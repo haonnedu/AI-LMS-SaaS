@@ -1,0 +1,1 @@
+"""Explicitly registered Celery tasks."""

@@ -6,11 +6,30 @@ Eduvia is an AI-powered, multi-tenant Education SaaS platform designed to help t
 
 The platform combines **Retrieval-Augmented Generation (RAG)**, Large Language Models (LLMs), intelligent assessment, and automated grading to connect teachers and students in a unified digital learning environment.
 
-**Project Status:** Planning / Pre-MVP
+**Project Status:** Foundation scaffold / Pre-MVP
 **Initial Market:** Vietnam
 **Target Users:** Individual teachers, students, educational institutions, and schools
 **Business Model:** Subscription-based SaaS (B2C and B2B)
 **Working Name:** Eduvia (domain and trademark availability not yet verified)
+
+### Run the foundation
+
+A runnable frontend and backend scaffold is now available. Start with [DEVELOPMENT.md](DEVELOPMENT.md) for setup and verification.
+
+```powershell
+.\scripts\setup.ps1
+```
+
+Run `.\scripts\dev-backend.ps1` and `.\scripts\dev-frontend.ps1` in separate terminals, then open [Eduvia locally](http://localhost:3000). Docker Compose is also provided for PostgreSQL/pgvector, Redis, migration, API, worker, and frontend.
+
+| Implemented foundation | Next product work |
+|---|---|
+| Next.js/TypeScript workspace shell and empty states | Identity, authenticated sessions, personal workspaces, RLS |
+| FastAPI liveness/readiness, request IDs, environment settings | Document upload, licensed/private RAG, generation |
+| Database connection, Alembic bootstrap, Redis/Celery configuration | Classes, enrollments, quizzes, grading, OMR |
+| Shared OpenAPI types, locked dependencies, local run scripts, CI | Subscriptions, production deployment, recovery validation |
+
+The foundation does not expose tenant/student data endpoints. The feature catalog below remains the product roadmap; a page or module boundary does not mean its workflow is implemented.
 
 ### Design documents
 
@@ -554,7 +573,7 @@ Phases 1–3 form the initial teaching pilot. Phase 4 adds OMR after online asse
 
 ### Phase 1 — Foundation
 
-- [ ] Project architecture
+- [x] Technical architecture and database design documents
 - [ ] User authentication
 - [ ] Teacher dashboard
 - [ ] Workspace management and tenant isolation/RLS checks

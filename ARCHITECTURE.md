@@ -1,6 +1,8 @@
 # Eduvia Architecture Design
 
-Status: proposed technical design, not an implemented system. Date: 2026-10-19.
+Status: proposed application design; runnable foundation scaffold available. Date: 2026-10-19.
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for the implemented frontend/API foundation and local setup. The domain workflows, identity, tenant isolation, AI services, and operational controls below remain implementation targets unless explicitly listed as implemented there.
 
 ## 1. Basis, goals, and boundaries
 
