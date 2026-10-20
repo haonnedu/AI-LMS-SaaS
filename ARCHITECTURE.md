@@ -1,12 +1,12 @@
 # Eduvia Architecture Design
 
-Status: proposed application design; runnable foundation scaffold available. Date: 2026-10-19.
+Status: proposed application design; runnable foundation scaffold available. Updated: 2026-10-20. Student-learning and blueprint extensions are design targets, not deployed services.
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for the implemented frontend/API foundation and local setup. The domain workflows, identity, tenant isolation, AI services, and operational controls below remain implementation targets unless explicitly listed as implemented there.
 
 ## 1. Basis, goals, and boundaries
 
-This design interprets the existing `README.md` as the product specification. The referenced conversation was inspected, but its edited specification and assistant artifacts were not retrievable as substantive text. No additional specification is assumed. Technology choices, state machines, service boundaries, and operational targets below are proposals requiring validation during implementation.
+This design follows [README.md](README.md), with the 2026-10-20 planning extension for independent student learning and structured examinations. [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) defines delivery order; [STUDENT_LEARNING.md](STUDENT_LEARNING.md) and [EXAM_BLUEPRINTS.md](EXAM_BLUEPRINTS.md) detail the new bounded context and assessment contracts. Technology choices, state machines, service boundaries, and operational targets remain proposals requiring validation during implementation.
 
 Eduvia serves individual teachers, students, and eventually schools, initially in Vietnam. The first pilot should support roughly 10–20 teachers, one education level, and one or two subjects. Its complete first teaching loop is: authorized source material → AI draft → teacher review → published learning materials and quiz → student submission → deterministic grading → teacher-visible results. OMR follows a stable online workflow.
 
@@ -14,7 +14,7 @@ Eduvia serves individual teachers, students, and eventually schools, initially i
 
 ## 2. Architecture and deployment units
 
-Start with a modular monolith: one FastAPI codebase with explicit domain modules and one shared PostgreSQL database. Run HTTP and Celery workers as separate processes from the same backend release. Avoid independent microservices until measured load or operational boundaries justify them.
+Start the teacher-pilot core with a modular monolith: one FastAPI codebase with explicit domain modules and one core PostgreSQL database. Run HTTP and Celery workers as separate processes from the same backend release. Design independent student learning as a separately owned bounded context that may become a dedicated microservice at the L1 gate. It may start as an isolated module behind application interfaces; extraction is not a prerequisite for M0–M7. Do not split every core domain merely to adopt microservices. The following diagram describes the initial core topology; section 17 shows the proposed expanded topology.
 
 ```mermaid
 flowchart TD
@@ -72,7 +72,7 @@ Mutation idempotency keys are scoped to actor, workspace, and operation, with a 
 
 ## 4. Tenancy, ownership, and permission model
 
-A workspace is the tenant boundary and data owner. A user may own one active personal workspace and belong to several schools. Personal workspace ownership and school membership are independent of plan payment. School enrollment does not convert the personal workspace or automatically expose its documents, question bank, or classes.
+For teacher/classroom core data, a workspace is the tenant boundary and data owner. Future personal self-study uses a separate learner-owned boundary, not a fake school class or automatic access to teacher workspaces; see section 17. A user may own one active personal workspace and belong to several schools. Personal workspace ownership and school membership are independent of plan payment. School enrollment does not convert the personal workspace or automatically expose its documents, question bank, or classes.
 
 Workspace roles are owner, admin, teacher, and student. Classroom teacher assignments and student enrollments further constrain access. Students can read published materials assigned to their enrolled class, operate their own available attempts, and read their own released grades. A workspace membership alone does not grant a student broad workspace reads. Platform administrators use a separate audited control plane; ordinary admin accounts have no automatic access to private tenant content.
 
@@ -217,3 +217,63 @@ Before implementation confirm: identity provider; licensed sources and allowed d
 ## 16. Implementation references
 
 The job design assumes idempotent tasks and explicit retry/recovery handling; worker acknowledgement settings must be selected and tested per queue. See the [Celery task guide](https://docs.celeryq.dev/en/stable/userguide/tasks.html). These references guide implementation rather than pinning a dependency version.
+
+## 17. Student-learning service and expanded deployment (proposed)
+
+Detailed contracts and learner lifecycle are in [STUDENT_LEARNING.md](STUDENT_LEARNING.md); the delivery/extraction gates are in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). This section overrides any assumption that future self-study records must be classroom workspace records. Existing classroom semantics remain unchanged.
+
+```mermaid
+flowchart TD
+  B[Teacher and student browsers] --> F[Next.js / BFF]
+  F --> C[Core Education API]
+  F --> S[Student Learning API - proposed]
+  C --> CD[(Core database)]
+  S --> SD[(Learner database)]
+  S -->|Scoped commands and authorized catalog reads| C
+  C -->|Outbox events| E[Versioned event delivery]
+  E -->|Inbox and projection updates| S
+  S --> SW[Planning and projection workers]
+  C --> CW[Content and assessment workers]
+```
+
+| Authority | Owner | Boundary |
+|---|---|---|
+| Authentication identity / teacher memberships | Core integration with identity provider | Student service validates audience/scope/subject; never trusts browser identity headers |
+| Curriculum, skills, prerequisite catalog, content rights | Core | Versioned authorized DTOs; no private teacher corpus by default |
+| Question bank, blueprint, published exam, answer keys | Core | Student-facing payloads omit keys; student service does not duplicate key storage |
+| Attempts, durable answers/submission, canonical scoring | Core assessment | Add standalone learner assessment schema/API before L1; existing class assignments are not repurposed with fake enrollments |
+| Official classroom grades and release | Core | Self-study progress is not an official classroom grade |
+| Personal goals, availability, plans and tasks | Student-learning | Learner ownership; teacher/school access only through explicit limited grants |
+| Evidence receipts, mastery and recommendations | Student-learning | Derived, versioned and rebuildable from permitted evidence; not a second grade source |
+
+When deployed separately, each service has independent DB credentials/migrations, jobs, secrets and release ownership. Sharing a physical DB host is possible for pilot cost, but grants must prevent cross-service table access. No cross-service foreign keys or dual-write transactions. Standalone core assessment data needs learner-scoped RLS distinct from workspace tables; specify it before implementation rather than making workspace_id nullable across the existing schema.
+
+Service-to-service calls use short-lived audience-specific credentials and delegated subject/purpose scopes where acting for a learner. Core rechecks resource entitlement and current revocation, not just possession of a service token. Internal network location is not authentication. Identity/account suspension and consent/rights changes require immediate denial at authoritative APIs; asynchronous projection updates are not sufficient authorization. If fresh authorization cannot be obtained, deny restricted reads/writes rather than use stale cached permission.
+
+Commands needing durable acknowledgement call the owning service. Submit timeout means unknown outcome until lookup/retry with the same idempotency key; never display success for unpersisted answers. Core outage can leave a previously authorized non-sensitive study schedule visible with freshness labeling, but must not fabricate scoring or accept offline submissions as official. Student-service outage must not block ordinary core class quizzes.
+
+Events use local outbox transactions and consumer inbox deduplication. Envelope includes event ID/type/schema version, aggregate ID/version, occurred_at, trace ID, and scoped minimal payload. Consumers handle duplicates, gaps and reordering; corrections/supersession replace projections by version rather than incrementing mastery twice. Rebuild via authorized snapshots plus cursor replay; do not replay withdrawn data back into a deleted learner profile. IDs are references, never bearer access grants. Event infrastructure choice is an L1 ADR; current Celery/Redis health wiring is not a durable inter-service event implementation.
+
+Deletion and consent withdrawal are coordinated workflows with request IDs, tombstones, per-service acknowledgement and reconciliation. Restrict access first, then remove/rebuild derived evidence, plans/caches and allowed content copies; retention exceptions must be documented. Recovery must replay tombstones after independent service restores. No automatic merge/export of school records to self-study; permitted classroom evidence ingestion and teacher visibility need purpose-limited grants and legally appropriate consent.
+
+Define learner usage accounts and limits separately from teacher workspace subscriptions before paid self-study. The component executing a provider call records its actual cost; correlation IDs connect that execution to the initiating learner request without double-charging the same execution. Core-owned AI operations retain core metering; planner-only AI operations are metered by the student service. A teacher's subscription does not silently pay for independent student activity.
+
+## 18. Curriculum-aware planning and exam-blueprint boundary
+
+Core owns reviewed curriculum/objective-to-skill mappings, prerequisite versions, blueprint versions and immutable publications. Student-learning owns the decision of what to study next, based on authorized evidence and availability. Start with explainable rules, explicit uncertainty, weekly checkpoints and prerequisite repair. No per-student fine-tuning or adaptive model is required for the first self-study release.
+
+[EXAM_BLUEPRINTS.md](EXAM_BLUEPRINTS.md) defines the shared structure engine. Authoring selects a validated blueprint → resolves slots from approved questions or reviewed generation → validates matrix/types/points/rights → publishes an immutable exam snapshot. Official templates require a verified source and applicable year; uploaded sample papers yield drafts, not automatic official status. Cognitive demand and empirical difficulty are separate fields. Unsupported item types or unsatisfied constraints fail explicitly.
+
+Diagnostic and targeted practice may adapt. Mock examinations keep the chosen structure and timing; only the subsequent study plan adapts to weaknesses. Initial M4 delivery supports single-choice blueprints and human review. Independent student delivery uses published approved pools; any later AI-generated practice policy must be explicitly labeled and reviewed for scoring safety, not silently promoted into authoritative exams.
+
+Roadmap mapping: original phases 1–3 become M0–M7 for implementation tracking. L0–L4 extend student-led learning after required core gates; OMR and commercial launch remain separate prioritized branches. Do not interpret this extension as completion of any original phase.
+
+## 19. School-led teacher management (2026-10-21 proposal)
+
+[SCHOOL_MANAGEMENT.md](SCHOOL_MANAGEMENT.md) defines the H0–H4 expansion: school staff invitation/lifecycle, departments, academic years/terms, class-subject teaching assignments, revision-pinned academic review, scoped reports, quota allocation and offboarding/handover. It remains outside the M0–M7 teacher pilot and does not require completion of independent student-learning.
+
+Start as a core school-management module using existing identity/workspaces/teaching/assessment application services. Core remains the single membership and grading authority. School admin, academic manager, department head and billing manager are proposed permission bundles with typed scope/expiry; map them explicitly onto membership roles and grants rather than granting all staff school-wide reads. Administrative teacher-management permission is not permission to inspect student answers or answer keys. Existing broad staff RLS baselines must be narrowed before school rollout.
+
+Teaching assignments must have one authority; if class_teachers remains, maintain it as a transactional compatibility/projection relation, not a second editable source. Staff suspension revokes current school permissions but not the global user, other schools or personal workspace. Last-owner transfer and concurrent revocation need invariant tests. Pending accepted submissions retain narrow system scoring authority; actor-dependent exports/jobs must reauthorize.
+
+Review approvals pin exact revisions and do not bypass rights, blueprint validation or publication controls. Staff departure preserves school records and authorship with audited handover, not automatic transfer of personal content. School reports default to permitted summaries; drill-down requires explicit educational scope. No school role grants access to student-learning personal evidence/mastery by default. Any later separate school service requires a new ownership/API/event/cutover ADR, not shared database access.

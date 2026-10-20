@@ -165,6 +165,16 @@ The health proxy has a fixed server-configured upstream and does not accept a cl
 
 Implement one complete, tested workflow at a time. S3-compatible object-storage settings are an extension point; no bucket or upload endpoint is provisioned here. The Celery health task validates worker connectivity only; generation/OMR pipelines require the durable job design before implementation.
 
+## Planned implementation and service expansion
+
+[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) is the detailed delivery backlog: M0 baseline, M1 identity/RLS, M2 jobs/quotas/storage, M3 knowledge, M4 authoring/blueprints, M5 classes, M6 assessment, M7 pilot. Add versioned single-choice exam blueprints and question-to-objective metadata in authoring; see [EXAM_BLUEPRINTS.md](EXAM_BLUEPRINTS.md).
+
+Independent self-study is a later L0–L4 track described in [STUDENT_LEARNING.md](STUDENT_LEARNING.md), distinct from the classroom student portal. Its proposed student-learning service owns goals/plans/mastery, while core retains content/blueprint publication and authoritative assessment/scoring. The current class-assignment schema requires a standalone learner assessment extension before this integration.
+
+No student-learning source directory, database, API, worker, event broker or Compose service is provisioned by these planning documents. Do not run undocumented service commands or assume the current OpenAPI exposes these APIs. A module-first implementation may precede extraction; when separated, use independent migrations/credentials, scoped APIs and durable outbox/inbox events, never direct cross-service table access. Baseline CI will need learner-isolation, API-contract, replay/revocation/deletion and service-failure tests before that release.
+
+This documentation update does not revalidate earlier foundation test results. Re-run the baseline in M0 and record actual outcomes. Keep design targets separate from the implemented checklist at the top of this guide.
+
 ## Troubleshooting
 
 - **API is offline:** start the backend and check `API_INTERNAL_URL` in `frontend/.env.local`; restart Next.js after changing it.

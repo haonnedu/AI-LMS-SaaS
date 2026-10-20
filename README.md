@@ -33,10 +33,18 @@ The foundation does not expose tenant/student data endpoints. The feature catalo
 
 ### Design documents
 
-- [ARCHITECTURE.md](ARCHITECTURE.md): module boundaries, workflows, security, deployment, and delivery gates.
-- [DATABASE.md](DATABASE.md): canonical entity names, relationships, constraints, access policies, and illustrative SQL.
+- [Project backlog](tasks/BACKLOG.md): shared two-person task tracker with core, school, student, OMR/billing work packages, dependencies and acceptance criteria. Task status lives in the linked detail trackers.
 
-This README describes the product direction; the two design documents define the proposed implementation. All features below are planned unless explicitly marked complete. The first pilot targets 10–20 teachers, one education level, and one or two subjects. It ends with reviewed teaching materials, online single-choice quizzes, and basic results. OMR follows in phase 4; school administration and advanced AI remain later scope.
+- [ARCHITECTURE.md](ARCHITECTURE.md): module boundaries, workflows, security, deployment, and delivery gates.
+- [DATABASE.md](DATABASE.md): canonical core entity names, relationships, constraints, access policies, and illustrative SQL.
+- [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md): detailed Vietnamese delivery plan, M0–M7 teacher pilot, L0–L4 student expansion, dependencies, acceptance gates, and service extraction strategy.
+- [EXAM_BLUEPRINTS.md](EXAM_BLUEPRINTS.md): versioned exam structures, matrices, generation constraints, review, and mock-exam rules.
+- [STUDENT_LEARNING.md](STUDENT_LEARNING.md): independent student learning, curriculum/skill-based plans, evidence-based diagnostics, and the proposed student-learning microservice.
+- [SCHOOL_MANAGEMENT.md](SCHOOL_MANAGEMENT.md): school-led teacher management, departments, teaching assignments, scoped academic review, reporting and staff handover (H0–H4, proposed).
+
+The school-led expansion lets institutions invite/manage teachers, organize departments and terms, assign classes/subjects, review school-owned learning materials and exam blueprints, and monitor permitted academic work. School membership never transfers a teacher's personal library or grants default access to a learner's private self-study history. It is a later delivery track, not implemented school administration or a full HR/payroll system.
+
+This README describes the product direction; the linked design and planning documents define the proposed implementation. All features below are planned unless explicitly marked complete. The first pilot targets 10–20 teachers, one education level, and one or two subjects. It ends with reviewed teaching materials, online single-choice quizzes, and basic results. OMR follows in phase 4; school administration and advanced AI remain later scope.
 
 ---
 
@@ -245,6 +253,18 @@ AI may recommend additional exercises, revision materials, and teaching activiti
 Analytics must distinguish between observed assessment results and AI-generated interpretations. A single short quiz should not be treated as a definitive measure of student ability.
 
 ---
+
+## 3A. Student-led learning and structured examinations (planned expansion)
+
+Eduvia will support both teacher-led classroom workflows and independent student-led learning. Students can select their curriculum, textbook series, actual classroom progress, goals, available study time, and target examination. The system proposes a diagnostic, a weekly learning plan, practice, and checkpoints. Knowing a textbook does not establish a school's teaching pace; learners or an authorized class integration supply that information.
+
+Three modes are planned: keep up with classroom lessons, consolidate missing prerequisites, and prepare for a target exam. The initial planner is rule-based, using reviewed curriculum/skill mappings and prerequisite relationships. AI assists explanations and content drafts; it does not invent authoritative curricula or guarantee target scores. Skill estimates include evidence count, recency, hint/repetition context, and uncertainty. A short quiz or distractor choice is not sufficient to label a student's ability or diagnose a misconception conclusively.
+
+Examinations are generated against a versioned **exam blueprint**: sections, supported question types, topic/skill coverage, cognitive levels, counts, points, scoring rules, time, source provenance, and effective year. Official-format templates require verified references; teacher templates and personalized practice are labeled separately. Diagnostic/practice tasks may adapt to weaknesses; a mock exam must preserve its selected blueprint. If the question pool cannot satisfy it, report the shortage instead of silently relaxing constraints. The teacher pilot implements single-choice blueprints only; short-answer/essay and their scoring/review workflows are separate milestones.
+
+The proposed **student-learning service** owns personal goals, plans, practice orchestration and mastery projections. Core education owns authorized curriculum/content, blueprints, published assessments, authoritative submissions/scoring and classroom records. Personal self-study data is not teacher/school data by default. Service separation uses authenticated APIs and versioned events, not shared-table access or duplicated grading authorities. Start modular when useful; deploy the student service independently once contract, ownership and operational gates are met. No microservice is implemented by this documentation change.
+
+See [student product and service design](STUDENT_LEARNING.md), [exam blueprint specification](EXAM_BLUEPRINTS.md), and [implementation milestones](IMPLEMENTATION_PLAN.md). Independent self-study follows the core teaching pilot and is distinct from its assigned-work student portal; OMR and commercial billing can proceed as separately prioritized branches.
 
 ## 4. Automated Examination Scanning and Grading
 
