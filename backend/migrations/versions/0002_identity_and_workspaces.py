@@ -5,8 +5,6 @@ Revises: 0001_bootstrap
 """
 
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 revision = "0002_identity_and_workspaces"
 down_revision = "0001_bootstrap"
@@ -62,8 +60,13 @@ def upgrade() -> None:
     )
 
     # Indexes for performance
-    op.execute("CREATE INDEX IF NOT EXISTS idx_workspace_members_user_id ON edu.workspace_members(user_id)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_workspace_members_workspace_id ON edu.workspace_members(workspace_id)")
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_workspace_members_user_id ON edu.workspace_members(user_id)"
+    )
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_workspace_members_workspace_id "
+        "ON edu.workspace_members(workspace_id)"
+    )
 
 
 def downgrade() -> None:
