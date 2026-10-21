@@ -8,7 +8,7 @@ async function get(base, path) {
   return response;
 }
 
-for (const path of ['/', '/library', '/classes', '/settings']) {
+for (const path of ['/', '/library', '/classes', '/settings', '/login', '/lessons', '/assessments', '/student', '/school', '/admin', '/analytics']) {
   const html = await (await get(frontend, path)).text();
   if (!html.includes('Eduvia')) throw new Error(`${path} did not render the Eduvia shell`);
   console.log(`PASS frontend ${path}`);
