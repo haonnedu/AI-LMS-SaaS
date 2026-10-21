@@ -35,7 +35,7 @@ def upgrade() -> None:
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(255) NOT NULL,
             slug VARCHAR(255) NOT NULL UNIQUE,
-            workspace_type VARCHAR(50) NOT NULL DEFAULT 'personal', -- personal | school
+            workspace_type VARCHAR(50) NOT NULL DEFAULT 'personal',
             is_active BOOLEAN NOT NULL DEFAULT TRUE,
             created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
@@ -50,8 +50,8 @@ def upgrade() -> None:
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             workspace_id UUID NOT NULL REFERENCES edu.workspaces(id) ON DELETE CASCADE,
             user_id UUID NOT NULL REFERENCES edu.users(id) ON DELETE CASCADE,
-            role VARCHAR(50) NOT NULL DEFAULT 'teacher', -- owner, admin, teacher, student
-            status VARCHAR(50) NOT NULL DEFAULT 'active', -- active, suspended, departed
+            role VARCHAR(50) NOT NULL DEFAULT 'teacher',
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
             created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
             CONSTRAINT uq_workspace_user UNIQUE (workspace_id, user_id)
