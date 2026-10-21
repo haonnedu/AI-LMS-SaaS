@@ -28,9 +28,9 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 |---|---|---|---|---|
 | DB-01 | done | Hao | M0 | Tách migrator/runtime roles; runtime không owner/superuser/BYPASSRLS; kiểm tra grants bằng DB thật. |
 | DB-02 | done | Hao | DB-01, DATA-01 | Migration users/workspaces/members và audit tối thiểu; tenant FK/unique constraints và upgrade tests. (Đã tạo migration backend/migrations/versions/0002_identity_and_workspaces.py). |
-| DB-03 | in_progress | Hao | DB-02 | Transaction-local verified actor/workspace context; reset an toàn khi commit/rollback/pool reuse. |
-| DB-04 | todo | — | DB-03 | RLS + FORCE RLS, active membership checks; missing context deny, bootstrap flow không mở quyền tùy ý. |
-| DB-05 | todo | — | DB-04 | Runtime-role integration tests: tenant A/B, forged IDs, revoked member, pool reuse, negative writes và joins. |
+| DB-03 | done | Hao | DB-02 | Transaction-local verified actor/workspace context; reset an toàn khi commit/rollback/pool reuse. (Đã hiện thực tại backend/app/infrastructure/context.py và unit test). |
+| DB-04 | done | Hao | DB-03 | RLS + FORCE RLS, active membership checks; missing context deny, bootstrap flow không mở quyền tùy ý. (Đã tạo migration backend/migrations/versions/0003_row_level_security.py). |
+| DB-05 | in_progress | Hao | DB-04 | Runtime-role integration tests: tenant A/B, forged IDs, revoked member, pool reuse, negative writes và joins. |
 | BE-01 | todo | — | DB-02, AUTH-02 | Verify provider identity/session server-side; bad issuer/audience/expiry/signature và spoofed headers bị chặn. |
 | BE-02 | todo | — | BE-01, DB-04 | Idempotent user provisioning theo stable provider subject; không merge email tùy tiện. |
 | BE-03 | todo | — | BE-02 | Personal workspace provisioning atomic; concurrent requests chỉ tạo một ownership hợp lệ. |
