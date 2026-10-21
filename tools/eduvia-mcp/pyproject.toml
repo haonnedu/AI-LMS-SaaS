@@ -26,6 +26,10 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["eduvia_mcp"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--basetemp=.pytest_cache/tmp"
+# A fresh checkout has no .pytest_cache parent when tmp_path first initializes.
+addopts = "--basetemp=.pytest-tmp"

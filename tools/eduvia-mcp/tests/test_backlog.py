@@ -1,3 +1,5 @@
+from collections import Counter
+
 import pytest
 
 from eduvia_mcp.backlog import cells, load_tasks
@@ -10,13 +12,34 @@ def append(root, text, name="CORE"):
         stream.write(text + "\n")
 
 
-def test_actual_backlog_baseline(real_root):
-    result = Tools(Repository(real_root)).summary()
+def test_actual_backlog_integrity(real_root):
+    repository = Repository(real_root)
+    tasks = load_tasks(repository)
+    result = Tools(repository).summary()
     assert result.error is None
-    assert result.data.total == 179
-    assert result.data.by_track == {"core": 92, "school": 25, "student": 28, "omr_billing": 34}
-    assert result.data.by_status == {"todo": 179}
-    assert result.data.by_owner == {"—": 179}
+    assert tasks
+    assert len({task.id for task in tasks}) == len(tasks)
+    assert result.data.total == len(tasks)
+    assert result.data.by_track == dict(Counter(task.track for task in tasks))
+    assert result.data.by_status == dict(Counter(task.status for task in tasks))
+    assert result.data.by_owner == dict(Counter(task.owner for task in tasks))
+    assert result.data.by_milestone == dict(Counter(task.milestone for task in tasks))
+
+
+def test_backlog_progress_and_added_task_are_valid(checkout, tools):
+    append(checkout, "| BASE-01 | todo | — | — | Baseline |")
+    assert tools.summary().data.by_status == {"todo": 1}
+    tracker = checkout / "tasks/CORE.md"
+    tracker.write_text(
+        tracker.read_text(encoding="utf-8").replace("| todo | — |", "| done | Hao Nguyen |"),
+        encoding="utf-8",
+    )
+    append(checkout, "| BASE-02 | in_progress | Duc Quach | BASE-01 | Verify baseline |")
+    summary = tools.summary().data
+    assert summary.total == 2
+    assert summary.by_status == {"done": 1, "in_progress": 1}
+    assert summary.by_owner == {"Hao Nguyen": 1, "Duc Quach": 1}
+    assert tools.get_task("BASE-02").data.task.dependencies[0].resolved
 
 
 def test_escaped_pipe_and_backslash():

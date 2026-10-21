@@ -140,10 +140,12 @@ Tests bao gồm parser, fresh reads, pagination, giới hạn Unicode/output, t�
 secrets/traversal, liên kết filesystem và MCP client stdio thật. Test symlink có
 thể skip nếu Windows chưa bật Developer Mode/quyền symlink; test junction chạy
 riêng trên Windows. Trong sandbox cấm tạo junction, chạy bộ test với quyền cho
-phép tạo liên kết tạm trong `.pytest_cache`.
+phép tạo liên kết tạm trong `.pytest-tmp`. Thư mục temp nằm trực tiếp dưới package,
+không phụ thuộc `.pytest_cache` đã tồn tại; bị loại khỏi Git và quyền đọc của MCP.
 
-Baseline test hiện xác nhận 179 task (92/25/28/34), toàn bộ `todo`; cập nhật assertion
-này có chủ đích khi backlog thay đổi. Các số này không nằm trong implementation.
+Test repo thật kiểm tra ID duy nhất và summary nhất quán với tracker, không cố định
+status/owner hoặc tổng số task. Fixtures kiểm tra cập nhật status/owner và thêm task;
+test checkout mới xác nhận tmp_path hoạt động ngay lần chạy đầu, trước khi có cache.
 CI chạy cùng checks trên Windows và Linux; không cần hạ tầng Eduvia.
 
 Tham khảo: [SDK MCP chính thức](https://github.com/modelcontextprotocol/python-sdk)

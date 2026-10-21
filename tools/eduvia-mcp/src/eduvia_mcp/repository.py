@@ -49,6 +49,7 @@ BLOCKED_DIRS = {
     "htmlcov",
     "tmp",
     ".pytest_cache",
+    ".pytest-tmp",
     ".ruff_cache",
     ".mypy_cache",
     ".cache",
