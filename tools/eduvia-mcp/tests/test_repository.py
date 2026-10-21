@@ -33,6 +33,7 @@ from eduvia_mcp.repository import MAX_FILE_BYTES, Repository, RepositoryError
         ".git/config",
         "frontend/node_modules/x.ts",
         "backend/.venv/x.py",
+        "backend/.pytest-tmp/example.md",
         "backend/cache.pem",
         "random/file.py",
     ],

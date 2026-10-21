@@ -56,7 +56,10 @@ def test_stdio_handshake_tools_and_results(real_root):
                     wire = json.dumps(result.model_dump(mode="json", by_alias=True))
                     assert len(wire.encode()) < 64 * 1024
                     if name == "get_backlog_summary":
-                        assert result.structured_content["data"]["total"] == 179
+                        summary = result.structured_content["data"]
+                        assert summary["total"] > 0
+                        for group in ("by_track", "by_status", "by_owner", "by_milestone"):
+                            assert sum(summary[group].values()) == summary["total"]
                 denied = await client.call_tool("read_file", {"path": "backend/.env"})
                 assert denied.structured_content["error"]["code"] == "ACCESS_DENIED"
                 invalid = await client.call_tool("list_files", {"limit": 201})
