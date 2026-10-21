@@ -1,0 +1,70 @@
+name: Deploy staging
+
+on:
+  workflow_run:
+    workflows: [Foundation checks]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eduvia-staging-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Configure pinned SSH identity
+        env:
+          DEPLOY_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.STAGING_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Transfer exact tested revision and deploy
+        env:
+          DEPLOY_HOST: ${{ secrets.STAGING_HOST }}
+          DEPLOY_PORT: ${{ secrets.STAGING_PORT }}
+          DEPLOY_USER: ${{ secrets.STAGING_USER }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]]
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+          remote="$DEPLOY_USER@$DEPLOY_HOST"
+          archive="$RUNNER_TEMP/$RELEASE_SHA.tar.gz"
+          git archive --format=tar.gz -o "$archive" "$RELEASE_SHA"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -p "$DEPLOY_PORT" "$remote" 'mkdir -p "$HOME/eduvia-staging/incoming"'
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes -P "$DEPLOY_PORT" "$archive" "$remote:eduvia-staging/incoming/$RELEASE_SHA.tar.gz"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -p "$DEPLOY_PORT" "$remote" "bash -s -- '$RELEASE_SHA'" <<'REMOTE'
+          set -euo pipefail
+          sha="$1"
+          root="$HOME/eduvia-staging"
+          exec 9>"$root/release.lock"
+          flock -w 1200 9
+          mkdir -p "$root/releases/$sha"
+          tar -xzf "$root/incoming/$sha.tar.gz" -C "$root/releases/$sha"
+          bash "$root/releases/$sha/deploy/deploy.sh" "$root/releases/$sha" "$root/shared/staging.env"
+          printf '%s\n' "$sha" > "$root/shared/current-release"
+          REMOTE
+      - name: Remove runner SSH credentials
+        if: always()
+        run: rm -f ~/.ssh/id_ed25519 ~/.ssh/known_hosts

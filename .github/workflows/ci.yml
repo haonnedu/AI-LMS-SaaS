@@ -88,4 +88,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker compose config --quiet
+      - name: Validate isolated staging configuration
+        run: |
+          set -euo pipefail
+          python3 deploy/generate-env.py "$RUNNER_TEMP/staging.env" --tunnel
+          export RELEASE_SHA="$GITHUB_SHA"
+          docker compose --env-file "$RUNNER_TEMP/staging.env" -f compose.staging.yaml config --format json | python3 deploy/validate-config.py
+          bash -n deploy/deploy.sh deploy/postgres/10-bootstrap.sh
       - run: docker compose build
