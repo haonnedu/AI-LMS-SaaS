@@ -1,53 +1,58 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, BookOpen, ChevronRight, Home, Library, Settings2, Sprout, Users } from "lucide-react";
-
+import { BookOpen, ChevronDown, ChevronRight, LayoutDashboard, Library, Users, Settings2, Sparkles, ClipboardList, ChartNoAxesCombined, GraduationCap, Building2, ShieldCheck, Menu, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 const links = [
-  { href: "/", label: "Overview", icon: Home },
-  { href: "/library", label: "Knowledge library", icon: Library },
-  { href: "/classes", label: "My classes", icon: Users },
-  { href: "/settings", label: "Workspace settings", icon: Settings2 },
+  { href: "/", label: "Tổng quan", icon: LayoutDashboard },
+  { href: "/library", label: "Thư viện học liệu", icon: Library },
+  { href: "/lessons", label: "Soạn bài cùng AI", icon: Sparkles },
+  { href: "/classes", label: "Lớp học của tôi", icon: Users },
+  { href: "/assessments", label: "Bài tập & kiểm tra", icon: ClipboardList },
+  { href: "/analytics", label: "Kết quả học tập", icon: ChartNoAxesCombined },
 ];
-
+const spaces = [
+  { href: "/student", label: "Góc học sinh", icon: GraduationCap },
+  { href: "/school", label: "Không gian nhà trường", icon: Building2 },
+  { href: "/admin", label: "Quản trị nền tảng", icon: ShieldCheck },
+];
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const currentPage = links.find((link) => link.href === pathname)?.label ?? "Workspace";
-
-  return (
-    <div className="app-shell">
-      <a className="skip-link" href="#main-content">Skip to content</a>
-      <aside className="sidebar">
-        <Link href="/" className="brand" aria-label="Eduvia home">
-          <span className="brand-mark"><BookOpen size={23} strokeWidth={1.8} aria-hidden="true" /></span>
-          <span>eduvia<span className="brand-dot">.</span></span>
-        </Link>
-        <div className="workspace-card">
-          <span className="workspace-avatar"><Sprout size={20} aria-hidden="true" /></span>
-          <div><strong>Teaching workspace</strong><span>Personal · Preview</span></div>
-        </div>
-        <p className="nav-label">YOUR WORKSPACE</p>
-        <nav aria-label="Main navigation" className="main-nav">
-          {links.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href} className={`nav-link ${pathname === href ? "active" : ""}`} aria-current={pathname === href ? "page" : undefined}>
-              <Icon size={19} strokeWidth={1.8} aria-hidden="true" /><span>{label}</span>
-            </Link>
-          ))}
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="small-note"><span className="note-symbol">✦</span><p>A little less admin.<br /><strong>A little more teaching.</strong></p></div>
-          <Link href="/settings" className="sidebar-footer">Workspace setup <ArrowUpRight size={16} aria-hidden="true" /></Link>
-        </div>
-      </aside>
-      <div className="workspace-main">
-        <header className="topbar">
-          <div className="breadcrumb"><span>Workspace</span><ChevronRight size={14} aria-hidden="true" /><strong>{currentPage}</strong></div>
-          <span className="preview-label"><span aria-hidden="true" />Foundation preview</span>
-        </header>
-        <main id="main-content" className="page-content" tabIndex={-1}>{children}</main>
-        <footer className="page-footer"><span>Made for the way teachers work.</span><span>Eduvia <span aria-hidden="true">·</span> 0.1.0</span></footer>
-      </div>
-    </div>
-  );
+  const [open, setOpen] = useState(false);
+  const sidebar = useRef<HTMLElement>(null);
+  const alternate = spaces.find(space => space.href === pathname);
+  const roleLabel = alternate?.label ?? "Không gian giáo viên";
+  const visibleLinks = alternate ? [alternate] : links;
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    sidebar.current?.querySelector<HTMLElement>("a")?.focus();
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+      if (event.key !== "Tab") return;
+      const controls = Array.from(sidebar.current?.querySelectorAll<HTMLElement>("a, button, summary") ?? []).filter(el => el.getClientRects().length);
+      const first = controls[0]; const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => { document.body.style.overflow = oldOverflow; document.removeEventListener("keydown", handleKey); previous?.focus(); };
+  }, [open]);
+  const currentPage = [...links, ...spaces, { href: "/settings", label: "Cài đặt" }].find((link) => link.href === pathname)?.label ?? "Eduvia";
+  if (pathname === "/login") return <main className="auth-root">{children}</main>;
+  return <div className="app-shell">
+    <a className="skip-link" href="#main-content">Đến nội dung chính</a>
+    {open && <button className="nav-scrim" aria-label="Đóng menu" onClick={() => setOpen(false)} />}
+    <aside ref={sidebar} id="workspace-navigation" className={`sidebar ${open ? "is-open" : ""}`} aria-label="Điều hướng không gian">
+      <Link href="/" aria-label="Eduvia · Trang tổng quan" className="brand" onClick={() => setOpen(false)}><span className="brand-mark"><BookOpen size={24} /></span><span>eduvia<span className="brand-dot">.</span></span></Link>
+      <div className="workspace-card"><span className="workspace-avatar">{alternate ? "DEMO" : "GV"}</span><div><strong>{roleLabel}</strong><span>Dữ liệu minh họa</span></div></div>
+      <p className="nav-label">{alternate ? "KHÔNG GIAN HIỆN TẠI" : "GIẢNG DẠY"}</p>
+      <nav className="main-nav" aria-label="Điều hướng chính">{visibleLinks.map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} title={label} onClick={() => setOpen(false)} className={`nav-link ${pathname === href ? "active" : ""}`} aria-current={pathname === href ? "page" : undefined}><Icon size={19} /><span>{label}</span>{href === "/lessons" && <span className="ai-mini">AI</span>}</Link>)}</nav>
+      <details className="role-picker"><summary>Xem giao diện vai trò khác <ChevronDown size={14} aria-hidden="true" /></summary><p className="nav-label">BẢN MẪU · KHÔNG ĐỔI QUYỀN</p><nav aria-label="Khám phá vai trò mẫu">{[{ href: "/", label: "Không gian giáo viên", icon: BookOpen }, ...spaces].map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} title={label} onClick={() => setOpen(false)} className="nav-link"><Icon size={18} /><span>{label}</span></Link>)}</nav></details>
+      <div className="sidebar-bottom">{!alternate && <Link href="/settings" onClick={() => setOpen(false)} aria-label="Cài đặt không gian" title="Cài đặt không gian" className={`nav-link ${pathname === "/settings" ? "active" : ""}`} aria-current={pathname === "/settings" ? "page" : undefined}><Settings2 size={19} />Cài đặt không gian</Link>}<Link href="/login" aria-label="Xem giao diện đăng nhập" className="profile" onClick={() => setOpen(false)}><span className="avatar">{alternate ? "EV" : "MA"}</span><span><strong>{alternate ? "Khám phá Eduvia" : "Minh Anh"}</strong><small>Xem đăng nhập mẫu</small></span><ChevronRight size={16} /></Link></div>
+    </aside>
+    <div className="workspace-main"><header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-toggle" aria-expanded={open} aria-controls="workspace-navigation" aria-label={open ? "Đóng menu" : "Mở menu"} onClick={() => setOpen(!open)}>{open ? <X size={20} /> : <Menu size={20} />}</button><span>Không gian làm việc</span><ChevronRight size={14} /><strong>{currentPage}</strong></div><span className="preview-label"><span />Bản mẫu tương tác</span></header><main id="main-content" className="page-content" tabIndex={-1}>{children}</main><footer className="page-footer"><span>Mỗi bài học hay bắt đầu từ người thầy.</span><span>Eduvia · Dữ liệu minh họa</span></footer></div>
+  </div>;
 }

@@ -8,9 +8,9 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 
 | ID | Trạng thái | Owner | Phụ thuộc | Task / nghiệm thu |
 |---|---|---|---|---|
-| SET-01 | todo | — | — | Chốt branch/PR/review conventions; một owner/task, người còn lại review; lưu quy tắc và mẫu PR. |
-| SET-02 | todo | — | — | Ghi working-tree baseline; phân biệt thay đổi có sẵn, không xóa/revert file không thuộc task. |
-| BASE-01 | todo | — | SET-02 | Đọc manifests/locks/setup để xác minh phiên bản Node/Python/package manager/Compose; ghi kết quả cho cả hai máy, không tự nâng phiên bản. |
+| SET-01 | done | Hao | — | Chốt branch/PR/review conventions; một owner/task, người còn lại review; lưu quy tắc và mẫu PR. |
+| SET-02 | done | Hao | — | Ghi working-tree baseline; phân biệt thay đổi có sẵn, không xóa/revert file không thuộc task. |
+| BASE-01 | in_progress | Hao | SET-02 | Đọc manifests/locks/setup để xác minh phiên bản Node/Python/package manager/Compose; ghi kết quả cho cả hai máy, không tự nâng phiên bản. |
 | BASE-02 | todo | — | BASE-01 | Chạy backend lint/format-check/tests theo scripts thực tế; ghi command, exit code và lỗi thành task riêng. |
 | BASE-03 | todo | — | BASE-01 | Chạy frontend lint/typecheck/build theo scripts thực tế; lưu kết quả, không coi scaffold là domain hoàn chỉnh. |
 | BASE-04 | todo | — | BASE-01 | Xác minh tên services Compose rồi chạy DB/Redis và migrations trên DB dev; ghi upgrade path, không dùng production data. |

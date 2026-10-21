@@ -32,17 +32,17 @@ export function ServiceStatus() {
 
   const isChecking = connection.state === "checking";
   const Icon = isChecking ? LoaderCircle : connection.state === "online" ? CircleCheck : Unplug;
-  const title = isChecking ? "Checking API connection" : connection.state === "online" ? "API connected" : "API is offline";
+  const title = isChecking ? "Đang kiểm tra kết nối API" : connection.state === "online" ? "API đã kết nối" : "Chưa kết nối API";
   const description = connection.state === "online"
-    ? `Eduvia API ${connection.version} is responding. Database readiness is checked separately.`
-    : isChecking ? "Connecting to your local backend…" : "Start the backend service, then try the connection again.";
+    ? `Eduvia API ${connection.version} đang phản hồi. Trạng thái cơ sở dữ liệu được kiểm tra riêng.`
+    : isChecking ? "Đang kết nối đến backend…" : "Khởi động dịch vụ backend rồi thử kết nối lại.";
 
   return (
     <div className={`service-status ${connection.state}`}>
       <div className="service-icon"><Icon size={21} className={isChecking ? "spin" : ""} aria-hidden="true" /></div>
       <div className="service-copy" role="status" aria-live="polite" aria-atomic="true"><strong>{title}</strong><p>{description}</p></div>
       <button type="button" className="button button-secondary button-small" disabled={isChecking} onClick={() => { setConnection({ state: "checking" }); setRequestNumber((value) => value + 1); }}>
-        <RefreshCw size={15} aria-hidden="true" /><span>{isChecking ? "Checking" : "Retry"}</span>
+        <RefreshCw size={15} aria-hidden="true" /><span>{isChecking ? "Đang kiểm tra" : "Thử lại"}</span>
       </button>
     </div>
   );
