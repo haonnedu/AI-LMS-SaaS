@@ -6,9 +6,17 @@ param(
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 
+function Get-PythonVersion([string]$Executable) {
+    try {
+        # No embedded quotes: Windows PowerShell 5.1 removes them in native arguments.
+        $version = & $Executable -c 'import sys; print(str(sys.version_info.major)+chr(46)+str(sys.version_info.minor))' 2>$null
+        if ($LASTEXITCODE -eq 0) { return "$version".Trim() }
+    } catch { }
+    return ''
+}
+
 function Assert-Python312([string]$Executable) {
-    $version = & $Executable -c 'import sys; print("%s.%s" % sys.version_info[:2])' 2>$null
-    if ($LASTEXITCODE -ne 0 -or "$version".Trim() -ne '3.12') {
+    if ((Get-PythonVersion $Executable) -ne '3.12') {
         throw 'Python 3.12 is required. Supply -Python312 <absolute-path-to-python.exe>. Existing environments are never deleted automatically.'
     }
 }
@@ -27,15 +35,16 @@ if (-not $SkipInstall -or $CheckOnly) {
     } elseif (-not $Python312) {
         $launcher = Get-Command py -ErrorAction SilentlyContinue
         if ($launcher) {
-            $candidate = & $launcher.Source -3.12 -c 'import sys; print(sys.executable)' 2>$null
-            if ($LASTEXITCODE -eq 0) { $Python312 = "$candidate".Trim() }
+            try {
+                $candidate = & $launcher.Source -3.12 -c 'import sys; print(sys.executable)' 2>$null
+                if ($LASTEXITCODE -eq 0) { $Python312 = "$candidate".Trim() }
+            } catch { }
         }
         if (-not $Python312) {
             foreach ($name in @('python3.12', 'python')) {
                 $candidate = Get-Command $name -ErrorAction SilentlyContinue
                 if ($candidate) {
-                    $version = & $candidate.Source -c 'import sys; print("%s.%s" % sys.version_info[:2])' 2>$null
-                    if ($LASTEXITCODE -eq 0 -and "$version".Trim() -eq '3.12') {
+                    if ((Get-PythonVersion $candidate.Source) -eq '3.12') {
                         $Python312 = $candidate.Source
                         break
                     }

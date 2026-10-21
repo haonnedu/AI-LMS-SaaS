@@ -4,13 +4,13 @@
 
 This repository is a runnable foundation for the design in [ARCHITECTURE.md](ARCHITECTURE.md) and [DATABASE.md](DATABASE.md). It contains:
 
-- A Next.js App Router/TypeScript frontend with responsive workspace navigation, empty library/classroom states, and API connectivity feedback.
+- A Next.js App Router/TypeScript frontend with 11 interactive preview pages and API connectivity feedback; educational records shown in the previews are sample data.
 - A FastAPI application with environment configuration, request IDs, logging, health probes, and an OpenAPI contract.
 - Async PostgreSQL sessions, Redis connectivity, Alembic migration setup, and a Celery worker entry point.
-- A bootstrap migration for the `edu` schema and pgvector; no educational or tenant data tables yet.
+- Bootstrap migration for `edu`/pgvector and an identity migration for users, workspaces and workspace members. Runtime roles, tenant context and RLS are not implemented yet.
 - Local Docker Compose, native Windows scripts, dependency lock files, and CI checks.
 
-Authentication, workspace membership/RLS, document upload, RAG, generation, enrollment, quiz submission, OMR, and billing are **planned**, not connected functionality. The UI has no fake user accounts or stored educational records. A green API indicator means the API process is reachable; it does not imply database readiness or completed product workflows.
+Authentication, workspace membership APIs/RLS, document upload, RAG, generation, enrollment, quiz submission, OMR, and billing are **planned**, not connected functionality. The UI previews do not create real accounts or persist educational records. A green API indicator means the API process is reachable; it does not imply database readiness or completed product workflows.
 
 ## Repository layout
 
@@ -46,6 +46,14 @@ This copies missing environment files without overwriting existing settings, cre
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
 ```
+
+Windows PowerShell 5.1 and PowerShell 7 are supported. Setup validates Python 3.12 before installing anything. It uses a valid existing backend virtualenv, or discovers Python 3.12 via the Python launcher/PATH. To select an interpreter explicitly and validate without writing files or installing packages:
+
+```powershell
+.\scripts\setup.ps1 -Python312 'C:\path\to\Python312\python.exe' -CheckOnly
+```
+
+Remove `-CheckOnly` to install. An invalid existing virtualenv is reported and left intact; deliberately move it aside before recreating it if needed. `-SkipInstall` only creates missing environment files, without validating/installing Python. `-CheckOnly` takes precedence if both switches are passed.
 
 Start the backend in one terminal:
 
@@ -186,6 +194,25 @@ This documentation update does not revalidate earlier foundation test results. R
 
 Compose startup ordering follows the [Docker Compose dependency guidance](https://docs.docker.com/compose/how-tos/startup-order/). Database installation details are in the [pgvector project](https://github.com/pgvector/pgvector#installation).
 
-## Validation of this foundation
+## Tooling regression and disposable integration checks
 
-Checked on Windows with Node 24 and Python 3.12: 16 backend tests, Ruff lint/format, frontend lint/type checking/production build, standalone startup, all four page routes, frontend/API liveness integration, API-down/retry behavior in the browser, and bounded dependency-down readiness. PowerShell setup and Compose/CI YAML were checked. Docker is not installed on the authoring machine, so container builds, real database migration execution, and PostgreSQL/Redis-backed readiness remain to be verified in Docker/CI. The migration was checked in offline SQL generation mode.
+From the repository root, using the backend Python 3.12 virtualenv:
+
+```powershell
+.\backend\.venv\Scripts\python.exe -m ruff check --config backend/pyproject.toml scripts
+.\backend\.venv\Scripts\python.exe -m ruff format --check --config backend/pyproject.toml scripts
+.\backend\.venv\Scripts\python.exe -m pytest -c backend/pyproject.toml scripts/tests -q
+.\backend\.venv\Scripts\python.exe scripts/verify-m0.py
+```
+
+On Linux use `backend/.venv/bin/python` instead. Unit tests do not call Docker; setup tests run both Windows shells and are skipped on Linux. CI installs the locked backend development dependencies for these checks.
+
+The verifier needs Docker with Compose and access to build dependencies. It builds current source, creates a unique project with free loopback ports and its own temporary DB volume, and ignores the repository `.env` and inherited Compose overrides. It checks bootstrap, the single Alembic head, the current three identity tables, repeated upgrades, downgrade/upgrade, all 11 pages, health/proxy, and loss/recovery of PostgreSQL, Redis and API. Update its explicit table expectations when future migrations intentionally change the schema. This does not test RLS or product workflows.
+
+Evidence is written under `tmp/eduvia-m0-<UTC timestamp>-<random>/`: `result.json` includes expected head, observed tables, source commit, dirty-tree summary, ports and failed step; `commands.log` includes command exit codes and redacted diagnostics. Build commands time out after 900 seconds, other Compose commands after 180 seconds. Cleanup is attempted on failures as well; a cleanup error fails the run and identifies the specific project to inspect. Never run broad volume deletion to recover from a failed verification.
+
+The disposable environment file is removed at the end. Do not share it while a run is active. CI uploads only `result.json` and `commands.log`; the Ubuntu containers job runs this verifier, while a Windows/Linux scripts job runs lint/format/regression checks. GitHub CI results apply only to the commit being tested. See [tooling handoff](discuss/BASE-tooling-ci.md) for recorded results and limitations.
+
+## Historical scaffold validation
+
+The original scaffold was checked with Node 24/Python 3.12, including 16 backend tests and four initial page routes. That record predates the identity migration, expanded preview UI and Docker-backed verification. It is historical context, not evidence for the current revision; use the linked handoffs and current CI runs for acceptance.

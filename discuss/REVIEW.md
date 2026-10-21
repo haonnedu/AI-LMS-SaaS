@@ -2,6 +2,18 @@
 
 Mỗi yêu cầu ghi task và revision. Người yêu cầu đề xuất reviewer; người review tự ghi kết luận của mình.
 
+## 2026-10-21 — BASE-01 / BASE-05 — tooling và CI
+
+- Người chuẩn bị: Codex theo yêu cầu người dùng; branch `fix/tooling-ci`, base `302762b` cộng diff chưa commit.
+- Phạm vi: setup tương thích PowerShell 5.1/7; verifier theo Alembic head và schema identity; regression tests và CI Windows/Linux.
+- Evidence và hành động cần review: [BASE-tooling-ci.md](BASE-tooling-ci.md).
+- Cần reviewer xác nhận: setup không thay môi trường trong CheckOnly; migration chỉ chạy trên DB tạm; timeout/cleanup/report an toàn; CI artifact không chứa env file.
+- Reviewer con người / SHA duyệt: chưa có. CI của branch mới chưa chạy trước khi push; không coi CI xanh của base là bằng chứng cho diff này.
+
+## Cập nhật yêu cầu lint/format bên dưới
+
+Bản sửa đã merge qua PR #1; [Foundation CI tại 302762b](https://github.com/haonnedu/AI-LMS-SaaS/actions/runs/39560321514) xanh. Yêu cầu bên dưới là bản ghi trước commit; không còn chờ push bản sửa lint. Không tự ghi nhận reviewer con người nếu chưa có thông tin review cụ thể.
+
 ## 2026-10-21 — BASE-02 / DB-02 — sửa lint/format migration 0002
 
 - Người chuẩn bị: Codex theo yêu cầu người dùng; chưa có reviewer con người xác nhận nhận review.
