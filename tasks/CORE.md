@@ -30,8 +30,8 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 | DB-02 | done | Hao | DB-01, DATA-01 | Migration users/workspaces/members và audit tối thiểu; tenant FK/unique constraints và upgrade tests. (Đã tạo migration backend/migrations/versions/0002_identity_and_workspaces.py). |
 | DB-03 | done | Hao | DB-02 | Transaction-local verified actor/workspace context; reset an toàn khi commit/rollback/pool reuse. (Đã hiện thực tại backend/app/infrastructure/context.py và unit test). |
 | DB-04 | done | Hao | DB-03 | RLS + FORCE RLS, active membership checks; missing context deny, bootstrap flow không mở quyền tùy ý. (Đã tạo migration backend/migrations/versions/0003_row_level_security.py). |
-| DB-05 | in_progress | Hao | DB-04 | Runtime-role integration tests: tenant A/B, forged IDs, revoked member, pool reuse, negative writes và joins. |
-| BE-01 | todo | — | DB-02, AUTH-02 | Verify provider identity/session server-side; bad issuer/audience/expiry/signature và spoofed headers bị chặn. |
+| DB-05 | done | Hao | DB-04 | Runtime-role integration tests: tenant A/B, forged IDs, revoked member, pool reuse, negative writes và joins. (Đã chạy deploy/test/rls-smoke.sql trên PostgreSQL 17 staging bằng role eduvia_runtime: 8/8 PASS, transaction rollback. Lưu ý: chưa có test connection-pool thật; pool reuse dựa trên ngữ nghĩa set_config(... , true).) |
+| BE-01 | in_progress | Hao | DB-02, AUTH-02 | Verify provider identity/session server-side; bad issuer/audience/expiry/signature và spoofed headers bị chặn. |
 | BE-02 | todo | — | BE-01, DB-04 | Idempotent user provisioning theo stable provider subject; không merge email tùy tiện. |
 | BE-03 | todo | — | BE-02 | Personal workspace provisioning atomic; concurrent requests chỉ tạo một ownership hợp lệ. |
 | BE-04 | todo | — | BE-03 | Current-user/workspace-list endpoints, paginated DTO tối thiểu; chỉ membership hợp lệ. |
