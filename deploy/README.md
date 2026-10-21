@@ -29,6 +29,20 @@ The shared env directory's flock serializes the entire deployment and Alembic mi
 
 Postgres bootstrap runs only on an **empty** project volume. It installs pgvector using the administrator because the existing first migration requests an untrusted extension. Non-superuser `eduvia_migrator` owns the `edu` schema and migration-created tables and can create the current public Alembic version table. `eduvia_runtime` has only CONNECT/schema USAGE and default DML/sequence privileges on migrator-created edu objects, not ownership/schema CREATE/BYPASSRLS. Future migrations adding extensions or schema objects outside edu require explicit review. Runtime grants are not tenant isolation: **RLS is not implemented by these files**. Changing dotenv passwords does not rotate an initialized database's roles; perform a planned SQL role-password rotation and application restart. Do not delete a volume to repair credentials. Existing volumes without these bootstrap roles require a reviewed manual upgrade, not automatic adoption.
 
+## Disk retention
+
+Source releases are tiny (about 2 MB each). The real growth is Docker: every deploy tags two images (`backend` ~400 MB, `frontend` ~320 MB, sharing most layers across releases) and adds build cache. Nothing is pruned automatically, so an unreviewed pile of releases accumulates.
+
+`deploy/prune.sh` keeps the newest releases and deletes older release directories, their uploaded archives and their image tags. It is dry-run by default, always protects the release in `shared/current-release`, and skips any image still used by a running container:
+
+```sh
+bash deploy/prune.sh          # show what would go, keep newest 3
+bash deploy/prune.sh 2        # show plan for keeping newest 2
+bash deploy/prune.sh 2 --apply
+```
+
+Build cache is host-wide and shared with other stacks on this machine, so it is **not** pruned by that script. Reclaim it deliberately with `docker builder prune --filter until=168h` after checking `docker system df`. Deleting an old release also gives up the ability to redeploy it without a rebuild.
+
 ## Validation
 
 Offline checks: `python3 deploy/test-staging.py` (PyYAML), `bash -n deploy/deploy.sh deploy/postgres/10-bootstrap.sh`. Deployment itself validates the resolved Compose JSON without printing secrets, including internal network/no-external-network restrictions, role credential shape, exact origin settings, and loopback-only publishing. Local Windows development environment had no Docker CLI, so real Compose rendering/builds, bootstrap SQL, migration permissions, network reachability and container health require a Docker-enabled integration smoke test. Offline checks are not evidence of a successful deployment.
