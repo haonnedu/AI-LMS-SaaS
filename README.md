@@ -33,6 +33,8 @@ The foundation does not expose tenant/student data endpoints. The feature catalo
 
 ### Design documents
 
+- [Local MCP source and backlog tools](tools/eduvia-mcp/README.md): read-only stdio server for repository exploration and task lookup, independent of the application infrastructure.
+
 - [Project backlog](tasks/BACKLOG.md): shared two-person task tracker with core, school, student, OMR/billing work packages, dependencies and acceptance criteria. Task status lives in the linked detail trackers.
 
 - [ARCHITECTURE.md](ARCHITECTURE.md): module boundaries, workflows, security, deployment, and delivery gates.

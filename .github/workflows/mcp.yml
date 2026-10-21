@@ -1,0 +1,41 @@
+name: MCP checks
+
+on:
+  push:
+    paths:
+      - 'tools/eduvia-mcp/**'
+      - 'tasks/**'
+      - 'frontend/package.json'
+      - 'backend/pyproject.toml'
+      - '.github/workflows/mcp.yml'
+  pull_request:
+    paths:
+      - 'tools/eduvia-mcp/**'
+      - 'tasks/**'
+      - 'frontend/package.json'
+      - 'backend/pyproject.toml'
+      - '.github/workflows/mcp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  mcp:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: tools/eduvia-mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: '0.13.4'
+          enable-cache: true
+          cache-dependency-glob: tools/eduvia-mcp/uv.lock
+      - run: uv sync --locked --python 3.12
+      - run: uv run --frozen ruff check .
+      - run: uv run --frozen ruff format --check .
+      - run: uv run --frozen pytest -q
