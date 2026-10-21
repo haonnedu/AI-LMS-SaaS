@@ -62,7 +62,7 @@ jobs:
           flock -w 1200 9
           mkdir -p "$root/releases/$sha"
           tar -xzf "$root/incoming/$sha.tar.gz" -C "$root/releases/$sha"
-          bash "$root/releases/$sha/deploy/deploy.sh" "$root/releases/$sha" "$root/shared/staging.env"
+          bash "$root/releases/$sha/deploy/deploy.sh" "$root/releases/$sha" "$root/shared/staging.env" </dev/null
           printf '%s\n' "$sha" > "$root/shared/current-release"
           REMOTE
       - name: Remove runner SSH credentials
