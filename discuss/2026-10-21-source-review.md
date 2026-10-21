@@ -13,7 +13,7 @@ Người ghi: Codex. Snapshot tham chiếu: `c99874481683692c84b58ac7ae99da87a31
 
 | Mục | Task liên quan | Vấn đề / điều kiện xác nhận đã xử lý |
 |---|---|---|
-| D-01 | BASE-02, DB-02 | Tại snapshot có import thừa/sai thứ tự và dòng dài. Đã sửa local, lint/format/tests và migration/readiness thật pass; xem [bàn giao bản sửa](BASE-02-lint-format.md). Chờ commit/push và Foundation CI trên SHA mới; chưa khép finding. |
+| D-01 | BASE-02, DB-02 | Đã sửa và merge qua PR #1; [Foundation CI tại 302762b](https://github.com/haonnedu/AI-LMS-SaaS/actions/runs/39560321514) pass cả backend/frontend/containers. Lỗi lint/format đã được giải quyết; evidence local lịch sử ở [bàn giao](BASE-02-lint-format.md). Không suy ra D-02..D-07 đã đạt. |
 | D-02 | DB-01 | Chưa thấy tạo/tách migrator/runtime roles; Compose dùng cùng DATABASE_URL cho migrate/API/worker. Cần role hạn chế và evidence grants bằng PostgreSQL thật. |
 | D-03 | DB-02, DATA-01 | Schema thiếu issuer trong identity, ràng buộc personal workspace/owner, CHECK cho type/role/status, audit tối thiểu và migration tests. Review thêm unique email và downgrade CASCADE trước mở rộng. |
 | D-04 | DB-03..05 | Chưa có verified transaction-local actor/workspace context, RLS/FORCE RLS hoặc tests tenant A/B, revoke, pool reuse. Chưa mở API tenant cho đến khi các gate đạt. |
@@ -38,3 +38,7 @@ Người nhận chọn task trong tracker, ghi owner/status tại đó, rồi c�
 Codex đã sửa riêng import/format migration 0002, giữ nguyên AST ngoài import và toàn bộ SQL/revision. Backend lint, format-check, 16 unit tests, contract comparison và PostgreSQL/Redis integration đều pass. Evidence integration này áp dụng cho source `c998744` cộng bản sửa migration local, không phải lượt Docker bootstrap cũ.
 
 [Bản ghi bàn giao](BASE-02-lint-format.md) lưu kết quả cần thiết ngay trong repo để co-worker không cần thư mục `tmp/` trên máy tác giả. Các mục D-02 đến D-07 chưa được xử lý bởi bản sửa lint/format. Task tracker không đổi; chưa có review chấp thuận hoặc CI xanh của SHA chứa bản sửa.
+
+## Cập nhật sau merge — đợt tooling/CI
+
+D-01 đã được khôi phục CI xanh trên `main` tại `302762b`; nội dung "chưa commit/push" ở các ghi chú phía trên là lịch sử tại lúc ghi. Đợt tiếp theo sửa setup PowerShell và verifier, bổ sung regression/CI; xem [bàn giao mới](BASE-tooling-ci.md). D-02..D-06 vẫn mở; D-07 mới cập nhật development guide, database design chưa được đồng bộ trong đợt tooling này.

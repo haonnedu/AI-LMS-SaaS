@@ -12,6 +12,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  scripts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.lock
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: python -m pip install -r backend/requirements-dev.lock
+      - run: python -m ruff check --config backend/pyproject.toml scripts
+      - run: python -m ruff format --check --config backend/pyproject.toml scripts
+      - run: python -m pytest -c backend/pyproject.toml scripts/tests -q
+
   backend:
     runs-on: ubuntu-latest
     services:
@@ -85,8 +107,12 @@ jobs:
 
   containers:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - run: docker compose config --quiet
       - name: Validate isolated staging configuration
         run: |
@@ -95,4 +121,14 @@ jobs:
           export RELEASE_SHA="$GITHUB_SHA"
           docker compose --env-file "$RUNNER_TEMP/staging.env" -f compose.staging.yaml config --format json | python3 deploy/validate-config.py
           bash -n deploy/deploy.sh deploy/postgres/10-bootstrap.sh
-      - run: docker compose build
+      - name: Verify production build, migrations and dependency recovery
+        run: python scripts/verify-m0.py
+      - name: Upload sanitized verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m0-verification
+          if-no-files-found: warn
+          path: |
+            tmp/eduvia-m0-*/result.json
+            tmp/eduvia-m0-*/commands.log

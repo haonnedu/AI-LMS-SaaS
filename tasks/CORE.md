@@ -135,3 +135,11 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 | PILOT-06 | todo | — | PILOT-05 | DB + object restore drill, tombstones/revocations reapplied; đo RPO/RTO với targets được duyệt. |
 | PILOT-07 | todo | — | PILOT-01, PILOT-02, PILOT-03, PILOT-04, PILOT-06 | Staging→production deployment/rollback checklist; không rollback schema phá accepted submissions, secrets/env isolation kiểm chứng. |
 | PILOT-08 | todo | — | PILOT-07 | Pilot onboarding/support/feedback và go-no-go signoff; không còn lỗi chặn isolation, mất bài hoặc sai điểm. |
+
+### BASE-01 — execution record: acceptance clarification / tooling
+
+- Owner theo tracker: Hao; reviewer cho đợt tooling chưa có người xác nhận.
+- Người dùng đã miễn yêu cầu evidence môi trường/chạy lại trên máy thứ hai trong phiên 2026-10-21. Không coi ngoại lệ này là bằng chứng đã chạy trên hai máy.
+- Branch triển khai tooling: `fix/tooling-ci`; Codex thực hiện theo yêu cầu người dùng, không tự thay owner task.
+- Scope bổ sung: sửa setup PowerShell 5.1/7, cập nhật verifier cho migration head hiện tại, thêm regression checks và CI. Evidence/giới hạn: [bàn giao tooling](../discuss/BASE-tooling-ci.md).
+- Trạng thái các hàng task giữ nguyên; đợt tooling mới chưa được reviewer con người nghiệm thu. Pilot/ngân sách/region vẫn chưa chốt; DB roles/RLS ngoài phạm vi đợt này.

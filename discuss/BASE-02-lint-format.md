@@ -1,5 +1,7 @@
 # BASE-02 / DB-02 — bàn giao sửa lint/format migration 0002
 
+> Cập nhật sau merge: bản sửa đã vào main qua PR #1; [Foundation CI tại 302762b](https://github.com/haonnedu/AI-LMS-SaaS/actions/runs/39560321514) pass. Các câu "chưa commit/push" bên dưới là lịch sử tại thời điểm bàn giao. Commit 302762b còn bỏ SQL comments nên blob hiện tại khác blob local cũ. Đợt tooling tiếp theo xem [bàn giao mới](BASE-tooling-ci.md).
+
 Người ghi: Codex, 2026-10-21 13:57 +07:00. Task chính thức: [Core tracker](../tasks/CORE.md). Finding liên quan: [D-01](2026-10-21-source-review.md). Đây là evidence kỹ thuật chuẩn bị commit/review, chưa phải nghiệm thu task.
 
 ## Revision và thay đổi
