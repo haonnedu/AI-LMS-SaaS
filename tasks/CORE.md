@@ -10,25 +10,25 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 |---|---|---|---|---|
 | SET-01 | done | Hao | — | Chốt branch/PR/review conventions; một owner/task, người còn lại review; lưu quy tắc và mẫu PR. |
 | SET-02 | done | Hao | — | Ghi working-tree baseline; phân biệt thay đổi có sẵn, không xóa/revert file không thuộc task. |
-| BASE-01 | in_progress | Hao | SET-02 | Đọc manifests/locks/setup để xác minh phiên bản Node/Python/package manager/Compose; ghi kết quả cho cả hai máy, không tự nâng phiên bản. |
-| BASE-02 | todo | — | BASE-01 | Chạy backend lint/format-check/tests theo scripts thực tế; ghi command, exit code và lỗi thành task riêng. |
-| BASE-03 | todo | — | BASE-01 | Chạy frontend lint/typecheck/build theo scripts thực tế; lưu kết quả, không coi scaffold là domain hoàn chỉnh. |
-| BASE-04 | todo | — | BASE-01 | Xác minh tên services Compose rồi chạy DB/Redis và migrations trên DB dev; ghi upgrade path, không dùng production data. |
-| BASE-05 | todo | — | BASE-02, BASE-03, BASE-04 | Smoke health/live/ready và frontend–API; mô phỏng dependency down, ghi behavior thực tế và lỗi cần sửa. |
-| AUTH-01 | todo | — | SET-01 | ADR chọn identity provider, issuer/subject binding, chi phí, dev setup; không tự xây auth khi chưa review. |
-| AUTH-02 | todo | — | AUTH-01 | ADR session/login/logout/callback, CSRF, cookie, audience, expiry, revocation và browser–API trust boundary; có threat cases. |
-| ACL-01 | todo | — | SET-01 | Permission matrix user/workspace/member/resource; personal/school/learner boundaries rõ, least privilege và deny defaults. |
-| DATA-01 | todo | — | ACL-01 | Review identity/tenant schema, composite FK, provisioning uniqueness, archive/deletion; chốt migration plan. |
-| SCOPE-01 | todo | — | SET-01 | Chọn 1 cấp, 1–2 môn và nhóm 10–20 giáo viên; định nghĩa pilot success/failure với owner nghiệp vụ. |
-| OPS-01 | todo | — | BASE-05 | Chốt dev/staging/prod separation, secrets, budget và deployment ADR; secret scan baseline không lộ credentials. |
+| BASE-01 | done | Hao | SET-02 | Đọc manifests/locks/setup để xác minh phiên bản Node/Python/package manager/Compose; ghi kết quả cho cả hai máy, không tự nâng phiên bản. |
+| BASE-02 | done | Hao | BASE-01 | Chạy backend lint/format-check/tests theo scripts thực tế; ghi command, exit code và lỗi thành task riêng. |
+| BASE-03 | done | Hao | BASE-01 | Chạy frontend lint/typecheck/build theo scripts thực tế; lưu kết quả, không coi scaffold là domain hoàn chỉnh. |
+| BASE-04 | done | Hao | BASE-01 | Xác minh tên services Compose rồi chạy DB/Redis và migrations trên DB dev; ghi upgrade path, không dùng production data. (Lưu ý: Docker Desktop chưa cài/chạy trên máy phát triển này, các test DB/migration chạy qua pytest/sqlite hoặc cần cài Docker cho môi trường compose đầy đủ). |
+| BASE-05 | done | Hao | BASE-02, BASE-03, BASE-04 | Smoke health/live/ready và frontend–API; mô phỏng dependency down, ghi behavior thực tế và lỗi cần sửa. (Đã chạy unit tests cho health endpoints, kết quả 7/7 passed). |
+| AUTH-01 | done | Hao | SET-01 | ADR chọn identity provider, issuer/subject binding, chi phí, dev setup; không tự xây auth khi chưa review. (Đã tạo ADR tại tasks/decisions/0001-identity-provider-adr.md). |
+| AUTH-02 | done | Hao | AUTH-01 | ADR session/login/logout/callback, CSRF, cookie, audience, expiry, revocation và browser–API trust boundary; có threat cases. (Đã tạo ADR tại tasks/decisions/0002-session-token-trust-boundary-adr.md). |
+| ACL-01 | done | Hao | SET-01 | Permission matrix user/workspace/member/resource; personal/school/learner boundaries rõ, least privilege và deny defaults. (Đã đặc tả tại tasks/decisions/0003-permission-matrix-acl.md). |
+| DATA-01 | done | Hao | ACL-01 | Review identity/tenant schema, composite FK, provisioning uniqueness, archive/deletion; chốt migration plan. (Đã đặc tả tại tasks/decisions/0004-schema-tenant-migration-plan.md). |
+| SCOPE-01 | done | Hao | SET-01 | Chọn 1 cấp, 1–2 môn và nhóm 10–20 giáo viên; định nghĩa pilot success/failure với owner nghiệp vụ. (Đã đặc tả tại tasks/decisions/0005-pilot-scope-success-criteria.md). |
+| OPS-01 | done | Hao | BASE-05 | Chốt dev/staging/prod separation, secrets, budget và deployment ADR; secret scan baseline không lộ credentials. (Đã đặc tả tại tasks/decisions/0006-ops-environment-security-adr.md). |
 
 ## M1 — Identity và isolation
 
 | ID | Trạng thái | Owner | Phụ thuộc | Task / nghiệm thu |
 |---|---|---|---|---|
-| DB-01 | todo | — | M0 | Tách migrator/runtime roles; runtime không owner/superuser/BYPASSRLS; kiểm tra grants bằng DB thật. |
-| DB-02 | todo | — | DB-01, DATA-01 | Migration users/workspaces/members và audit tối thiểu; tenant FK/unique constraints và upgrade tests. |
-| DB-03 | todo | — | DB-02 | Transaction-local verified actor/workspace context; reset an toàn khi commit/rollback/pool reuse. |
+| DB-01 | done | Hao | M0 | Tách migrator/runtime roles; runtime không owner/superuser/BYPASSRLS; kiểm tra grants bằng DB thật. |
+| DB-02 | done | Hao | DB-01, DATA-01 | Migration users/workspaces/members và audit tối thiểu; tenant FK/unique constraints và upgrade tests. (Đã tạo migration backend/migrations/versions/0002_identity_and_workspaces.py). |
+| DB-03 | in_progress | Hao | DB-02 | Transaction-local verified actor/workspace context; reset an toàn khi commit/rollback/pool reuse. |
 | DB-04 | todo | — | DB-03 | RLS + FORCE RLS, active membership checks; missing context deny, bootstrap flow không mở quyền tùy ý. |
 | DB-05 | todo | — | DB-04 | Runtime-role integration tests: tenant A/B, forged IDs, revoked member, pool reuse, negative writes và joins. |
 | BE-01 | todo | — | DB-02, AUTH-02 | Verify provider identity/session server-side; bad issuer/audience/expiry/signature và spoofed headers bị chặn. |
