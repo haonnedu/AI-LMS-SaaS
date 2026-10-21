@@ -1,0 +1,149 @@
+# Standalone staging stack. Never merge with compose.yaml.
+name: eduvia-staging
+
+x-runtime: &runtime
+  mem_limit: 1g
+  cpus: 1.0
+  pids_limit: 256
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '3'
+
+x-backend: &backend
+  <<: *runtime
+  image: eduvia-staging-backend:${RELEASE_SHA:?Use deploy/deploy.sh with a full commit SHA}
+  build:
+    context: ./backend
+  environment: &backend-environment
+    APP_ENV: production
+    DATABASE_URL: postgresql+psycopg://eduvia_runtime:${DB_RUNTIME_PASSWORD:?Generate staging secrets}@db:5432/eduvia
+    REDIS_URL: redis://:${REDIS_PASSWORD:?Generate staging secrets}@redis:6379/0
+    CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:?Generate staging secrets}@redis:6379/1
+    CORS_ORIGINS: ${CORS_ORIGINS:?Set exact HTTPS staging origin JSON}
+    # No storage service is provisioned. Empty endpoint fails closed if invoked;
+    # do not silently use the development endpoint or cloud metadata credentials.
+    S3_ENDPOINT_URL: ${S3_ENDPOINT_URL-}
+    S3_BUCKET: ${S3_BUCKET-eduvia-staging-unconfigured}
+    S3_REGION: ${S3_REGION-us-east-1}
+    S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID-}
+    S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY-}
+    AWS_EC2_METADATA_DISABLED: 'true'
+  networks: [data, app]
+
+services:
+  db:
+    <<: *runtime
+    image: pgvector/pgvector:0.8.6-pg17-trixie@sha256:724a4041afdb1750446e3f6b5cfa8f3b0ac5a2cf538ddfa6bfee4f94c2fa85c6
+    environment:
+      POSTGRES_DB: eduvia
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Generate staging secrets}
+      DB_MIGRATOR_PASSWORD: ${DB_MIGRATOR_PASSWORD:?Generate staging secrets}
+      DB_RUNTIME_PASSWORD: ${DB_RUNTIME_PASSWORD:?Generate staging secrets}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/postgres/10-bootstrap.sh:/docker-entrypoint-initdb.d/10-bootstrap.sh:ro
+      - ./deploy/postgres/bootstrap.sql:/opt/eduvia/bootstrap.sql:ro
+    networks: [data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d eduvia']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  redis:
+    <<: *runtime
+    image: redis:7.4-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Generate staging secrets}
+    # Write a private config rather than expose the password in the process argv.
+    command: [sh, -ec, 'umask 077; printf "requirepass %s\nappendonly yes\n" "$$REDIS_PASSWORD" > /tmp/redis.conf; exec redis-server /tmp/redis.conf']
+    volumes:
+      - redis-data:/data
+    networks: [data]
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -qx PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  migrate:
+    <<: *backend
+    environment:
+      <<: *backend-environment
+      DATABASE_URL: postgresql+psycopg://eduvia_migrator:${DB_MIGRATOR_PASSWORD:?Generate staging secrets}@db:5432/eduvia
+    networks: [data]
+    profiles: [tools]
+    command: [alembic, upgrade, head]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    <<: *backend
+    command: [uvicorn, 'app.main:app', --host, 0.0.0.0, --port, '8000', --no-access-log]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 12
+    restart: unless-stopped
+
+  worker:
+    <<: *backend
+    command: [celery, -A, 'app.worker:celery_app', worker, '--loglevel=INFO', '--concurrency=2', -Q, 'default,ingestion,generation,export,omr']
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'celery -A app.worker:celery_app inspect ping --destination "celery@$$HOSTNAME" --timeout 5 | grep -q pong']
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 6
+    restart: unless-stopped
+
+  frontend:
+    <<: *runtime
+    image: eduvia-staging-frontend:${RELEASE_SHA:?Use deploy/deploy.sh with a full commit SHA}
+    build:
+      context: ./frontend
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      HOSTNAME: 0.0.0.0
+      PORT: '3000'
+      NEXT_TELEMETRY_DISABLED: '1'
+    ports: ['127.0.0.1:3100:3000']
+    networks: [app]
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 12
+    restart: unless-stopped
+
+networks:
+  data:
+    internal: true
+  app: {}
+
+volumes:
+  postgres-data: {}
+  redis-data: {}
