@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "eduvia-source": {
+      "command": "D:/Data/Git_Space/AI-LMS-SaaS/tools/eduvia-mcp/.venv/Scripts/python.exe",
+      "args": [
+        "-m",
+        "eduvia_mcp.server",
+        "--repo-root",
+        "D:/Data/Git_Space/AI-LMS-SaaS"
+      ]
+    }
+  }
+}
