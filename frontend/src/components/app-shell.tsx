@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useWorkspace } from "@/components/workspace/workspace-provider";
 import authStyles from "@/components/auth/mock-auth.module.css";
 import { usePathname } from "next/navigation";
 import { BookOpen, ChevronDown, ChevronRight, LayoutDashboard, Library, Users, Settings2, Sparkles, ClipboardList, ChartNoAxesCombined, GraduationCap, Building2, ShieldCheck, Menu, X } from "lucide-react";
@@ -21,6 +22,8 @@ const spaces = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { session, signOut } = useAuth();
+  const { workspace } = useWorkspace();
+  const standalone = pathname === "/login" || pathname === "/onboarding";
   const [menu, setMenu] = useState({ pathname, open: false });
   const open = menu.pathname === pathname && menu.open;
   // Reset route-owned menu state before children mount on the new route.
@@ -31,7 +34,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const roleLabel = alternate?.label ?? "Không gian giáo viên";
   const visibleLinks = alternate ? [alternate] : links;
   useEffect(() => {
-    if (!open || pathname === "/login") return;
+    if (!open || standalone) return;
     const previous = document.activeElement as HTMLElement | null;
     const oldOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -46,15 +49,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
     document.addEventListener("keydown", handleKey);
     return () => { document.body.style.overflow = oldOverflow; document.removeEventListener("keydown", handleKey); previous?.focus(); };
-  }, [open, pathname]);
+  }, [open, pathname, standalone]);
   const currentPage = [...links, ...spaces, { href: "/settings", label: "Cài đặt" }].find((link) => link.href === pathname)?.label ?? "Eduvia";
-  if (pathname === "/login") return <main className="auth-root">{children}</main>;
+  if (standalone) return <main className="auth-root">{children}</main>;
   return <div className="app-shell">
     <a className="skip-link" href="#main-content">Đến nội dung chính</a>
     {open && <button className="nav-scrim" aria-label="Đóng menu" onClick={() => setOpen(false)} />}
     <aside ref={sidebar} id="workspace-navigation" className={`sidebar ${open ? "is-open" : ""}`} aria-label="Điều hướng không gian">
       <Link href="/" aria-label="Eduvia · Trang tổng quan" className="brand" onClick={() => setOpen(false)}><span className="brand-mark"><BookOpen size={24} /></span><span>eduvia<span className="brand-dot">.</span></span></Link>
-      <div className="workspace-card"><span className="workspace-avatar">{alternate ? "DEMO" : "GV"}</span><div><strong>{roleLabel}</strong><span>Dữ liệu minh họa</span></div></div>
+      <div className="workspace-card"><span className="workspace-avatar">{alternate ? "DEMO" : "GV"}</span><div><strong>{workspace?.name ?? roleLabel}</strong><span>Dữ liệu minh họa</span></div></div>
       <p className="nav-label">{alternate ? "KHÔNG GIAN HIỆN TẠI" : "GIẢNG DẠY"}</p>
       <nav className="main-nav" aria-label="Điều hướng chính">{visibleLinks.map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} title={label} onClick={() => setOpen(false)} className={`nav-link ${pathname === href ? "active" : ""}`} aria-current={pathname === href ? "page" : undefined}><Icon size={19} /><span>{label}</span>{href === "/lessons" && <span className="ai-mini">AI</span>}</Link>)}</nav>
       <details className="role-picker"><summary>Xem giao diện vai trò khác <ChevronDown size={14} aria-hidden="true" /></summary><p className="nav-label">BẢN MẪU · KHÔNG ĐỔI QUYỀN</p><nav aria-label="Khám phá vai trò mẫu">{[{ href: "/", label: "Không gian giáo viên", icon: BookOpen }, ...spaces].map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} title={label} onClick={() => setOpen(false)} className="nav-link"><Icon size={18} /><span>{label}</span></Link>)}</nav></details>

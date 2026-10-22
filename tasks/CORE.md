@@ -39,6 +39,7 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 | BE-06 | todo | — | BE-05 | Export OpenAPI và generate frontend types theo scripts repo; CI phát hiện contract drift. |
 | FE-01 | in_progress | Duc | BE-01 | Login/logout/callback UI; loading/error/session expiry, không chứa provider secrets. |
 | FE-02 | todo | — | BE-06, FE-01 | Onboarding + dashboard workspace thật; không cần Library/Classes API chưa tồn tại. |
+| FE-02a | in_progress | Duc | — | Chuẩn bị onboarding/workspace mock độc lập; prerequisite phần mock FE-01 đã merge PR #5 (2379a6e), không thay gate FE-02 thật. React-memory theo session; pending/retry/logout/expiry và responsive có evidence. |
 | FE-03 | todo | — | FE-02 | Protected routes và 401/403 states; không rò dữ liệu qua SSR/cache; server authorization độc lập. |
 | FE-04 | todo | — | FE-02 | Workspace selector và tên context hiện hành; switch invalidate tenant caches. |
 | QA-01 | todo | — | FE-03, FE-04 | Automated E2E login → provision → workspace → logout; bổ sung manual smoke cho provider. |
@@ -154,3 +155,18 @@ Ngày cập nhật: 2026-10-22
 Kiểm tra: frontend lint/typecheck pass; production build + standalone pass ngoài sandbox (sandbox EPERM). Browser xác nhận success/loading/logout/error/cancel/expiry/reload; DOM 375px không tràn ngang. Desktop visual pass; mobile visual capture chưa đáng tin cậy, còn chờ signoff. Chi tiết: frontend/FE-01.md.
 
 FE-01 follow-up (2026-10-22): đã bổ sung operation ID để hủy login khi rời route, bỏ kết quả cũ và bảo vệ timer/session mới; menu reset theo pathname. Lint/typecheck và production build+standalone pass. Browser checks đạt cho cancel/retry/expiry/logout/reload/keyboard/production. Evidence và draft PR body: frontend/FE-01.md, frontend/FE-01-PR.md. Capture raster vẫn không khớp DOM ở cả desktop/mobile; visual signoff chưa đạt, chưa ghi mock sẵn sàng review. FE-01 giữ in_progress; chưa push/PR/deploy.
+
+### FE-02a — execution record
+Owner: Duc
+Reviewer: Hao (đề xuất; chưa review)
+Branch: feat/fe-02-workspace-mock
+Prerequisite: FE-01 mock đã merge PR #5 / 2379a6e; không tuyên bố FE-01 thật hoặc BE-06 đã đạt.
+Phạm vi: frontend onboarding + workspace mock; reset theo sessionVersion, bỏ kết quả cũ theo operation/session, không HTTP/provider/migration/API contract.
+Kiểm tra: lint/typecheck pass; 4 Node adapter tests pass; build production + standalone pass. Browser dev/production: success/existing/error-retry/cancel/logout/expiry/reload/keyboard đạt. DOM 375x812 và 1440x900 không tràn ngang; capture vẫn không khớp DOM nên visual signoff chưa đạt.
+Evidence: frontend/FE-02a.md; frontend/evidence/fe-02a/geometry.json. PR body local: frontend/FE-02a-PR.md.
+Trạng thái: in_progress; FE-02 giữ todo, FE-01 giữ in_progress. Chưa commit/push/PR/deploy.
+Ngày cập nhật: 2026-10-22
+
+FE-02a review trước commit (2026-10-22): đã rà diff + toàn bộ file mới, chưa xác nhận lỗi chức năng mới trong phạm vi mock; lượt review chỉ cập nhật docs, không sửa source/test. Baseline lint/typecheck/build + 4 adapter tests + 14 backlog tests được giữ nguyên, không tuyên bố là lượt chạy mới. Findings còn mở: visual acceptance (P2), CI frontend chưa gọi test:workspace (P2, phối hợp Hào; không sửa workflow), provider/race E2E coverage chỉ manual. FE-02a.md có checklist visual, file manifest và review boundaries; FE-02a-PR.md theo PR template. FE-02a/FE-01 vẫn in_progress, FE-02 todo; chưa có reviewer approval/commit/push/PR/deploy.
+
+Bàn giao discuss (2026-10-22 22:12 +07:00): đã thêm ghi chú phía Duc tại [discuss/DUC.md](../discuss/DUC.md) và yêu cầu review đề xuất tại [discuss/REVIEW.md](../discuss/REVIEW.md); chưa có phản hồi/chấp thuận của Hao. Discuss chỉ dẫn evidence và hành động phối hợp, không thay authority owner/status tại tracker.
