@@ -37,7 +37,7 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 | BE-04 | todo | — | BE-03 | Current-user/workspace-list endpoints, paginated DTO tối thiểu; chỉ membership hợp lệ. |
 | BE-05 | todo | — | BE-04, DB-05 | Workspace auth dependency; client-selected context luôn được verify; revoke có hiệu lực không dựa UI. |
 | BE-06 | todo | — | BE-05 | Export OpenAPI và generate frontend types theo scripts repo; CI phát hiện contract drift. |
-| FE-01 | todo | — | BE-01 | Login/logout/callback UI; loading/error/session expiry, không chứa provider secrets. |
+| FE-01 | in_progress | Duc | BE-01 | Login/logout/callback UI; loading/error/session expiry, không chứa provider secrets. |
 | FE-02 | todo | — | BE-06, FE-01 | Onboarding + dashboard workspace thật; không cần Library/Classes API chưa tồn tại. |
 | FE-03 | todo | — | FE-02 | Protected routes và 401/403 states; không rò dữ liệu qua SSR/cache; server authorization độc lập. |
 | FE-04 | todo | — | FE-02 | Workspace selector và tên context hiện hành; switch invalidate tenant caches. |
@@ -143,3 +143,12 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 - Branch triển khai tooling: `fix/tooling-ci`; Codex thực hiện theo yêu cầu người dùng, không tự thay owner task.
 - Scope bổ sung: sửa setup PowerShell 5.1/7, cập nhật verifier cho migration head hiện tại, thêm regression checks và CI. Evidence/giới hạn: [bàn giao tooling](../discuss/BASE-tooling-ci.md).
 - Trạng thái các hàng task giữ nguyên; đợt tooling mới chưa được reviewer con người nghiệm thu. Pilot/ngân sách/region vẫn chưa chốt; DB roles/RLS ngoài phạm vi đợt này.
+
+### FE-01 — execution record
+Owner: Duc
+Reviewer: Hao (đề xuất; chưa review)
+Branch: fe-01-auth-mock
+Phạm vi: frontend mock auth; session trong React memory, không provider/token/backend/authorization. BE-01 vẫn là dependency cho tích hợp thật; chưa nghiệm thu toàn bộ FE-01.
+Scenario dev: thành công, lỗi, callback bị hủy, hết hạn sau 5 giây. Production chỉ có đăng nhập thử thành công.
+Ngày cập nhật: 2026-10-22
+Kiểm tra: frontend lint/typecheck pass; production build + standalone pass ngoài sandbox (sandbox EPERM). Browser xác nhận success/loading/logout/error/cancel/expiry/reload; DOM 375px không tràn ngang. Desktop visual pass; mobile visual capture chưa đáng tin cậy, còn chờ signoff. Chi tiết: frontend/FE-01.md.
