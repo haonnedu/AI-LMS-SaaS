@@ -1,4 +1,4 @@
-"""Parse the four authoritative trackers, without inferring delivery readiness."""
+"""Parse the five authoritative trackers, without inferring delivery readiness."""
 
 import re
 
@@ -10,10 +10,12 @@ TRACKERS: dict[Track, str] = {
     "school": "tasks/SCHOOL.md",
     "student": "tasks/STUDENT.md",
     "omr_billing": "tasks/OMR_BILLING.md",
+    "ai": "tasks/AI.md",
 }
 STATUSES = {"todo", "ready", "in_progress", "review", "blocked", "done", "cancelled"}
 TASK_ID = re.compile(r"[A-Z][A-Z0-9]*-\d+(?:[a-z])?|M\d+-QA")
-GATE = re.compile(r"[MHL]\d+")
+GATE = re.compile(r"[MHLA]\d+")
+GATE_HEADING = re.compile(r"([MHLA]\d+)\b")
 
 
 def cells(line: str) -> list[str]:
@@ -52,7 +54,7 @@ def load_tasks(repo: Repository) -> list[Task]:
                 continue
             if re.match(r"#{1,6}\s", stripped):
                 heading = stripped.lstrip("#").strip()
-                gate = re.match(r"([MHL]\d+)\b", heading)
+                gate = GATE_HEADING.match(heading)
                 if gate:
                     gates.add(gate[1])
                 active = False
@@ -93,7 +95,7 @@ def load_tasks(repo: Repository) -> list[Task]:
                         else ("task" if TASK_ID.fullmatch(token) else "unknown")
                     )
                     dependencies.append(Dependency(identifier=token, kind=kind, resolved=False))
-            gate = re.match(r"([MHL]\d+)\b", heading)
+            gate = GATE_HEADING.match(heading)
             tasks.append(
                 Task(
                     id=identifier,

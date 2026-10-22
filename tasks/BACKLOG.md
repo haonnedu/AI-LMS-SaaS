@@ -10,6 +10,7 @@
 | Nhà trường | [SCHOOL.md](SCHOOL.md) | H0–H4: teacher lifecycle, scopes, tổ chuyên môn, phân công, duyệt và pilot trường |
 | Học sinh | [STUDENT.md](STUDENT.md) | L0–L4: skills, independent learning, standalone assessment, planner, mock exams, adaptive gates |
 | OMR, billing và mở rộng | [OMR_BILLING.md](OMR_BILLING.md) | Các nhánh tùy chọn sau core gates; discovery cho phạm vi tương lai |
+| AI tác vụ và MCP | [AI.md](AI.md) | A0–A1: MCP dev-only, tool registry in-process và trợ lý soạn bài sau M4; A2–A4 chỉ có phạm vi trong plan |
 
 Thiết kế nguồn: [delivery plan](../IMPLEMENTATION_PLAN.md), [architecture](../ARCHITECTURE.md), [database](../DATABASE.md), [development](../DEVELOPMENT.md), [blueprints](../EXAM_BLUEPRINTS.md), [school](../SCHOOL_MANAGEMENT.md), [student](../STUDENT_LEARNING.md).
 
@@ -82,10 +83,11 @@ Cột Phụ thuộc sử dụng task ID hoặc gate trong bảng dưới. Dấu 
 | M7 | Nhóm M7 đạt: security/load/privacy/restore/deployment/pilot signoff |
 | H0–H4 | Mỗi gate Hn đạt khi tất cả task trong mục Hn của SCHOOL và dependencies đạt |
 | L0–L4 | Mỗi gate Ln đạt khi tất cả task trong mục Ln của STUDENT và dependencies đạt; optional extraction/adaptive quyết định explicit theo gate, không mặc nhiên bắt buộc |
+| A0–A4 | Mỗi gate An đạt khi tất cả task trong mục An của AI và dependencies đạt; A1 bắt đầu sau M4, A không phải điều kiện của M7, A2–A4 chưa có task |
 
 Luồng core chính M0→M1→M2→M3→M4→M5→M6→M7. CLASS-01..04 có thể bắt đầu sau M1 song song jobs/RAG, nhưng assignment publication phải đợi M4. Bảng task là authority cho phụ thuộc cụ thể.
 
-**H, L, OMR, billing là các nhánh ưu tiên riêng**, không phải Phase 6→7 bắt buộc và không tự nằm trong estimate M0–M7. H0 có thể thiết kế sau nền core cần thiết; trường pilot cần full H4 gates. L không cần fake teacher class và không bắt buộc deploy microservice ngày đầu. Không chạy toàn bộ nhánh cùng lúc với team 2 người.
+**H, L, A, OMR, billing là các nhánh ưu tiên riêng**, không phải Phase 6→7 bắt buộc và không tự nằm trong estimate M0–M7. H0 có thể thiết kế sau nền core cần thiết; trường pilot cần full H4 gates. L không cần fake teacher class và không bắt buộc deploy microservice ngày đầu. Không chạy toàn bộ nhánh cùng lúc với team 2 người.
 
 ## 5. Bắt đầu thế nào / chia việc song song
 
