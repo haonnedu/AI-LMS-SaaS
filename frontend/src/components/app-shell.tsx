@@ -21,7 +21,11 @@ const spaces = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { session, signOut } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [menu, setMenu] = useState({ pathname, open: false });
+  const open = menu.pathname === pathname && menu.open;
+  // Reset route-owned menu state before children mount on the new route.
+  if (menu.pathname !== pathname) setMenu({ pathname, open: false });
+  const setOpen = (value: boolean) => setMenu({ pathname, open: value });
   const sidebar = useRef<HTMLElement>(null);
   const alternate = spaces.find(space => space.href === pathname);
   const roleLabel = alternate?.label ?? "Không gian giáo viên";
@@ -33,7 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     document.body.style.overflow = "hidden";
     sidebar.current?.querySelector<HTMLElement>("a")?.focus();
     function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") setMenu({ pathname, open: false });
       if (event.key !== "Tab") return;
       const controls = Array.from(sidebar.current?.querySelectorAll<HTMLElement>("a, button, summary") ?? []).filter(el => el.getClientRects().length);
       const first = controls[0]; const last = controls[controls.length - 1];

@@ -152,3 +152,5 @@ Phạm vi: frontend mock auth; session trong React memory, không provider/token
 Scenario dev: thành công, lỗi, callback bị hủy, hết hạn sau 5 giây. Production chỉ có đăng nhập thử thành công.
 Ngày cập nhật: 2026-10-22
 Kiểm tra: frontend lint/typecheck pass; production build + standalone pass ngoài sandbox (sandbox EPERM). Browser xác nhận success/loading/logout/error/cancel/expiry/reload; DOM 375px không tràn ngang. Desktop visual pass; mobile visual capture chưa đáng tin cậy, còn chờ signoff. Chi tiết: frontend/FE-01.md.
+
+FE-01 follow-up (2026-10-22): đã bổ sung operation ID để hủy login khi rời route, bỏ kết quả cũ và bảo vệ timer/session mới; menu reset theo pathname. Lint/typecheck và production build+standalone pass. Browser checks đạt cho cancel/retry/expiry/logout/reload/keyboard/production. Evidence và draft PR body: frontend/FE-01.md, frontend/FE-01-PR.md. Capture raster vẫn không khớp DOM ở cả desktop/mobile; visual signoff chưa đạt, chưa ghi mock sẵn sàng review. FE-01 giữ in_progress; chưa push/PR/deploy.

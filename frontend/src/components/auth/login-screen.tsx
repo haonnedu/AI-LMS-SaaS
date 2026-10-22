@@ -17,9 +17,12 @@ const messages = {
 };
 
 export function LoginScreen() {
-  const { state, scenario, setScenario, signIn, signOut, session } = useAuth();
+  const { state, scenario, setScenario, signIn, signOut, cancelSignIn, session } = useAuth();
   const title = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { title.current?.focus(); }, []);
+  useEffect(() => {
+    title.current?.focus();
+    return cancelSignIn;
+  }, [cancelSignIn]);
   const loading = state === "loading";
   return <div className={styles.layout}>
     <section className={styles.story} aria-label="Giới thiệu Eduvia">
@@ -48,7 +51,7 @@ export function LoginScreen() {
             <option value="success">Thành công</option><option value="error">Lỗi đăng nhập</option><option value="cancelled">Callback bị hủy</option><option value="expired">Hết hạn sau 5 giây</option>
           </select>
         </fieldset>}
-        <Link href="/" className={styles.back}>Tiếp tục xem bản mẫu <ArrowRight size={16} aria-hidden="true" /></Link>
+        <Link href="/" onNavigate={cancelSignIn} className={styles.back}>Tiếp tục xem bản mẫu <ArrowRight size={16} aria-hidden="true" /></Link>
       </div>
     </section>
   </div>;
