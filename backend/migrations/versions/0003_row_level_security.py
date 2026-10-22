@@ -41,7 +41,17 @@ def upgrade() -> None:
         """
     )
     op.execute("REVOKE ALL ON FUNCTION edu.is_active_member() FROM PUBLIC")
-    op.execute("GRANT EXECUTE ON FUNCTION edu.is_active_member() TO eduvia_runtime")
+    # Only grant EXECUTE if the role exists (in local dev/tests without bootstrap role, skip)
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'eduvia_runtime') THEN
+                GRANT EXECUTE ON FUNCTION edu.is_active_member() TO eduvia_runtime;
+            END IF;
+        END $$;
+        """
+    )
 
     # 2. Workspaces: FORCEd, so even the owning role is filtered. A caller sees only the
     # workspace named by the verified transaction-local context, and only while its own
