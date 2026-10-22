@@ -1,0 +1,211 @@
+{
+  "date": "2026-10-22",
+  "browser": "Codex in-app browser",
+  "mobile": {
+    "contentHeight": 916,
+    "contentWidth": 360,
+    "sections": [
+      {
+        "rect": {
+          "bottom": 811.921875,
+          "height": 915.921875,
+          "left": 0,
+          "right": 360,
+          "top": -104,
+          "width": 360,
+          "x": 0,
+          "y": -104
+        },
+        "tag": "MAIN"
+      },
+      {
+        "rect": {
+          "bottom": 811.921875,
+          "height": 915.921875,
+          "left": 0,
+          "right": 360,
+          "top": -104,
+          "width": 360,
+          "x": 0,
+          "y": -104
+        },
+        "tag": "DIV"
+      },
+      {
+        "rect": {
+          "bottom": 193.359375,
+          "height": 297.359375,
+          "left": 0,
+          "right": 360,
+          "top": -104,
+          "width": 360,
+          "x": 0,
+          "y": -104
+        },
+        "tag": "SECTION"
+      },
+      {
+        "rect": {
+          "bottom": 811.921875,
+          "height": 618.5625,
+          "left": 0,
+          "right": 360,
+          "top": 193.359375,
+          "width": 360,
+          "x": 0,
+          "y": 193.359375
+        },
+        "tag": "SECTION"
+      },
+      {
+        "rect": {
+          "bottom": 318.140625,
+          "height": 33.59375,
+          "left": 24,
+          "right": 336,
+          "top": 284.546875,
+          "width": 312,
+          "x": 24,
+          "y": 284.546875
+        },
+        "tag": "H1"
+      },
+      {
+        "rect": {
+          "bottom": 494.140625,
+          "height": 48,
+          "left": 24,
+          "right": 336,
+          "top": 446.140625,
+          "width": 312,
+          "x": 24,
+          "y": 446.140625
+        },
+        "tag": "BUTTON"
+      }
+    ],
+    "viewport": {
+      "height": 812,
+      "width": 375
+    }
+  },
+  "desktop": {
+    "contentHeight": 900,
+    "contentWidth": 1440,
+    "sections": [
+      {
+        "rect": {
+          "bottom": 900,
+          "height": 900,
+          "left": 0,
+          "right": 1440,
+          "top": 0,
+          "width": 1440,
+          "x": 0,
+          "y": 0
+        },
+        "tag": "MAIN"
+      },
+      {
+        "rect": {
+          "bottom": 900,
+          "height": 900,
+          "left": 0,
+          "right": 1440,
+          "top": 0,
+          "width": 1440,
+          "x": 0,
+          "y": 0
+        },
+        "tag": "DIV"
+      },
+      {
+        "rect": {
+          "bottom": 900,
+          "height": 900,
+          "left": 0,
+          "right": 720,
+          "top": 0,
+          "width": 720,
+          "x": 0,
+          "y": 0
+        },
+        "tag": "SECTION"
+      },
+      {
+        "rect": {
+          "bottom": 900,
+          "height": 900,
+          "left": 720,
+          "right": 1440,
+          "top": 0,
+          "width": 720,
+          "x": 720,
+          "y": 0
+        },
+        "tag": "SECTION"
+      },
+      {
+        "rect": {
+          "bottom": 358.78125,
+          "height": 43.1875,
+          "left": 870,
+          "right": 1290,
+          "top": 315.59375,
+          "width": 420,
+          "x": 870,
+          "y": 315.59375
+        },
+        "tag": "H1"
+      },
+      {
+        "rect": {
+          "bottom": 534.78125,
+          "height": 48,
+          "left": 870,
+          "right": 1290,
+          "top": 486.78125,
+          "width": 420,
+          "x": 870,
+          "y": 486.78125
+        },
+        "tag": "BUTTON"
+      }
+    ],
+    "viewport": {
+      "height": 900,
+      "width": 1440
+    }
+  },
+  "captures": [
+    {
+      "file": "login-desktop.jpg",
+      "width": 1440,
+      "height": 900,
+      "visualAcceptance": false,
+      "format": "JPEG"
+    },
+    {
+      "file": "login-mobile-capture.jpg",
+      "width": 360,
+      "height": 916,
+      "visualAcceptance": false,
+      "format": "JPEG"
+    },
+    {
+      "file": "menu-mobile-capture.jpg",
+      "width": 375,
+      "height": 812,
+      "visualAcceptance": false,
+      "format": "JPEG"
+    },
+    {
+      "file": "login-desktop-production-capture.jpg",
+      "width": 1440,
+      "height": 900,
+      "visualAcceptance": false,
+      "format": "JPEG"
+    }
+  ],
+  "blocker": "Captured raster shows a narrow column inconsistent with DOM bounding rectangles; visual signoff remains pending."
+}

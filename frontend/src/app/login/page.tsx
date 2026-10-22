@@ -1,2 +1,2 @@
-import { WorkspacePreview } from "@/components/workspace-preview";
-export default function Page() { return <WorkspacePreview view="login" />; }
+import { LoginScreen } from "@/components/auth/login-screen";
+export default function Page() { return <LoginScreen />; }
