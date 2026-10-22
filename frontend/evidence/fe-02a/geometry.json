@@ -1,0 +1,101 @@
+{
+  "desktop": {
+    "card": {
+      "bottom": 939.328125,
+      "height": 827.734375,
+      "left": 412.5,
+      "right": 1012.5,
+      "top": 111.59375,
+      "width": 600,
+      "x": 412.5,
+      "y": 111.59375
+    },
+    "contentHeight": 987,
+    "contentWidth": 1425,
+    "focus": "onboarding-title",
+    "heading": {
+      "bottom": 290.15625,
+      "height": 86.375,
+      "left": 453.5,
+      "right": 971.5,
+      "top": 203.78125,
+      "width": 518,
+      "x": 453.5,
+      "y": 203.78125
+    },
+    "sidebar": false,
+    "viewport": {
+      "height": 900,
+      "width": 1440
+    }
+  },
+  "mobile": {
+    "action": {
+      "bottom": 574.96875,
+      "height": 48,
+      "left": 41,
+      "right": 319,
+      "top": 526.96875,
+      "width": 278,
+      "x": 41,
+      "y": 526.96875
+    },
+    "card": {
+      "bottom": 916.140625,
+      "height": 824.546875,
+      "left": 16,
+      "right": 344,
+      "top": 91.59375,
+      "width": 328,
+      "x": 16,
+      "y": 91.59375
+    },
+    "contentHeight": 948,
+    "contentWidth": 360,
+    "heading": {
+      "bottom": 234.96875,
+      "height": 67.1875,
+      "left": 41,
+      "right": 319,
+      "top": 167.78125,
+      "width": 278,
+      "x": 41,
+      "y": 167.78125
+    },
+    "live": [
+      {
+        "live": "polite",
+        "role": "status"
+      }
+    ],
+    "viewport": {
+      "height": 812,
+      "width": 375
+    }
+  },
+  "visualAcceptance": false,
+  "blocker": "Captured raster is inconsistent with DOM bounding rectangles; retain images as diagnostic evidence only.",
+  "captures": [
+    {
+      "file": "dashboard-workspace.jpg",
+      "format": "JPEG",
+      "width": 1425,
+      "height": 891,
+      "visualAcceptance": false
+    },
+    {
+      "file": "onboarding-desktop.jpg",
+      "format": "JPEG",
+      "width": 1425,
+      "height": 987,
+      "visualAcceptance": false
+    },
+    {
+      "file": "onboarding-mobile.jpg",
+      "format": "JPEG",
+      "width": 360,
+      "height": 948,
+      "visualAcceptance": false
+    }
+  ]
+}

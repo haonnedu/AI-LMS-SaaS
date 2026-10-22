@@ -8,6 +8,8 @@ import type { AuthAdapter, AuthSession, MockScenario } from "@/lib/auth/types";
 type AuthState = "idle" | "loading" | "success" | "error" | "cancelled" | "expired";
 type AuthContextValue = {
   session: AuthSession | null;
+  sessionVersion: number;
+  isCurrentSession: (version: number) => boolean;
   state: AuthState;
   scenario: MockScenario;
   setScenario: (scenario: MockScenario) => void;
@@ -20,6 +22,8 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [session, setSession] = useState<AuthSession | null>(null);
+  const [sessionVersion, setSessionVersion] = useState(0);
+  const sessionEpoch = useRef(0);
   const [state, setState] = useState<AuthState>("idle");
   const [scenario, setScenario] = useState<MockScenario>("success");
   const adapter = useRef<AuthAdapter | null>(null);
@@ -32,12 +36,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      sessionEpoch.current += 1;
       operation.current += 1;
       pendingSignIn.current = null;
       busy.current = false;
       if (expiry.current) clearTimeout(expiry.current);
     };
   }, []);
+
+  const isCurrentSession = useCallback((version: number) =>
+    mounted.current && sessionEpoch.current === version, []);
+
+  function advanceSession() {
+    sessionEpoch.current += 1;
+    setSessionVersion(sessionEpoch.current);
+  }
 
   const cancelSignIn = useCallback(() => {
     if (pendingSignIn.current === null) return;
@@ -62,11 +75,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const nextSession = await current.getSession();
       if (!mounted.current || operation.current !== id) return;
       adapter.current = current;
+      advanceSession();
       setSession(nextSession);
       setState("success");
       // Login unmounts after navigation. Its cleanup must not cancel this session.
       pendingSignIn.current = null;
-      router.push("/");
+      router.push("/onboarding");
       if (expiry.current) clearTimeout(expiry.current);
       if (selected === "expired") {
         expiry.current = setTimeout(() => {
@@ -75,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           expiry.current = null;
           adapter.current = null;
           void current.signOut();
+          advanceSession();
           setSession(null);
           setState("expired");
           router.replace("/login");
@@ -101,13 +116,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await adapter.current?.signOut();
       if (!mounted.current || operation.current !== id) return;
       adapter.current = null;
+      advanceSession();
       setSession(null);
       setState("idle");
       router.push("/login");
     } finally { if (operation.current === id) busy.current = false; }
   }
 
-  return <AuthContext.Provider value={{ session, state, scenario, setScenario, signIn, signOut, cancelSignIn }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ session, sessionVersion, isCurrentSession, state, scenario, setScenario, signIn, signOut, cancelSignIn }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
