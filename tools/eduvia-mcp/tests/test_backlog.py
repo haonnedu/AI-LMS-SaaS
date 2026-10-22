@@ -89,6 +89,20 @@ def test_invalid_rows_fail_closed(checkout, tools, row):
     assert row not in result.error.message
 
 
+def test_ai_track_and_gate(checkout, tools):
+    append(checkout, "| MCP-01 | todo | — | A0, A9, M0 | Nền MCP |", "AI")
+    detail = tools.get_task("MCP-01").data
+    assert detail.task.track == "ai"
+    assert detail.task.milestone == "A0"
+    assert [(dep.kind, dep.resolved) for dep in detail.task.dependencies] == [
+        ("gate", True),
+        ("gate", False),
+        ("gate", True),
+    ]
+    assert tools.list_tasks("ai", None, None, "A0", None, 0, 50).data.total == 1
+    assert tools.summary().data.by_track == {"ai": 1}
+
+
 def test_duplicate_across_trackers(checkout, repo):
     row = "| BASE-01 | todo | — | — | Trùng |"
     append(checkout, row)

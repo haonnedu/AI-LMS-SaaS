@@ -33,6 +33,7 @@ def checkout(tmp_path):
         ("SCHOOL", "H0"),
         ("STUDENT", "L0"),
         ("OMR_BILLING", "A. OMR"),
+        ("AI", "A0"),
     ):
         (tmp_path / f"tasks/{name}.md").write_text(
             f"## {milestone} — Kế hoạch\n\n" + HEADER,
