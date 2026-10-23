@@ -18,6 +18,7 @@ from uuid import UUID, uuid4
 
 import jwt
 import pytest
+from agreements_helper import accept_agreements, mount_agreements
 from alembic import command
 from alembic.config import Config
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -126,8 +127,11 @@ async def api(database, monkeypatch):
         auth_jwks_url="https://identity.example/jwks",
         db_pool_size=3,
         db_max_overflow=3,
+        # These tests exercise the optional guardian flow (decision 0009: default is signup).
+        privacy_consent_mode="guardian",
     )
     app = create_app(settings)
+    mount_agreements(app)
     paths = {getattr(route, "path", "") for route in app.routes}
     for router in (
         classes_api.router,
@@ -168,6 +172,7 @@ async def api(database, monkeypatch):
 
 async def person(client, headers, prefix, name="Người dùng"):
     subject = prefix + "-" + str(uuid4())
+    await accept_agreements(client, headers(subject, name))
     response = await client.post("/v1/auth/bootstrap", headers=headers(subject, name))
     assert response.status_code == 200, response.text
     body = response.json()
@@ -293,6 +298,41 @@ def run_job(worker_sessions, store, job_id):
 def admin_scalar(database, sql, **params):
     with database.connect() as db:
         return db.execute(text(sql), params).scalar()
+
+
+async def test_signup_mode_never_blocks_and_guardian_mode_can_be_reenabled(api, database):
+    client, headers, app = api
+    s = await setup(client, headers, database)
+    start_url = f"/v1/student/assignments/{s.assignment}/attempts"
+    guardian = app.state.settings
+    app.state.settings = guardian.model_copy(update={"privacy_consent_mode": "signup"})
+    try:
+        status = await client.get("/v1/student/me/consent-status", headers=s.minor.h)
+        assert status.status_code == 200, status.text
+        assert status.json()["mode"] == "signup"
+        item = status.json()["items"][0]
+        assert item["consentStatus"] == "not_required" and item["consentRequired"] is False
+        roster = await client.get(f"{s.base}/classes/{s.class_id}/consents", headers=s.teacher.h)
+        assert roster.json()["mode"] == "signup"
+        assert all(not row["consentRequired"] for row in roster.json()["items"])
+        # Unknown age, no consent: still allowed in signup mode.
+        started = await client.post(start_url, headers=s.minor.h | {"Idempotency-Key": "s1"})
+        assert started.status_code == 201, started.text
+        # A birth year declared in signup mode keeps the stored status untouched.
+        declared = await client.put(
+            "/v1/student/me/birth-year", json={"birthYear": UNDER_AGE_YEAR}, headers=s.adult.h
+        )
+        assert declared.status_code == 200, declared.text
+        assert declared.json()["items"][0]["consentStatus"] == "not_required"
+        stored = admin_scalar(
+            database, "SELECT consent_status FROM edu.students WHERE id = :id", id=s.adult_student
+        )
+        assert stored == "unknown"
+    finally:
+        app.state.settings = guardian
+    # Guardian mode re-enabled without a migration: the under-age account is gated again.
+    blocked = await client.post(start_url, headers=s.adult.h | {"Idempotency-Key": "g1"})
+    assert blocked.status_code == 403 and blocked.json()["error"]["code"] == "consent_required"
 
 
 async def test_under_age_student_is_blocked_until_a_guardian_consents(api, database):

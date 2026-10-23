@@ -67,6 +67,17 @@ def test_status_after_birth_year(current, year, expected):
     assert privacy.status_after_birth_year(current, year, 16, TODAY) == expected
 
 
+def test_signup_mode_sends_the_sentinel_age_and_never_requires_consent():
+    assert privacy.gate_age("signup", 16) == privacy.SIGNUP_GATE_AGE == 0
+    assert privacy.gate_age("guardian", 15) == 15
+    for status in privacy.CONSENT_STATUSES:
+        for year in (None, 2015, 2000):
+            assert privacy.consent_required(status, year, 0, TODAY) is False
+            assert privacy.consent_required(status, year, -1, TODAY) is False
+    for current in privacy.CONSENT_STATUSES:
+        assert privacy.status_after_birth_year(current, 2015, 0, TODAY) == "not_required"
+
+
 def test_birth_year_validation():
     assert privacy.validate_birth_year(2012, TODAY) == 2012
     for year in (1899, 2027):
@@ -84,6 +95,15 @@ def test_settings_bounds():
     assert settings.privacy_consent_age == 16
     assert settings.privacy_policy_version == "2026-10-draft"
     assert settings.privacy_export_url_seconds == 300
+    assert settings.privacy_consent_mode == "signup"  # decision 0009
+    assert settings.terms_version == "2026-10-draft"
+    assert Settings(_env_file=None, privacy_consent_mode="guardian").privacy_consent_mode == (
+        "guardian"
+    )
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, privacy_consent_mode="parental")
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, terms_version="bad version!")
     for bad in ({"privacy_consent_age": 11}, {"privacy_consent_age": 19}):
         with pytest.raises(ValidationError):
             Settings(_env_file=None, **bad)

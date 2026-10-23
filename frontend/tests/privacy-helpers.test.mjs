@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-  activeConsentId, ageFromBirthYear, birthYearOptions, blockingConsents, consentLabel, consentLinkOutcome, consentLinkUrl, givenName, isConsentToken, isMinor,
+  activeConsentId, ageFromBirthYear, birthYearOptions, blockingConsents, consentLabel, consentLinkOutcome, consentLinkUrl, givenName, guardianFlowEnabled, isConsentToken, isMinor, showsGuardianCard,
   isRequestFailed, isRequestTerminal, isValidBirthYear, latestPolicyVersion, needsBirthYear, requestPollDelay, requestStatusText, safeDownloadUrl, shouldPollRequest,
   REQUEST_POLL_MAX_ATTEMPTS, REQUEST_POLL_MAX_MS,
 } from "../src/lib/client/privacy.ts";
@@ -87,4 +87,11 @@ test("download urls and public link outcomes", () => {
   assert.equal(consentLinkOutcome(410, "link_used"), "used");
   assert.equal(consentLinkOutcome(429), "rate_limited");
   assert.equal(consentLinkOutcome(503), "error");
+});
+
+test("guardian consent UI follows the server mode (decision 0009)", () => {
+  assert.equal(guardianFlowEnabled("guardian"), true);
+  for (const mode of ["signup", undefined, null, "other"]) assert.equal(guardianFlowEnabled(mode), false);
+  assert.equal(showsGuardianCard("signup"), false);
+  for (const mode of ["guardian", undefined, null]) assert.equal(showsGuardianCard(mode), true);
 });

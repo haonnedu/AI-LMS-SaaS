@@ -38,6 +38,10 @@ export function givenName(displayName: string): string {
 }
 
 export const needsBirthYear = (items: readonly StudentConsentItem[]): boolean => items.some(item => item.consentStatus === "unknown");
+/** Birth year and the parent-consent card are only part of the optional "guardian" mode (decision 0009). */
+export const guardianFlowEnabled = (mode: unknown): boolean => mode === "guardian";
+/** After a server-side consent_required refusal, the card is hidden only when the server says it runs in "signup" mode. */
+export const showsGuardianCard = (mode: unknown): boolean => mode !== "signup";
 export const blockingConsents = (items: readonly StudentConsentItem[]): StudentConsentItem[] => items.filter(item => item.consentRequired && item.consentStatus !== "granted");
 
 export const CONSENT_REQUIRED_MESSAGE = "Cần sự đồng ý của phụ huynh trước khi em làm bài. Thầy cô hoặc nhà trường sẽ ghi nhận việc này.";

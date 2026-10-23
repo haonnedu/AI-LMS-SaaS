@@ -1,6 +1,98 @@
 {
   "components": {
     "schemas": {
+      "AgreementAcceptDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted": {
+            "const": true,
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "clientHash": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-fA-F]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clienthash"
+          },
+          "privacyVersion": {
+            "pattern": "^[A-Za-z0-9._-]{1,32}$",
+            "title": "Privacyversion",
+            "type": "string"
+          },
+          "userAgreementVersion": {
+            "pattern": "^[A-Za-z0-9._-]{1,32}$",
+            "title": "Useragreementversion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userAgreementVersion",
+          "privacyVersion",
+          "accepted"
+        ],
+        "title": "AgreementAcceptDTO",
+        "type": "object"
+      },
+      "AgreementStatusDTO": {
+        "properties": {
+          "accepted": {
+            "$ref": "#/components/schemas/AgreementVersionsDTO"
+          },
+          "required": {
+            "$ref": "#/components/schemas/AgreementVersionsDTO"
+          },
+          "upToDate": {
+            "title": "Uptodate",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "required",
+          "accepted",
+          "upToDate"
+        ],
+        "title": "AgreementStatusDTO",
+        "type": "object"
+      },
+      "AgreementVersionsDTO": {
+        "properties": {
+          "privacy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Privacy"
+          },
+          "userAgreement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Useragreement"
+          }
+        },
+        "required": [
+          "userAgreement",
+          "privacy"
+        ],
+        "title": "AgreementVersionsDTO",
+        "type": "object"
+      },
       "AnswerDTO": {
         "additionalProperties": false,
         "properties": {
@@ -1288,6 +1380,14 @@
             "title": "Items",
             "type": "array"
           },
+          "mode": {
+            "enum": [
+              "signup",
+              "guardian"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
           "policyVersion": {
             "title": "Policyversion",
             "type": "string"
@@ -1299,6 +1399,7 @@
         "required": [
           "classId",
           "consentAge",
+          "mode",
           "policyVersion",
           "items",
           "summary"
@@ -1825,10 +1926,19 @@
             },
             "title": "Items",
             "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "signup",
+              "guardian"
+            ],
+            "title": "Mode",
+            "type": "string"
           }
         },
         "required": [
           "consentAge",
+          "mode",
           "items"
         ],
         "title": "ConsentStateListDTO",
@@ -7819,6 +7929,166 @@
         "summary": "Readiness",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/v1/auth/agreements": {
+      "get": {
+        "operationId": "agreements_status_v1_auth_agreements_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgreementStatusDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Agreements Status",
+        "tags": [
+          "agreements"
+        ]
+      },
+      "post": {
+        "operationId": "accept_agreements_v1_auth_agreements_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgreementAcceptDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgreementStatusDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Accept Agreements",
+        "tags": [
+          "agreements"
         ]
       }
     },

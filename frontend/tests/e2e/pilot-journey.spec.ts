@@ -91,6 +91,7 @@ async function signIn(context: BrowserContext, role: string): Promise<Session> {
   await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page).toHaveURL(/onboarding/);
+  await page.getByRole("checkbox", { name: /Tôi đã đọc và đồng ý/ }).check();
   await page.getByRole("button", { name: "Mở workspace cá nhân" }).click();
   await expect(page).toHaveURL(/dashboard/);
   const session = await (await context.request.get("/api/session")).json();

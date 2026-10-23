@@ -25,6 +25,7 @@ test("Google link requires two proofs and confirmation, preserves workspace, and
   await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
   await expect(page).toHaveURL(/\/onboarding$/);
+  await page.getByRole("checkbox", { name: /Tôi đã đọc và đồng ý/ }).check();
   await page.getByRole("button", { name: "Mở workspace cá nhân" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   const previousUser = await (await page.request.get("/api/backend/me")).json();

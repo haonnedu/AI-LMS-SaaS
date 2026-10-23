@@ -15,7 +15,9 @@ export type PrivacyRequest = { id: string; kind: PrivacyKind; status: string; do
 export type PrivacyRequestCreated = { request: { id: string; kind: PrivacyKind; status: string }; job?: unknown };
 
 export type StudentConsentItem = { workspaceId: string; className: string; consentStatus: ConsentStatus; consentRequired: boolean; policyVersion: string };
-export type StudentConsentStatus = { items: StudentConsentItem[] };
+/** Decision 0009: "signup" (default) = no guardian consent; "guardian" = the optional 0016 flow. */
+export type ConsentMode = "signup" | "guardian";
+export type StudentConsentStatus = { items: StudentConsentItem[]; mode?: ConsentMode; consentAge?: number };
 
 export type PublicConsentLink = { studentDisplayName: string; workspaceName: string; policyVersion: string; expiresAt: string };
 export type PublicConsentSubmit = { guardianName: string; guardianContact: string; agree: true };

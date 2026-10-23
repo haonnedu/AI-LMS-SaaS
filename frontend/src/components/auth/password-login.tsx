@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { AgreementCheckbox } from "./agreement-checkbox";
 import styles from "./mock-auth.module.css";
 
 const subscribe = () => () => {};
@@ -9,8 +10,9 @@ export function PasswordLogin({ initialMode = "login", google = false }: { initi
   const router = useRouter();
   const hydrated = useSyncExternalStore(subscribe, () => true, () => false);
   const [mode, setMode] = useState(initialMode), [email, setEmail] = useState(""), [password, setPassword] = useState(""), [name, setName] = useState("");
-  const [message, setMessage] = useState(""), [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState(""), [busy, setBusy] = useState(false), [agreed, setAgreed] = useState(false);
   async function submit(social = false) {
+    if (!social && mode === "signup" && !agreed) { setMessage("Vui lòng đồng ý với Thỏa thuận người dùng và Thông báo quyền riêng tư."); return; }
     setBusy(true); setMessage("");
     try {
       const path = social ? "sign-in/social" : ({ login: "sign-in/email", signup: "sign-up/email", forgot: "request-password-reset", reset: "reset-password", verify: "send-verification-email" })[mode];
@@ -32,12 +34,13 @@ export function PasswordLogin({ initialMode = "login", google = false }: { initi
       {mode === "signup" && <label>Tên<input disabled={busy || !hydrated} required value={name} onChange={event => setName(event.target.value)} maxLength={255} autoComplete="name" /></label>}
       {mode !== "reset" && <label>Email<input disabled={busy || !hydrated} required type="email" value={email} onChange={event => setEmail(event.target.value)} autoComplete="email" /></label>}
       {["login", "signup", "reset"].includes(mode) && <label>Mật khẩu<input disabled={busy || !hydrated} required type="password" minLength={mode === "login" ? 1 : 12} maxLength={128} value={password} onChange={event => setPassword(event.target.value)} autoComplete={mode === "login" ? "current-password" : "new-password"} /></label>}
-      <button disabled={busy || !hydrated} className={`button button-primary ${styles.action}`}>{busy ? "Đang xử lý…" : mode === "verify" ? "Gửi lại email xác minh" : "Tiếp tục"}</button>
+      {mode === "signup" && <AgreementCheckbox checked={agreed} onChange={setAgreed} disabled={busy || !hydrated} />}
+      <button disabled={busy || !hydrated || (mode === "signup" && !agreed)} className={`button button-primary ${styles.action}`}>{busy ? "Đang xử lý…" : mode === "verify" ? "Gửi lại email xác minh" : "Tiếp tục"}</button>
     </form>
     {message && <p role="status">{message}</p>}
     {google && mode === "login" && <button disabled={busy || !hydrated} className="button button-secondary" onClick={() => void submit(true)}>Đăng nhập bằng Google</button>}
     <p><button disabled={busy || !hydrated} onClick={() => setMode(mode === "login" ? "signup" : "login")}>{mode === "login" ? "Tạo tài khoản" : "Đăng nhập"}</button> · <button disabled={busy || !hydrated} onClick={() => setMode("forgot")}>Quên mật khẩu</button></p>
     <Link href="/">Xem giao diện minh họa</Link>
-    <p><Link href="/privacy">Thông báo quyền riêng tư</Link></p>
+    <p><Link href="/privacy">Thông báo quyền riêng tư</Link> · <Link href="/terms">Thỏa thuận người dùng</Link></p>
   </div></section></div>;
 }

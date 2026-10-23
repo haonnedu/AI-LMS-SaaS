@@ -9,6 +9,6 @@ export function StudentShell({ children, nav = true }: { children: ReactNode; na
       {nav && <nav className={styles.headerNav} aria-label="Điều hướng học sinh"><Link href="/student/assignments">Bài được giao</Link><Link href="/student/privacy">Dữ liệu của em</Link></nav>}
     </header>
     {children}
-    {nav && <footer className={styles.footer}><Link href="/privacy">Thông báo quyền riêng tư</Link></footer>}
+    {nav && <footer className={styles.footer}><Link href="/privacy">Thông báo quyền riêng tư</Link> · <Link href="/terms">Thỏa thuận người dùng</Link></footer>}
   </div>;
 }

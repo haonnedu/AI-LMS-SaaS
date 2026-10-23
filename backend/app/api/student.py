@@ -26,6 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.identity import ApiError, Claims, Database, ErrorDTO, current_user
 from app.services import attempts as service
 from app.services import jobs as job_service
+from app.services import privacy as privacy_service
 from app.services.assessment_common import AssessmentError
 
 logger = logging.getLogger("eduvia.assessment")
@@ -319,7 +320,11 @@ async def start_attempt(
     key: IdempotencyKey = None,
 ):
     client_key = idempotency_key(key)
-    consent_age = request.app.state.settings.privacy_consent_age
+    settings = request.app.state.settings
+    # Decision 0009: the sentinel 0 in signup mode means the gate never blocks.
+    consent_age = privacy_service.gate_age(
+        settings.privacy_consent_mode, settings.privacy_consent_age
+    )
     async with student_transaction(db, claims):
         started = await service.start_attempt(
             db, assignment_id, client_key, consent_age=consent_age

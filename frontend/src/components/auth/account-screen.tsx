@@ -3,8 +3,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { components } from "@/lib/api/generated";
+import { acceptanceBody, AGREEMENT_OUTDATED_MESSAGE, AGREEMENT_REQUIRED_MESSAGE, isAgreementRetryCode, isAgreementStatus, needsAgreement, type AgreementStatus } from "@/lib/client/agreements";
 import { read, RequestError, type Session } from "@/lib/client/api";
 import { takeReturnTo } from "@/lib/client/return-to";
+import { AgreementCheckbox } from "./agreement-checkbox";
 import styles from "../workspace/workspace.module.css";
 
 type Workspace = components["schemas"]["WorkspaceDTO"];
@@ -18,6 +20,9 @@ export function AccountScreen({ mode }: { mode: "onboarding" | "dashboard" }) {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState("");
+  // Decision 0009: the user agreement + privacy notice must be accepted before bootstrap.
+  const [agreement, setAgreement] = useState<AgreementStatus | null>(null);
+  const [agreed, setAgreed] = useState(false);
   const epoch = useRef(0);
   const inFlight = useRef(false);
   const handleError = useCallback((error: unknown) => {
@@ -36,6 +41,11 @@ export function AccountScreen({ mode }: { mode: "onboarding" | "dashboard" }) {
       if (version !== epoch.current) return;
       if (!current.authenticated) { setUser(null); setWorkspace(null); setWorkspaces([]); router.replace("/login"); return; }
       setSession(current);
+      if (mode === "onboarding") {
+        const status: unknown = await read("/api/backend/auth/agreements");
+        if (version !== epoch.current) return;
+        setAgreement(isAgreementStatus(status) ? status : null);
+      }
       if (mode === "dashboard") {
         const [me, list] = await Promise.all([read("/api/backend/me"), read("/api/backend/workspaces")]);
         if (version !== epoch.current) return;
@@ -71,6 +81,12 @@ export function AccountScreen({ mode }: { mode: "onboarding" | "dashboard" }) {
     setBusy(true); setMessage("");
     if (kind === "logout") { setWorkspace(null); setWorkspaces([]); setUser(null); }
     try {
+      if (kind === "bootstrap" && agreement && needsAgreement(agreement)) {
+        if (!agreed) { setMessage(AGREEMENT_REQUIRED_MESSAGE); return; }
+        const accepted: unknown = await read("/api/backend/auth/agreements", { method: "POST", headers: { "X-CSRF-Token": session.csrfToken, "Content-Type": "application/json" }, body: JSON.stringify(acceptanceBody(agreement)) });
+        if (version !== epoch.current) return;
+        if (isAgreementStatus(accepted)) setAgreement(accepted);
+      }
       const url = kind === "bootstrap" ? "/api/backend/auth/bootstrap" : "/api/logout";
       const payload = await read(url, { method: "POST", headers: { "X-CSRF-Token": session.csrfToken } });
       if (version !== epoch.current) return;
@@ -80,7 +96,16 @@ export function AccountScreen({ mode }: { mode: "onboarding" | "dashboard" }) {
         const channel = new BroadcastChannel("eduvia-auth"); channel.postMessage("logout"); channel.close();
         window.location.assign(payload.redirect);
       }
-    } catch (error) { if (version === epoch.current) handleError(error); }
+    } catch (error) {
+      if (version !== epoch.current) return;
+      if (kind === "bootstrap" && error instanceof RequestError && isAgreementRetryCode(error.code)) {
+        // The required versions changed (or were never loaded): re-read them and ask again.
+        setAgreed(false);
+        try { const status: unknown = await read("/api/backend/auth/agreements"); if (version === epoch.current) setAgreement(isAgreementStatus(status) ? status : null); }
+        catch (reload) { handleError(reload); return; }
+        setMessage(error.code === "agreement_version_outdated" ? AGREEMENT_OUTDATED_MESSAGE : AGREEMENT_REQUIRED_MESSAGE);
+      } else handleError(error);
+    }
     finally { inFlight.current = false; if (version === epoch.current) setBusy(false); }
   }
   async function switchWorkspace(id: string) {
@@ -100,7 +125,7 @@ export function AccountScreen({ mode }: { mode: "onboarding" | "dashboard" }) {
   }
   return <div className={styles.page}><section className={styles.card} aria-busy={busy}>
     <p>{user?.name || session?.user?.name || "Eduvia"}</p>
-    {mode === "onboarding" && <><p>Eduvia sẽ tạo hoặc mở lại workspace cá nhân của bạn.</p><button className="button button-primary" disabled={busy || !session} onClick={() => void action("bootstrap")}>{busy ? "Đang chuẩn bị…" : "Mở workspace cá nhân"}</button></>}
+    {mode === "onboarding" && <><p>Eduvia sẽ tạo hoặc mở lại workspace cá nhân của bạn.</p>{needsAgreement(agreement) && <><p>{AGREEMENT_REQUIRED_MESSAGE}</p><AgreementCheckbox checked={agreed} onChange={setAgreed} disabled={busy} /></>}<button className="button button-primary" disabled={busy || !session || (needsAgreement(agreement) && !agreed)} onClick={() => void action("bootstrap")}>{busy ? "Đang chuẩn bị…" : "Mở workspace cá nhân"}</button></>}
     {mode === "dashboard" && <><label htmlFor="real-workspace">Workspace</label><select id="real-workspace" value={workspace?.id || ""} disabled={busy} onChange={event => void switchWorkspace(event.target.value)}><option value="" disabled>Chọn workspace</option>{workspaces.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>{nextCursor && <button disabled={busy} onClick={() => void more()}>Tải thêm workspace</button>}<nav className={styles.navLinks} aria-label="Điều hướng giáo viên"><Link href="/dashboard/classes">Lớp học</Link><Link href="/dashboard/documents">Tài liệu</Link></nav>{workspace ? <div className={styles.workspace}><div><strong>{workspace.name}</strong><p>Vai trò: {workspace.role}</p><p>Workspace của bạn đã sẵn sàng. Các tính năng học liệu và lớp học sẽ được bổ sung sau.</p></div></div> : !busy && <p>Không có workspace khả dụng. Quyền truy cập có thể đã thay đổi.</p>}</>}
     {message && <p role="status" aria-live="polite">{message}</p>}
     {message && <button disabled={busy} onClick={() => void load()}>Tải lại</button>}

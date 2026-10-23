@@ -71,6 +71,7 @@ class ConsentSummaryDTO(BaseModel):
 class ClassConsentsDTO(BaseModel):
     classId: UUID
     consentAge: int
+    mode: Literal["signup", "guardian"]
     policyVersion: str
     items: list[ConsentRosterEntryDTO]
     summary: ConsentSummaryDTO
@@ -239,12 +240,14 @@ async def class_consents(
 ):
     settings = request.app.state.settings
     age = settings.privacy_consent_age
+    gate = service.gate_age(settings.privacy_consent_mode, age)
     async with tenant(db, claims, workspace_id) as scope:
         result = await service.class_consents(db, scope, class_id)
         today = service.local_today()
         return ClassConsentsDTO(
             classId=result.class_id,
             consentAge=age,
+            mode=settings.privacy_consent_mode,
             policyVersion=settings.privacy_policy_version,
             items=[
                 ConsentRosterEntryDTO(
@@ -253,7 +256,7 @@ async def class_consents(
                     birthYear=entry.student.birth_year,
                     consentStatus=entry.student.consent_status,
                     consentRequired=service.consent_required(
-                        entry.student.consent_status, entry.student.birth_year, age, today
+                        entry.student.consent_status, entry.student.birth_year, gate, today
                     ),
                     consents=[consent_dto(c) for c in entry.consents],
                 )

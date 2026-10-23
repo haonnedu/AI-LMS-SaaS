@@ -141,7 +141,15 @@ class FakeStore:
 
 @pytest.fixture
 def fake(monkeypatch):
-    app = create_app(Settings(_env_file=None, environment="test", privacy_consent_age=15))
+    # Most tests exercise the optional guardian flow; signup-mode tests switch the setting.
+    app = create_app(
+        Settings(
+            _env_file=None,
+            environment="test",
+            privacy_consent_age=15,
+            privacy_consent_mode="guardian",
+        )
+    )
     paths = {getattr(r, "path", "") for r in app.routes}
     for router in (teacher_api.router, student_privacy_api.router, public_api.router):
         if not any(route.path in paths for route in router.routes):
@@ -427,6 +435,7 @@ def test_class_consent_roster(fake):
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["consentAge"] == 15 and body["policyVersion"] == "2026-10-draft"
+    assert body["mode"] == "guardian"
     assert body["summary"] == {
         "granted": 1,
         "pending": 1,
@@ -566,6 +575,7 @@ def test_student_sets_birth_year_and_reads_status(fake):
     }
     status = client.get("/v1/student/me/consent-status", headers=AUTH)
     assert status.status_code == 200 and status.json()["consentAge"] == 15
+    assert status.json()["mode"] == "guardian"
 
 
 @pytest.mark.parametrize(
@@ -708,3 +718,78 @@ def test_consent_rows_have_no_plaintext_contact_column():
     columns = {c.name for c in StudentConsent.__table__.columns}
     assert "guardian_contact_hash" in columns
     assert not {"guardian_contact", "guardian_email", "guardian_phone"} & columns
+
+
+# ---- Signup mode (decision 0009): guardian consent off -------------------------------------
+
+
+def signup_mode(client):
+    settings = client.app.state.settings
+    client.app.state.settings = settings.model_copy(update={"privacy_consent_mode": "signup"})
+
+
+def test_signup_mode_start_attempt_sends_the_sentinel_age(fake):
+    client, session, _ = fake
+    signup_mode(client)
+    seen = []
+    started = SimpleNamespace(
+        out_attempt_id=uuid4(),
+        out_created=True,
+        out_status="in_progress",
+        out_attempt_no=1,
+        out_started_at=NOW,
+        out_deadline_at=None,
+        out_server_now=NOW,
+    )
+    session.functions["edu.student_start_attempt"] = lambda p: seen.append(p) or [started]
+    response = client.post(
+        f"/v1/student/assignments/{uuid4()}/attempts", headers=AUTH | {"Idempotency-Key": "k"}
+    )
+    assert response.status_code == 201, response.text
+    assert seen[0]["consent_age"] == 0  # "consent not required" sentinel, 4-argument function
+
+
+def test_signup_mode_consent_status_reports_the_mode(fake):
+    client, session, _ = fake
+    signup_mode(client)
+    seen = []
+    session.functions["edu.student_consent_status"] = lambda p: (
+        seen.append(p) or [state_row(uuid4(), status="not_required", required=False)]
+    )
+    response = client.get("/v1/student/me/consent-status", headers=AUTH)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["mode"] == "signup" and body["consentAge"] == 15
+    assert seen == [{"age": 0}]
+    assert body["items"][0]["consentRequired"] is False
+
+
+def test_signup_mode_birth_year_uses_the_sentinel_age(fake):
+    client, session, _ = fake
+    signup_mode(client)
+    seen = []
+    session.functions["edu.student_set_birth_year"] = lambda p: seen.append(p) or []
+    session.functions["edu.student_consent_status"] = lambda p: []
+    response = client.put("/v1/student/me/birth-year", json={"birthYear": 2013}, headers=AUTH)
+    assert response.status_code == 200, response.text
+    assert seen == [{"year": 2013, "age": 0}]
+    assert response.json() == {"consentAge": 15, "mode": "signup", "items": []}
+
+
+def test_signup_mode_roster_still_works_and_requires_nothing(fake):
+    client, session, _ = fake
+    signup_mode(client)
+    ws = member(session)
+    school_class = SimpleNamespace(id=uuid4(), workspace_id=ws.id, status="active")
+    a = student_row(ws.id, display_name="An", consent_status="pending", birth_year=None)
+    b = student_row(ws.id, display_name="Bình", consent_status="unknown", birth_year=2013)
+    session.scalar_queue = [school_class, []]
+    session.execute_queue = [[a, b]]
+    response = client.get(
+        f"/v1/workspaces/{ws.id}/classes/{school_class.id}/consents", headers=AUTH
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["mode"] == "signup"
+    assert [item["consentRequired"] for item in body["items"]] == [False, False]
+    assert body["summary"]["pending"] == 1 and body["summary"]["unknown"] == 1

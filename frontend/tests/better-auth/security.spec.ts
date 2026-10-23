@@ -27,6 +27,7 @@ test("Google-first account cannot unlink its final method; Redis expiry removes 
   await page.goto("/login");
   await page.getByRole("button", { name: "Đăng nhập bằng Google", exact: true }).click();
   await expect(page).toHaveURL(/\/onboarding$/);
+  await page.getByRole("checkbox", { name: /Tôi đã đọc và đồng ý/ }).check();
   await page.getByRole("button", { name: "Mở workspace cá nhân" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.goto("/account");

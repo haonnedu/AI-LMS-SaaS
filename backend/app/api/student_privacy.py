@@ -60,6 +60,7 @@ class ConsentStateDTO(BaseModel):
 
 class ConsentStateListDTO(BaseModel):
     consentAge: int
+    mode: Literal["signup", "guardian"]
     items: list[ConsentStateDTO]
 
 
@@ -67,6 +68,7 @@ def state_list(request: Request, states: list[service.StudentConsentState]) -> C
     settings = request.app.state.settings
     return ConsentStateListDTO(
         consentAge=settings.privacy_consent_age,
+        mode=settings.privacy_consent_mode,
         items=[
             ConsentStateDTO(
                 workspaceId=s.workspace_id,
@@ -122,9 +124,14 @@ async def personal_transaction(db, claims: dict) -> AsyncIterator[WorkspaceScope
 IdempotencyKey = Annotated[str | None, Header(alias="Idempotency-Key")]
 
 
+def gate_age(request: Request) -> int:
+    settings = request.app.state.settings
+    return service.gate_age(settings.privacy_consent_mode, settings.privacy_consent_age)
+
+
 @router.put("/me/birth-year", response_model=ConsentStateListDTO)
 async def set_birth_year(body: BirthYearDTO, request: Request, db: Database, claims: Claims):
-    age = request.app.state.settings.privacy_consent_age
+    age = gate_age(request)
     async with identity_transaction(db, claims):
         await service.set_birth_year(db, body.birthYear, age)
         states = await service.my_consent_status(db, age)
@@ -133,7 +140,7 @@ async def set_birth_year(body: BirthYearDTO, request: Request, db: Database, cla
 
 @router.get("/me/consent-status", response_model=ConsentStateListDTO)
 async def consent_status(request: Request, db: Database, claims: Claims):
-    age = request.app.state.settings.privacy_consent_age
+    age = gate_age(request)
     async with identity_transaction(db, claims):
         states = await service.my_consent_status(db, age)
     return state_list(request, states)

@@ -9,6 +9,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError
 
 from app import __version__
+from app.api.agreements import router as agreements_router
 from app.api.assignments import router as assignments_router
 from app.api.authoring import router as authoring_router
 from app.api.classes import router as classes_router
@@ -97,6 +98,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     application.include_router(health_router)
     application.include_router(identity_router)
+    application.include_router(agreements_router)
     application.include_router(classes_router)
     application.include_router(documents_router)
     application.include_router(jobs_router)

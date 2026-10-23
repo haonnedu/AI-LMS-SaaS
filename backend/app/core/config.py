@@ -76,6 +76,12 @@ class Settings(BaseSettings):
     privacy_consent_age: int = Field(default=16, ge=12, le=18)
     # Version of the privacy notice every new consent row records.
     privacy_policy_version: str = Field(default="2026-10-draft", pattern=r"^[A-Za-z0-9._-]{1,32}$")
+    # Decision 0009: ``signup`` (default) = accepting the user agreement + privacy notice at
+    # registration is the legal basis for every role, the attempt-start gate never blocks;
+    # ``guardian`` = the 0016 guardian-consent flow for schools that ask for it.
+    privacy_consent_mode: Literal["signup", "guardian"] = "signup"
+    # Version of the user agreement accepted at registration (bump with privacy_policy_version).
+    terms_version: str = Field(default="2026-10-draft", pattern=r"^[A-Za-z0-9._-]{1,32}$")
     # Lifetime of signed download URLs for privacy exports (capped at 300 s by storage).
     privacy_export_url_seconds: int = Field(default=300, ge=30, le=300)
 

@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import jwt
 import pytest
+from agreements_helper import accept_agreements, mount_agreements
 from alembic import command
 from alembic.config import Config
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -126,6 +127,7 @@ async def api(database):
         db_max_overflow=1,
     )
     app = create_app(settings)
+    mount_agreements(app)
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     app.state.token_verifier.jwks.get_signing_key_from_jwt = Mock(
         return_value=SimpleNamespace(key=key.public_key())
@@ -165,6 +167,8 @@ async def test_bootstrap_concurrency_and_identity(api, database):
     client, headers, _ = api
     subject = "concurrent-" + str(uuid4())
     assert (await client.get("/v1/me", headers=headers(subject))).status_code == 409
+    # Concurrent first acceptances provision the account exactly once (advisory lock).
+    await asyncio.gather(*[accept_agreements(client, headers(subject)) for _ in range(2)])
     responses = await asyncio.gather(
         *[client.post("/v1/auth/bootstrap", headers=headers(subject)) for _ in range(2)]
     )
@@ -191,6 +195,8 @@ async def test_bootstrap_concurrency_and_identity(api, database):
 async def test_isolation_revocation_and_pool(api, database):
     client, headers, app = api
     a, b = "a-" + str(uuid4()), "b-" + str(uuid4())
+    await accept_agreements(client, headers(a))
+    await accept_agreements(client, headers(b))
     ra = (await client.post("/v1/auth/bootstrap", headers=headers(a))).json()
     rb = (await client.post("/v1/auth/bootstrap", headers=headers(b))).json()
     wa, wb = ra["personalWorkspace"]["id"], rb["personalWorkspace"]["id"]
@@ -218,6 +224,7 @@ async def test_unverified_disabled_and_missing_auth(api, database):
     assert (
         await client.post("/v1/auth/bootstrap", headers=headers(subject, False))
     ).status_code == 403
+    await accept_agreements(client, headers(subject))
     result = (await client.post("/v1/auth/bootstrap", headers=headers(subject))).json()
     with database.begin() as db:
         db.execute(
@@ -286,6 +293,7 @@ async def test_issuer_subject_pair_is_not_email_identity(api, database):
 async def test_workspace_pagination_only_returns_own_memberships(api, database):
     client, headers, _ = api
     subject = "pages-" + str(uuid4())
+    await accept_agreements(client, headers(subject))
     result = (await client.post("/v1/auth/bootstrap", headers=headers(subject))).json()
     with database.begin() as db:
         for _ in range(2):
@@ -430,3 +438,87 @@ def seed_discardable_other(database):
             {"id": other_id, "sub": str(other_id)},
         )
     return other_id, None
+
+
+async def test_bootstrap_requires_the_current_agreements(api, database):
+    client, headers, app = api
+    subject = "terms-" + str(uuid4())
+    refused = await client.post("/v1/auth/bootstrap", headers=headers(subject))
+    assert refused.status_code == 409 and refused.json()["error"]["code"] == "agreement_required"
+    status = (await client.get("/v1/auth/agreements", headers=headers(subject))).json()
+    assert status["upToDate"] is False and status["accepted"]["userAgreement"] is None
+    outdated = await client.post(
+        "/v1/auth/agreements",
+        headers=headers(subject),
+        json={"userAgreementVersion": "old", "privacyVersion": "old", "accepted": True},
+    )
+    assert outdated.status_code == 409
+    assert outdated.json()["error"]["code"] == "agreement_version_outdated"
+    first = await accept_agreements(client, headers(subject))
+    again = await accept_agreements(client, headers(subject))  # idempotent replay
+    assert first == again
+    assert (await client.post("/v1/auth/bootstrap", headers=headers(subject))).status_code == 200
+    with database.connect() as db:
+        rows = db.execute(
+            text(
+                "SELECT a.document, a.version, a.method, a.client_hash FROM edu.user_agreements a "
+                "JOIN edu.users u ON u.id = a.user_id WHERE u.provider_sub = :sub"
+            ),
+            {"sub": subject},
+        ).all()
+    assert sorted(r.document for r in rows) == ["privacy_notice", "user_agreement"]
+    assert {r.method for r in rows} == {"signup"} and all(r.client_hash is None for r in rows)
+    # A new version requires re-acceptance, recorded as "reaccept".
+    previous = app.state.settings
+    app.state.settings = previous.model_copy(update={"terms_version": "2026-11-v1"})
+    try:
+        gated = await client.post("/v1/auth/bootstrap", headers=headers(subject))
+        assert gated.status_code == 409
+        await accept_agreements(client, headers(subject))
+        assert (
+            await client.post("/v1/auth/bootstrap", headers=headers(subject))
+        ).status_code == 200
+    finally:
+        app.state.settings = previous
+    with database.connect() as db:
+        methods = db.execute(
+            text(
+                "SELECT a.version, a.method FROM edu.user_agreements a JOIN edu.users u "
+                "ON u.id = a.user_id WHERE u.provider_sub = :sub AND a.document = 'user_agreement'"
+            ),
+            {"sub": subject},
+        ).all()
+    assert ("2026-11-v1", "reaccept") in {(r.version, r.method) for r in methods}
+
+
+async def test_runtime_sees_only_its_own_agreements_and_cannot_rewrite_them(api, database):
+    from sqlalchemy.exc import DBAPIError
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    client, headers, app = api
+    a, b = "ra-" + str(uuid4()), "rb-" + str(uuid4())
+    await accept_agreements(client, headers(a))
+    await accept_agreements(client, headers(b))
+    engine = create_async_engine(app.state.settings.database_url.get_secret_value())
+    try:
+        async with engine.connect() as db:
+            await db.execute(
+                text(
+                    "SELECT set_config('edu.issuer', :iss, false), "
+                    "set_config('edu.subject', :sub, false)"
+                ),
+                {"iss": app.state.settings.auth_issuer, "sub": a},
+            )
+            visible = (
+                await db.execute(text("SELECT DISTINCT user_id FROM edu.user_agreements"))
+            ).all()
+            assert len(visible) == 1
+            for statement in (
+                "UPDATE edu.user_agreements SET version = 'x'",
+                "DELETE FROM edu.user_agreements",
+            ):
+                with pytest.raises(DBAPIError):
+                    async with db.begin_nested():
+                        await db.execute(text(statement))
+    finally:
+        await engine.dispose()

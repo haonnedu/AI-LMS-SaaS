@@ -173,6 +173,10 @@ The local PostgreSQL account is intentionally an owner account for bootstrapping
 
 The health proxy has a fixed server-configured upstream and does not accept a client-provided URL. Provider/database credentials must stay in backend environment variables; do not add them to `NEXT_PUBLIC_*` values. Production deployment, identity-provider configuration, TLS, secret management, and recovery are separate work from this local foundation.
 
+## Privacy: user agreement and consent mode
+
+Per decision `tasks/decisions/0009-user-agreement-at-registration.md`, every role accepts the user agreement (`/terms`) and privacy notice (`/privacy`) when registering. The sign-up form requires the checkbox; acceptance is recorded at the first authenticated step (the onboarding screen calls `GET`/`POST /v1/auth/agreements` through the BFF, then bootstrap), and `POST /v1/auth/bootstrap` answers 409 `agreement_required` until the current `TERMS_VERSION` and `PRIVACY_POLICY_VERSION` are accepted (stored in `edu.user_agreements`, migration 0017). Guardian consent (migration 0016) is kept but optional: `PRIVACY_CONSENT_MODE=signup` (default) never blocks attempts and hides the birth-year/parent-consent UI; `PRIVACY_CONSENT_MODE=guardian` restores the 0016 gate for students younger than `PRIVACY_CONSENT_AGE`. Bump both version variables together (and `USER_AGREEMENT_VERSION`/`PRIVACY_NOTICE_VERSION` in `frontend/src/content/`) when the lawyer-approved text replaces the draft; see `docs/legal/README.md`.
+
 ## Next implementation slices
 
 1. Identity provider integration, secure sessions, personal workspace creation, membership rules, and RLS tests.

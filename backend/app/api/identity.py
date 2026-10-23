@@ -134,12 +134,15 @@ def workspace_dto(row) -> WorkspaceDTO:
 
 
 @router.post("/auth/bootstrap", response_model=BootstrapDTO)
-async def bootstrap(db: Database, claims: Claims):
+async def bootstrap(request: Request, db: Database, claims: Claims):
+    from app.api.agreements import require_current_agreements  # local: avoids an import cycle
+
     try:
         async with db.begin():
             await set_identity(db, claims["iss"], claims["sub"])
             await provision_user_from_claims(db, claims)
             user = await current_user(db, claims)
+            await require_current_agreements(db, request.app.state.settings)  # decision 0009
             row = (
                 await db.execute(
                     accessible_workspaces(user).where(Workspace.personal_owner_user_id == user.id)

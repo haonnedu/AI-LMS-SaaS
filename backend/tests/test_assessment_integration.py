@@ -18,6 +18,7 @@ from uuid import uuid4
 
 import jwt
 import pytest
+from agreements_helper import accept_agreements, mount_agreements
 from alembic import command
 from alembic.config import Config
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -103,6 +104,7 @@ async def api(database, monkeypatch):
         db_max_overflow=3,
     )
     app = create_app(settings)
+    mount_agreements(app)
     paths = {getattr(route, "path", "") for route in app.routes}
     for router in (classes_api.router, teacher_api.router, student_api.router):
         if not any(route.path in paths for route in router.routes):
@@ -134,6 +136,7 @@ async def api(database, monkeypatch):
 
 async def person(client, headers, prefix, name="Người dùng"):
     subject = prefix + "-" + str(uuid4())
+    await accept_agreements(client, headers(subject, name))
     response = await client.post("/v1/auth/bootstrap", headers=headers(subject, name))
     assert response.status_code == 200, response.text
     body = response.json()

@@ -5,7 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { components } from "@/lib/api/generated";
 import { read, RequestError } from "@/lib/client/api";
 import { AVAILABILITY_LABEL, AVAILABILITY_TONE, canStart, clearIdempotencyKey, formatDuration, getIdempotencyKey, isRetryableStatus, startLabel, windowHint } from "@/lib/client/assessment";
-import { CONSENT_REQUIRED_MESSAGE } from "@/lib/client/privacy";
+import { CONSENT_REQUIRED_MESSAGE, showsGuardianCard } from "@/lib/client/privacy";
+import type { StudentConsentStatus } from "@/lib/client/privacy-types";
 import { ConsentRequiredCard } from "./consent-gate";
 import { StudentShell } from "./student-shell";
 import { sessionKeys, useServerClock, useStudent } from "./use-student";
@@ -48,7 +49,12 @@ export function StudentAssignmentScreen({ assignmentId }: { assignmentId: string
       router.push(`/student/attempts/${started.attemptId}`);
     } catch (e) {
       if (e instanceof RequestError && !isRetryableStatus(e.status)) clearIdempotencyKey(sessionKeys(), "start", assignmentId);
-      if (e instanceof RequestError && e.status === 403 && e.code === "consent_required") { setConsentBlocked(true); setError(CONSENT_REQUIRED_MESSAGE); }
+      if (e instanceof RequestError && e.status === 403 && e.code === "consent_required") {
+        // Decision 0009: the parent-consent card belongs to the optional guardian mode only.
+        const status: StudentConsentStatus | null = await read("/api/backend/student/me/consent-status").catch(() => null);
+        if (showsGuardianCard(status?.mode)) { setConsentBlocked(true); setError(CONSENT_REQUIRED_MESSAGE); }
+        else setError(handle(e));
+      }
       else setError(handle(e));
       setStarting(false);
       void load();

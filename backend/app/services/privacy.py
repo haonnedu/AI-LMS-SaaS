@@ -43,6 +43,7 @@ from app.services import classes as class_service
 from app.services import jobs as job_service
 
 ConsentStatus = Literal["unknown", "not_required", "pending", "granted", "revoked"]
+ConsentMode = Literal["signup", "guardian"]
 ConsentMethod = Literal["paper_school", "guardian_link", "self_adult"]
 RequestKind = Literal["export", "erasure"]
 RequestStatus = Literal["queued", "succeeded", "failed", "rejected"]
@@ -60,6 +61,9 @@ REQUEST_TRANSITIONS: dict[str, frozenset[str]] = {
     "rejected": frozenset(),
 }
 ERASED_STUDENT_NAME = "Học sinh đã xóa"
+# Consent age sent to the SQL in ``signup`` mode (decision 0009, migration 0017): <= 0 means
+# guardian consent is never required.
+SIGNUP_GATE_AGE = 0
 LOCAL_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
 MAX_LINK_TTL = timedelta(days=30)
 DEFAULT_LINK_DAYS = 14
@@ -151,11 +155,17 @@ def min_age(birth_year: int | None, today: date) -> int | None:
     return today.year - birth_year - 1
 
 
+def gate_age(mode: str, consent_age: int) -> int:
+    """Consent age for the SQL gate: the configured age in ``guardian`` mode, else the
+    ``signup`` sentinel 0 (consent not required)."""
+    return consent_age if mode == "guardian" else SIGNUP_GATE_AGE
+
+
 def consent_required(
     status: str, birth_year: int | None, consent_age: int, today: date | None = None
 ) -> bool:
     """Mirror of ``edu.privacy_consent_required`` (the attempt-start gate, EV017)."""
-    if status not in BLOCKING_STATUSES:
+    if consent_age <= 0 or status not in BLOCKING_STATUSES:
         return False
     age = min_age(birth_year, today or local_today())
     return age is None or age < consent_age
@@ -164,7 +174,9 @@ def consent_required(
 def status_after_birth_year(
     current: str, birth_year: int, consent_age: int, today: date | None = None
 ) -> str:
-    """Mirror of ``edu.student_set_birth_year``."""
+    """Mirror of ``edu.student_set_birth_year`` (the returned status)."""
+    if consent_age <= 0:
+        return "not_required"
     age = min_age(birth_year, today or local_today())
     if age is not None and age >= consent_age:
         return "not_required"

@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import jwt
 import pytest
+from agreements_helper import accept_agreements, mount_agreements
 from alembic import command
 from alembic.config import Config
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -77,6 +78,7 @@ async def api(database):
         db_max_overflow=2,
     )
     app = create_app(settings)
+    mount_agreements(app)
     if not any(getattr(r, "path", "").endswith("/classes") for r in app.routes):
         app.include_router(classes_api.router)
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -108,6 +110,7 @@ async def api(database):
 
 async def person(client, headers, prefix, name="Người dùng"):
     subject = prefix + "-" + str(uuid4())
+    await accept_agreements(client, headers(subject, name))
     response = await client.post("/v1/auth/bootstrap", headers=headers(subject, name))
     assert response.status_code == 200, response.text
     body = response.json()

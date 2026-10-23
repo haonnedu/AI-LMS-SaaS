@@ -17,6 +17,7 @@ from uuid import UUID, uuid4
 
 import jwt
 import pytest
+from agreements_helper import accept_agreements, mount_agreements
 from alembic import command
 from alembic.config import Config
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -122,6 +123,7 @@ async def api(database):
         db_max_overflow=2,
     )
     app = create_app(settings)
+    mount_agreements(app)
     paths = {getattr(route, "path", "") for route in app.routes}
     for router in (authoring_api.router, generation_api.router):
         if not any(route.path in paths for route in router.routes):
@@ -153,6 +155,7 @@ async def api(database):
 
 
 async def bootstrap(api, subject):
+    await accept_agreements(api.client, api.headers(subject))
     response = await api.client.post("/v1/auth/bootstrap", headers=api.headers(subject))
     assert response.status_code == 200, response.text
     return response.json()["personalWorkspace"]["id"]

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { read, RequestError } from "@/lib/client/api";
-import { birthYearOptions, blockingConsents, isValidBirthYear, needsBirthYear } from "@/lib/client/privacy";
+import { birthYearOptions, blockingConsents, guardianFlowEnabled, isValidBirthYear, needsBirthYear } from "@/lib/client/privacy";
 import type { StudentConsentItem, StudentConsentStatus } from "@/lib/client/privacy-types";
 import styles from "./student.module.css";
 
@@ -48,7 +48,8 @@ function BirthYearCard({ csrf, onSaved }: { csrf: string; onSaved: (status: Stud
 }
 
 /**
- * Step 1: birth year when any class reports `unknown`. Step 2: blocking parent-consent card.
+ * Only in the optional "guardian" mode (decision 0009; the default "signup" mode renders nothing):
+ * step 1: birth year when any class reports `unknown`. Step 2: blocking parent-consent card.
  * Renders nothing when everything is fine or the status endpoint is unavailable. Birth year is never logged or stored client-side.
  * `onPending(true)` tells a page the birth year is still missing so it can hide its list.
  */
@@ -56,7 +57,11 @@ export function ConsentGate({ csrf, onPending }: { csrf: string; onPending?: (pe
   const [items, setItems] = useState<StudentConsentItem[] | null>(null);
   const notify = useRef(onPending);
   useEffect(() => { notify.current = onPending; });
-  const apply = useCallback((status: StudentConsentStatus) => { setItems(status.items); notify.current?.(needsBirthYear(status.items)); }, []);
+  const apply = useCallback((status: StudentConsentStatus) => {
+    const guardian = guardianFlowEnabled(status.mode);
+    setItems(guardian ? status.items : []);
+    notify.current?.(guardian && needsBirthYear(status.items));
+  }, []);
   useEffect(() => {
     if (!csrf) return;
     let alive = true;

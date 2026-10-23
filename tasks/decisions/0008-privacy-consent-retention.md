@@ -26,6 +26,7 @@ Bảng này được `backend/tests/test_privacy_inventory.py` đối chiếu v�
 | `edu.users` | `email`, `display_name`, `provider_issuer`, `provider_sub` | PII-GV và PII-HS (học sinh cũng là user) | Đến khi tài khoản bị xóa + 30 ngày | Có (migration 0016): tự phục vụ `POST /v1/student/me/privacy-requests {kind: erasure}` → job `privacy.erase` → `edu.erase_self` (email → `erased+<id>@invalid`, `display_name` → "Người dùng đã xóa", `is_active=false`, thu hồi membership, pseudonymize mọi dòng `students` của user, xóa object tự xuất). `edu.bootstrap_identity` ghi đè `email`/`display_name` ở mỗi lần đăng nhập (user đã xóa không đăng nhập lại được) | Xóa bản ghi `auth.user`/phiên Better Auth; `provider_issuer`/`provider_sub` và `user_identities` còn giữ |
 | `edu.user_identities` | `user_id`, `issuer`, `subject` | PII-GV và PII-HS (liên kết đăng nhập, migration 0005 của Duc) | Theo vòng đời tài khoản | Không | Xóa alias khi erase user |
 | `edu.identity_transfers` | `user_id`, `target_issuer`, `target_subject`, `proof_id` | PII-GV (audit chuyển identity, migration 0006) | 1 năm cho audit | Không | Purge sau hạn |
+| `edu.user_agreements` | `user_id`, `document`, `version`, `accepted_at`, `method`, `client_hash` (sha256 User-Agent, không lưu IP) | PII-GV và PII-HS (bằng chứng chấp nhận Thỏa thuận người dùng + Thông báo quyền riêng tư, migration 0017, quyết định 0009) | Theo vòng đời tài khoản + thời hạn chứng minh chấp nhận (chờ duyệt) | Không (append-only, runtime chỉ SELECT/INSERT) | Quyết định giữ hay xóa khi erase user |
 | `edu.workspaces` | `personal_owner_user_id`, `name` | PII-GV (liên kết) | Theo vòng đời workspace | Không (chỉ `is_active`) | Workflow đóng workspace + xóa dữ liệu tenant |
 | `edu.workspace_members` | `user_id`, `role`, `status` | PII-GV (liên kết) | Theo membership; giữ bản ghi thu hồi cho audit | Không có DELETE qua API | — |
 | `edu.classes` | `created_by_user_id`, `name` | PII-GV (liên kết) | Năm học + 1 năm | Lưu trữ (`archived`), không xóa | Purge lớp đã lưu trữ quá hạn |
@@ -166,3 +167,4 @@ Bản dự thảo cho luật sư (chưa duyệt), xem `docs/legal/README.md`:
 - [Điều khoản giáo viên](../../docs/legal/teacher-terms.md)
 - [Tóm tắt cho luật sư](../../docs/legal/lawyer-brief.md)
 - Văn bản trong ứng dụng: `frontend/src/content/privacy-notice.ts`, `frontend/src/content/consent-text.ts`
+- [0009 — Chấp nhận Thỏa thuận người dùng khi đăng ký](0009-user-agreement-at-registration.md): đồng ý của người giám hộ trở thành tùy chọn (`PRIVACY_CONSENT_MODE=guardian`), mặc định tắt.
