@@ -1,0 +1,59 @@
+import { expect, test } from "@playwright/test";
+import { resetRates } from "./reset-rates";
+test.beforeEach(resetRates);
+
+test("email signup, verification, password reset, workspace and logout use Better Auth", async ({ page, request }) => {
+  const email = `teacher-${Date.now()}@example.test`, password = "Original-password-2026!", replacement = "Changed-password-2026!";
+  const origin = "http://127.0.0.1:3106";
+  const post = (path: string, data: unknown) => request.post("/api/auth/" + path, { headers: { Origin: origin }, data });
+  const signup = await post("sign-up/email", { email, password, name: "Teacher", callbackURL: "/login" });
+  expect(signup.status()).toBe(200);
+  expect(await signup.json()).not.toHaveProperty("token");
+  const blocked = await post("sign-in/email", { email, password });
+  expect(blocked.status()).toBe(403);
+  async function mailLink(fragment: string) {
+    let url = "";
+    await expect.poll(async () => {
+      const messages: string[] = await (await request.get("http://127.0.0.1:9112")).json();
+      const message = messages.filter(message => message.includes(email)).at(-1) || "";
+      const decoded = message.replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+      url = decoded.match(new RegExp(`http://127\\.0\\.0\\.1:3106/[^\\s<>]*${fragment}[^\\s<>]*`))?.[0] || "";
+      return url;
+    }).not.toBe("");
+    return url;
+  }
+  await page.goto(await mailLink("verify-email"));
+  await page.goto("/login");
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await page.getByRole("button", { name: "Mở workspace cá nhân" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.reload();
+  await expect(page.getByText("Vai trò: owner")).toBeVisible();
+  const session = await (await page.request.get("/api/session")).json();
+  expect(session.authenticated).toBe(true);
+  expect(session).not.toHaveProperty("token");
+  for (const path of ["/api/auth/token", "/api/auth/get-session", "/auth/access-token"]) expect((await page.request.get(path)).status()).toBe(404);
+  expect((await page.request.post("/api/logout", { headers: { Origin: origin } })).status()).toBe(403);
+  await page.goto("/account");
+  await expect(page.getByText("Email và mật khẩu: Đã thiết lập")).toBeVisible();
+  await page.getByRole("button", { name: "Đặt lại mật khẩu qua email" }).click();
+  await page.goto(await mailLink("reset-password"));
+  await expect(page).toHaveURL(/\/reset-password/);
+  await page.getByLabel("Mật khẩu", { exact: true }).fill(replacement);
+  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
+  await expect(page.getByText("Đã đặt mật khẩu. Vui lòng đăng nhập lại.")).toBeVisible();
+  expect((await post("sign-in/email", { email, password })).status()).toBe(401);
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Mật khẩu", { exact: true }).fill(replacement);
+  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await page.getByRole("button", { name: "Mở workspace cá nhân" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.getByRole("button", { name: "Đăng xuất", exact: true }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/login$/);
+});

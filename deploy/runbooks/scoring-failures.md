@@ -5,7 +5,7 @@ Page: `—` immediately during a scheduled class test (lost work or wrong scores
 
 ## How submission and grading work
 
-- Students start, autosave and submit only through SECURITY DEFINER functions (`edu.student_start_attempt`, `edu.student_save_answer`, `edu.student_submit`, migration 0011). Writes after `deadline_at` + 5 s are rejected (`EV010`).
+- Students start, autosave and submit only through SECURITY DEFINER functions (`edu.student_start_attempt`, `edu.student_save_answer`, `edu.student_submit`, migration 0014). Writes after `deadline_at` + 5 s are rejected (`EV010`).
 - Submit and the deadline sweeper share `edu.finalize_attempt`: it freezes the answer snapshot (sha256) and enqueues exactly one `attempt.grade` job (idempotency key `system:attempt.grade:<attempt id>`), requested by the **assignment author** so the worker runs with a verified teacher context.
 - The worker scores deterministically from `edu.exam_keys_for_scoring` (no AI). Results are append-only (`grading_results`, `grading_result_items`); `grades` gets a new current revision.
 - `edu.expire_attempts` (deadline) and `edu.apply_due_releases` (`after_close` score/solution release) run inside the beat sweep every 60 s. **Staging has no beat** (see README): timed attempts are not finalized and `after_close` releases never happen there until it is added.

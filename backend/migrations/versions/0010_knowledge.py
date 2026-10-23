@@ -17,8 +17,8 @@ import uuid
 
 from alembic import op
 
-revision = "0007_knowledge"
-down_revision = "0006_jobs_storage"
+revision = "0010_knowledge"
+down_revision = "0009_jobs_storage"
 branch_labels = None
 depends_on = None
 

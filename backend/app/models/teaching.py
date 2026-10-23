@@ -1,7 +1,7 @@
 """Teaching metadata (classes, rosters, invitations) shared by runtime and Alembic.
 
 The authoritative DDL, RLS policies and the invitation acceptance function live in
-migration 0005_classes; these mappings mirror its columns and constraint names.
+migration 0008_classes; these mappings mirror its columns and constraint names.
 """
 
 from sqlalchemy import (

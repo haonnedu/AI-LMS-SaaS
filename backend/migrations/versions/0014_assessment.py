@@ -34,8 +34,8 @@
 
 from alembic import op
 
-revision = "0011_assessment"
-down_revision = "0010_generation_exams"
+revision = "0014_assessment"
+down_revision = "0013_generation_exams"
 branch_labels = None
 depends_on = None
 

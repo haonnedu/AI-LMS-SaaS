@@ -1,4 +1,4 @@
-"""Static checks of the 0011 assessment migration SQL and model drift (no database)."""
+"""Static checks of the 0011 retrieval migration SQL and model drift (no database)."""
 
 import importlib.util
 import re
@@ -6,33 +6,17 @@ from pathlib import Path
 
 import pytest
 
+from app.core.config import Settings
 from app.infrastructure.database import Base
-from app.models import assessment  # noqa: F401
+from app.models import knowledge
+from app.services import embeddings
 
-PATH = Path(__file__).parents[1] / "migrations" / "versions" / "0011_assessment.py"
-TENANT_TABLES = (
-    "assignments",
-    "quiz_attempts",
-    "student_answers",
-    "grading_results",
-    "grading_result_items",
-    "grades",
-)
-STUDENT_FUNCTIONS = (
-    "student_assignments",
-    "student_assignment_detail",
-    "student_attempt",
-    "student_attempt_items",
-    "student_start_attempt",
-    "student_save_answer",
-    "student_submit",
-    "student_results",
-)
+PATH = Path(__file__).parents[1] / "migrations" / "versions" / "0011_retrieval.py"
 
 
 @pytest.fixture(scope="module")
 def migration():
-    spec = importlib.util.spec_from_file_location("migration_0011", PATH)
+    spec = importlib.util.spec_from_file_location("migration_0008", PATH)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -55,251 +39,109 @@ def sql(migration):
     return re.sub(r"\s+", " ", "\n".join(statements))
 
 
-def create_body(sql: str, table: str) -> str:
-    match = re.search(rf"CREATE TABLE edu\.{table} \((.*?)\); (?:CREATE|ALTER)", sql)
-    assert match, table
-    return match.group(1)
-
-
-def function_body(sql: str, name: str) -> str:
-    match = re.search(rf"CREATE FUNCTION edu\.{name}\((.*?)\$\$;", sql)
-    assert match, name
-    return match.group(1)
-
-
-def runtime_grants(sql: str) -> list[str]:
-    block = re.search(r"rolname = 'eduvia_runtime'\) THEN (.*?) END IF;", sql)
-    assert block
-    return re.findall(r"GRANT [^;]*? TO eduvia_runtime", block.group(1))
-
-
-def test_revision_chain(migration):
-    assert migration.revision == "0011_assessment"
-    assert migration.down_revision == "0010_generation_exams"
+def test_revision_chain_and_forward_only(migration):
+    assert migration.revision == "0011_retrieval"
+    assert migration.down_revision == "0010_knowledge"
     with pytest.raises(RuntimeError):
         migration.downgrade()
 
 
-@pytest.mark.parametrize("table", TENANT_TABLES)
-def test_every_table_is_tenant_scoped_with_force_rls(sql, table):
-    assert f"ALTER TABLE edu.{table} ENABLE ROW LEVEL SECURITY" in sql
-    assert f"ALTER TABLE edu.{table} FORCE ROW LEVEL SECURITY" in sql
-    policy = re.search(rf"CREATE POLICY {table}_tenant ON edu\.{table} FOR ALL (.*?);", sql)
-    assert policy, table
+def test_dimension_is_consistent_everywhere(migration, sql):
+    assert migration.EMBEDDING_DIMENSION == 1024
+    assert knowledge.EMBEDDING_DIMENSION == migration.EMBEDDING_DIMENSION
+    assert embeddings.EMBEDDING_DIMENSION == migration.EMBEDDING_DIMENSION
+    assert Settings(_env_file=None).embedding_dimension == migration.EMBEDDING_DIMENSION
+    assert "ADD COLUMN embedding public.vector(1024)" in sql
+    with pytest.raises(ValueError):
+        Settings(_env_file=None, embedding_dimension=1536)
+
+
+def test_lexical_column_is_generated_with_simple_config_and_gin(sql):
+    assert (
+        "ADD COLUMN search_vector tsvector GENERATED ALWAYS AS "
+        "(to_tsvector('simple'::regconfig, text)) STORED" in sql
+    )
+    assert "CREATE INDEX ix_document_chunks_search_vector ON edu.document_chunks USING gin" in sql
+    # Exact scan for the pilot: no ANN index that could post-filter authorized rows away.
+    assert not re.search(r"USING (hnsw|ivfflat)", sql, re.IGNORECASE)
+
+
+def test_embedding_identity_triple_and_chunk_update_guard(sql):
+    assert "ck_document_chunks_embedding_identity" in sql
+    assert "BEFORE UPDATE ON edu.document_chunks" in sql
+    guard = re.search(r"FUNCTION edu\.document_chunk_update_guard\(\)(.*?)END \$\$", sql)
+    assert guard
+    body = guard.group(1)
+    for column in ("text", "text_sha256", "document_version_id", "chunk_index", "page_no"):
+        assert f"NEW.{column}" in body and f"OLD.{column}" in body
+    assert "NEW.embedding" not in body  # the embedding triple is the only mutable part
+
+
+def test_withdrawn_status_is_terminal(sql):
+    assert "CHECK (status IN ('processing','active','failed','superseded','withdrawn'))" in sql
+    assert "OLD.status IN ('active','superseded') AND NEW.status = 'withdrawn'" in sql
+    assert "OLD.status = 'processing' AND NEW.status IN ('active','failed')" in sql
+    assert "withdrawn" in knowledge.VERSION_STATUSES
+    assert not re.search(r"OLD\.status = 'withdrawn'", sql)
+
+
+def test_embedding_runs_force_rls_and_composite_keys(sql):
+    assert "ALTER TABLE edu.embedding_runs ENABLE ROW LEVEL SECURITY" in sql
+    assert "ALTER TABLE edu.embedding_runs FORCE ROW LEVEL SECURITY" in sql
+    policy = re.search(
+        r"CREATE POLICY embedding_runs_tenant ON edu\.embedding_runs FOR ALL (.*?);", sql
+    )
+    assert policy
+    assert policy.group(1).count("current_setting('edu.current_workspace_id', true)") == 2
     assert policy.group(1).count("edu.can_read_workspace(workspace_id)") == 2
-    assert "workspace_id uuid NOT NULL REFERENCES edu.workspaces(id)" in create_body(sql, table)
-
-
-@pytest.mark.parametrize(
-    "table,fk",
-    [
-        ("assignments", "FOREIGN KEY (workspace_id, class_id) REFERENCES edu.classes"),
-        (
-            "assignments",
-            "FOREIGN KEY (workspace_id, exam_version_id) REFERENCES edu.exam_versions",
-        ),
-        (
-            "quiz_attempts",
-            "FOREIGN KEY (workspace_id, assignment_id, exam_version_id) "
-            "REFERENCES edu.assignments(workspace_id, id, exam_version_id)",
-        ),
-        ("quiz_attempts", "FOREIGN KEY (workspace_id, student_id) REFERENCES edu.students"),
-        (
-            "student_answers",
-            "FOREIGN KEY (workspace_id, attempt_id, exam_version_id) "
-            "REFERENCES edu.quiz_attempts(workspace_id, id, exam_version_id)",
-        ),
-        (
-            "student_answers",
-            "FOREIGN KEY (workspace_id, exam_version_id, exam_item_id) "
-            "REFERENCES edu.exam_items(workspace_id, exam_version_id, id)",
-        ),
-        (
-            "grading_results",
-            "FOREIGN KEY (workspace_id, attempt_id, supersedes_id) "
-            "REFERENCES edu.grading_results(workspace_id, attempt_id, id)",
-        ),
-        (
-            "grading_result_items",
-            "FOREIGN KEY (workspace_id, exam_version_id, exam_item_id) "
-            "REFERENCES edu.exam_items(workspace_id, exam_version_id, id)",
-        ),
-        (
-            "grades",
-            "FOREIGN KEY (workspace_id, attempt_id, grading_result_id) "
-            "REFERENCES edu.grading_results(workspace_id, attempt_id, id)",
-        ),
-    ],
-)
-def test_composite_tenant_foreign_keys(sql, table, fk):
-    assert fk in create_body(sql, table)
-
-
-def test_attempt_and_grade_uniqueness(sql):
-    attempts = create_body(sql, "quiz_attempts")
-    assert "UNIQUE (assignment_id, student_id, attempt_no)" in attempts
-    assert "UNIQUE (assignment_id, student_id, idempotency_key)" in attempts
     assert (
-        "CREATE UNIQUE INDEX uq_quiz_attempts_in_progress ON "
-        "edu.quiz_attempts(assignment_id, student_id) WHERE status = 'in_progress'" in sql
+        "FOREIGN KEY (workspace_id, document_version_id) "
+        "REFERENCES edu.document_versions(workspace_id, id)" in sql
     )
-    assert "UNIQUE (attempt_id, exam_item_id)" in create_body(sql, "student_answers")
-    assert "UNIQUE (attempt_id, run_key)" in create_body(sql, "grading_results")
-    assert "UNIQUE (attempt_id, revision_no)" in create_body(sql, "grades")
-    assert "CREATE UNIQUE INDEX uq_grades_current ON edu.grades(attempt_id) WHERE is_current" in sql
-    assert "max_attempts integer NOT NULL DEFAULT 1 CHECK (max_attempts BETWEEN 1 AND 5)" in sql
+    assert "CHECK (status IN ('pending','succeeded','failed'))" in sql
+    assert "CHECK ((status = 'failed') = (error_code IS NOT NULL))" in sql
 
 
-def test_release_policies_and_bounds(sql):
-    body = create_body(sql, "assignments")
-    assert "CHECK (score_release IN ('immediate','after_close','manual'))" in body
-    assert "CHECK (solution_release IN ('never','after_close','manual'))" in body
-    assert "score_release <> 'after_close' AND solution_release <> 'after_close'" in body
-    assert "CHECK (closes_at IS NULL OR closes_at > opens_at)" in body
-    grades = create_body(sql, "grades")
-    assert "score >= 0 AND score <= max_score" in grades
-    assert "approved_by_user_id IS NOT NULL AND reason IS NOT NULL" in grades
-
-
-def test_guards(sql):
-    assert "BEFORE INSERT OR UPDATE ON edu.assignments" in sql
-    assert "published assignment pin is immutable" in sql
-    assert "published closing time may only be extended" in sql
-    assert "archived assignment is immutable" in sql
-    assert "release stamps are immutable" in sql
-    assert "BEFORE UPDATE ON edu.quiz_attempts" in sql
-    assert "submitted attempt is frozen" in sql
-    assert "BEFORE INSERT OR UPDATE ON edu.student_answers" in sql
-    assert "answers are frozen once the attempt leaves in_progress" in sql
-    assert "BEFORE INSERT OR UPDATE ON edu.grades" in sql
-    assert "grade revisions are append-only" in sql
-    assert "grade release cannot be recalled" in sql
-
-
-def test_least_privilege_runtime_grants(sql):
-    grants = runtime_grants(sql)
-    assert not any("DELETE" in g.split(" ON ")[0] for g in grants)
-    assert (
-        "GRANT SELECT, INSERT ON edu.grading_results, edu.grading_result_items TO eduvia_runtime"
-        in grants
+def test_purge_function_is_narrow_security_definer(sql):
+    function = re.search(
+        r"CREATE FUNCTION edu\.purge_document_chunks\(p_document_id uuid\)(.*?)END \$\$", sql
     )
-    assert not any("grading_result" in g and "UPDATE" in g for g in grants)
-    assert re.search(r"REVOKE ALL ON [^;]*edu\.grades FROM eduvia_runtime", sql)
-    execute = next(g for g in grants if g.startswith("GRANT EXECUTE"))
-    for name in (*STUDENT_FUNCTIONS, "expire_attempts", "apply_due_releases"):
-        assert f"edu.{name}(" in execute, name
-    for internal in ("finalize_attempt", "attempt_snapshot_sha256", "assessment_actor_student"):
-        assert internal not in execute, internal
-
-
-@pytest.mark.parametrize("name", [*STUDENT_FUNCTIONS, "expire_attempts", "apply_due_releases"])
-def test_definer_functions_are_narrow(sql, name):
-    body = function_body(sql, name)
+    assert function
+    body = function.group(1)
+    assert "RETURNS integer" in body
     assert "SECURITY DEFINER SET search_path=pg_catalog,edu" in body
-    assert re.search(rf"ALTER FUNCTION edu\.{name}\([^)]*\) OWNER TO eduvia_identity_owner", sql)
-    assert re.search(rf"REVOKE ALL ON FUNCTION [^;]*edu\.{name}\(", sql)
-    assert "EXECUTE format" not in body and "EXECUTE '" not in body  # no dynamic SQL
+    assert "current_setting('edu.current_workspace_id', true)" in body
+    assert "edu.can_read_workspace(ws)" in body
+    assert "doc_status <> 'deleted'" in body
+    assert "DELETE FROM edu.document_chunks" in body
+    assert "SET status = 'withdrawn'" in body
+    assert "EXECUTE" not in body  # no dynamic SQL
+    assert "ALTER FUNCTION edu.purge_document_chunks(uuid) OWNER TO eduvia_identity_owner" in sql
+    assert "REVOKE ALL ON FUNCTION edu.purge_document_chunks(uuid) FROM PUBLIC" in sql
+    assert "REVOKE CREATE ON SCHEMA edu FROM eduvia_identity_owner" in sql
+    # No bypass policy for the definer role: tenant policies keep applying inside it.
+    assert not re.search(r"CREATE POLICY \w+ ON edu\.\w+ (FOR \w+ )?TO eduvia_identity_owner", sql)
 
 
-@pytest.mark.parametrize("name", STUDENT_FUNCTIONS)
-def test_student_functions_derive_the_student_from_verified_identity(sql, name):
-    body = function_body(sql, name)
-    assert "edu.actor_id()" in body or "edu.assessment_actor_student(" in body
-    assert "current_workspace_id" not in body  # never trusts a caller-chosen workspace
-
-
-@pytest.mark.parametrize(
-    "name",
-    [
-        "student_assignments",
-        "student_assignment_detail",
-        "student_attempt",
-        "student_attempt_items",
-        "student_start_attempt",
-        "student_save_answer",
-        "student_submit",
-    ],
-)
-def test_keys_never_leave_through_pre_release_functions(sql, name):
-    body = function_body(sql, name)
-    assert "exam_answer_keys" not in body
-    assert "correct_key" not in body and "explanation" not in body
-    assert "exam_keys_for_scoring" not in body
-
-
-def test_results_gate_keys_on_solution_release(sql):
-    body = function_body(sql, "student_results")
-    assert "solutions := asg.solutions_released_at IS NOT NULL" in body
-    keyed, unkeyed = body.split("ELSIF att.status IN ('submitted','graded') THEN")
-    assert "IF att.status IN ('submitted','graded') AND solutions THEN" in keyed
-    assert "exam_answer_keys" in keyed and "exam_answer_keys" not in unkeyed
-    assert "gr.released_at IS NOT NULL" in body
-    assert "'score', CASE WHEN released THEN g.score::text END" in body
-
-
-def test_attempt_items_rebuild_choices_without_extra_fields(sql):
-    body = function_body(sql, "student_attempt_items")
-    assert "jsonb_build_object('key', c.value->>'key', 'text', c.value->>'text')" in body
-
-
-def test_start_serializes_and_enforces_policy(sql):
-    body = function_body(sql, "student_start_attempt")
-    assert "pg_advisory_xact_lock(hashtext(" in body
-    assert "now_ts := clock_timestamp()" in body
-    assert "ERRCODE = 'EV011'" in body and "ERRCODE = 'EV012'" in body
-    assert "ERRCODE = 'EV013'" in body
-    assert "LEAST(asg.closes_at," in body
-    # The existing in-progress attempt is returned regardless of the new key.
-    assert "q.status = 'in_progress'" in body
-
-
-def test_writes_lock_the_attempt_and_check_fresh_deadline(sql):
-    for name in ("student_save_answer", "student_submit"):
-        body = function_body(sql, name)
-        assert "FOR UPDATE" in body
-        assert "now_ts := clock_timestamp()" in body
-        assert "interval '5 seconds'" in body
-    save = function_body(sql, "student_save_answer")
-    assert "ERRCODE = 'EV010'" in save and "ERRCODE = 'EV014'" in save
-    assert "ERRCODE = 'EV015'" in save and "ERRCODE = 'EV016'" in save
-    assert "p_client_sequence <= ans.client_sequence" in save
-
-
-def test_single_finalization_path(sql):
-    for name in ("student_submit", "expire_attempts"):
-        assert "edu.finalize_attempt(" in function_body(sql, name)
-    finalize = function_body(sql, "finalize_attempt")
-    assert "SECURITY DEFINER" not in finalize  # internal; executes only inside definers
-    assert "att.status <> 'in_progress' THEN RETURN NULL" in finalize
-    assert "edu.attempt_snapshot_sha256(att.id)" in finalize
-    assert "'system:attempt.grade:' || att.id::text" in finalize
-    assert "ON CONFLICT ON CONSTRAINT uq_background_jobs_idempotency DO NOTHING" in finalize
-    assert "FOR UPDATE SKIP LOCKED" in function_body(sql, "expire_attempts")
-    assert "LEAST(coalesce(p_now, clock_timestamp()), clock_timestamp())" in function_body(
-        sql, "expire_attempts"
+def test_runtime_grants_are_least_privilege(sql):
+    assert "IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'eduvia_runtime')" in sql
+    assert "GRANT SELECT, INSERT, UPDATE ON edu.embedding_runs TO eduvia_runtime" in sql
+    assert (
+        "GRANT UPDATE (embedding, embedding_model, embedding_version) "
+        "ON edu.document_chunks TO eduvia_runtime" in sql
     )
-    assert "WITH CHECK (kind = 'attempt.grade')" in sql
+    assert "GRANT EXECUTE ON FUNCTION edu.purge_document_chunks(uuid) TO eduvia_runtime" in sql
+    assert not re.search(r"GRANT[^;]*DELETE[^;]*TO eduvia_runtime", sql)
+    assert not re.search(r"GRANT UPDATE ON edu\.document_chunks", sql)
 
 
-def test_snapshot_function_matches_python_canonical_form(sql):
-    body = function_body(sql, "attempt_snapshot_sha256")
-    assert "a.exam_item_id::text || ':' || coalesce(a.response->>'selectedKey', '')" in body
-    assert "chr(10) ORDER BY a.exam_item_id" in body
-
-
-def test_schema_create_is_balanced(sql):
-    assert sql.count("GRANT CREATE ON SCHEMA edu TO eduvia_identity_owner") == sql.count(
-        "REVOKE CREATE ON SCHEMA edu FROM eduvia_identity_owner"
-    )
-
-
-@pytest.mark.parametrize("table", TENANT_TABLES)
-def test_models_match_migration_columns(sql, table):
-    model = Base.metadata.tables[f"edu.{table}"]
-    body = create_body(sql, table)
-    declared = re.findall(
-        r"(?:^\s*|, )([a-z_0-9]+) "
-        r"(?:uuid|text|integer|bigint|boolean|jsonb|bytea|timestamptz|numeric)",
-        body,
-    )
-    assert sorted(declared) == sorted(c.name for c in model.columns), table
+def test_embedding_run_model_matches_migration(sql):
+    columns = (
+        "id workspace_id document_version_id job_id model version status chunk_count units "
+        "provider_request_ids error_code created_at finished_at"
+    ).split()
+    model = Base.metadata.tables["edu.embedding_runs"]
+    assert [c.name for c in model.columns] == columns
+    body = re.search(r"CREATE TABLE edu\.embedding_runs \((.*?)\); CREATE INDEX", sql).group(1)
+    for column in columns:
+        assert re.search(rf"(^\s*|, ){column} ", body), column

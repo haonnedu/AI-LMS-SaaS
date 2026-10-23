@@ -46,3 +46,22 @@ class TokenVerifier:
             raise IdentityUnavailable("Identity provider unavailable") from exc
         except jwt.PyJWTError as exc:
             raise TokenError("Invalid token") from exc
+
+
+class TokenVerifierSet:
+    """Unverified issuer only selects a fixed verifier; it never supplies a key URL."""
+
+    def __init__(self, verifiers: list[TokenVerifier]):
+        self.verifiers = {verifier.issuer: verifier for verifier in verifiers}
+
+    def verify_token(self, token: str) -> dict[str, Any]:
+        if len(token) > 16384:
+            raise TokenError("Invalid token")
+        try:
+            issuer = jwt.decode(token, options={"verify_signature": False}).get("iss")
+            verifier = self.verifiers.get(issuer) if isinstance(issuer, str) else None
+        except jwt.PyJWTError:
+            raise TokenError("Invalid token") from None
+        if verifier is None:
+            raise TokenError("Invalid issuer")
+        return verifier.verify_token(token)

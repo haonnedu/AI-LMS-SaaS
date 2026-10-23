@@ -1,4 +1,4 @@
-"""Durable job state and the lean usage ledger (migration 0006_jobs_storage)."""
+"""Durable job state and the lean usage ledger (migration 0009_jobs_storage)."""
 
 from sqlalchemy import (
     BigInteger,

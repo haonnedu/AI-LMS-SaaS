@@ -5,9 +5,10 @@ statically but expensive to lose:
 
 (a) answer-key leak scan over the generated OpenAPI schema of the live FastAPI app;
 (b) every workspace-scoped operation documents 401 and 404 (non-member => 404, never 403);
-(c) FORCE ROW LEVEL SECURITY on every table created by migrations 0005-0011 and no runtime
+(c) FORCE ROW LEVEL SECURITY on every table created by migrations 0008-0014 and no runtime
     DELETE (direct grant or surviving default privilege) on append-only/secret tables;
-(d) forward-only policy: every migration after 0005 has a ``downgrade`` that only raises;
+(d) forward-only policy: every migration after 0008 has a ``downgrade`` that only raises
+(Duc's identity migrations 0005-0007 are forward-only as well);
 (e) exactly one Alembic head.
 
 They complement, not replace, the PostgreSQL integration suites gated on
@@ -274,7 +275,7 @@ def rendered_upgrade(path: Path) -> str:
 
 @pytest.fixture(scope="module")
 def tenant_sql() -> dict[str, str]:
-    return {p.name: rendered_upgrade(p) for p in migration_files() if 5 <= number(p) <= 11}
+    return {p.name: rendered_upgrade(p) for p in migration_files() if 8 <= number(p) <= 14}
 
 
 def created_tables(sql: str) -> dict[str, str]:
@@ -298,7 +299,7 @@ def runtime_table_grants(sql: str) -> list[tuple[str, list[str]]]:
 # ---- (c) FORCE RLS and no runtime DELETE on protected tables -----------------------------------
 
 
-def test_every_table_from_0005_to_0011_forces_rls(tenant_sql):
+def test_every_table_from_0008_to_0014_forces_rls(tenant_sql):
     known("c-force")
     combined = " ".join(tenant_sql.values())
     tables = {}
@@ -366,9 +367,9 @@ def _downgrade_only_raises(source: str) -> bool:
 
 
 @pytest.mark.parametrize(
-    "path", [p for p in migration_files() if number(p) > 5], ids=lambda p: p.stem
+    "path", [p for p in migration_files() if number(p) > 8], ids=lambda p: p.stem
 )
-def test_migrations_after_0005_are_forward_only(path):
+def test_migrations_after_0008_are_forward_only(path):
     known(f"d-{path.stem}")
     assert _downgrade_only_raises(path.read_text("utf-8")), f"{path.name} must only raise"
 

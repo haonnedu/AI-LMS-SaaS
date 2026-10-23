@@ -1,6 +1,6 @@
 """Identity metadata shared by runtime and Alembic."""
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.infrastructure.database import Base
@@ -19,6 +19,27 @@ class User(Base):
         DateTime(timezone=True), nullable=False, server_default=func.clock_timestamp()
     )
     updated_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.clock_timestamp()
+    )
+
+
+class UserIdentity(Base):
+    __tablename__ = "user_identities"
+    issuer = Column(String(512), primary_key=True)
+    subject = Column(String(255), primary_key=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("edu.users.id"), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.clock_timestamp()
+    )
+
+
+class IdentityTransfer(Base):
+    __tablename__ = "identity_transfers"
+    proof_id = Column(Text, primary_key=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("edu.users.id"), nullable=False)
+    target_issuer = Column(Text, nullable=False)
+    target_subject = Column(Text, nullable=False)
+    created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.clock_timestamp()
     )
 

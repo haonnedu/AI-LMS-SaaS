@@ -2,7 +2,7 @@
 
 Services raise ``AssessmentError`` subclasses with Vietnamese client messages; routers turn
 them into the standard error envelope. Database outcomes of the student SECURITY DEFINER
-functions (migration 0011) are mapped by ``map_db_error``.
+functions (migration 0014) are mapped by ``map_db_error``.
 """
 
 from datetime import timedelta
@@ -10,7 +10,7 @@ from typing import Any, Protocol
 
 from sqlalchemy.exc import DBAPIError
 
-# Transport grace after ``deadline_at`` (mirrors ``interval '5 seconds'`` in migration 0011).
+# Transport grace after ``deadline_at`` (mirrors ``interval '5 seconds'`` in migration 0014).
 GRACE = timedelta(seconds=5)
 STAFF_ROLES = frozenset({"owner", "admin", "teacher"})
 

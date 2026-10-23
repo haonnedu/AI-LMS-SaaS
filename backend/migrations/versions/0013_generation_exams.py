@@ -25,8 +25,8 @@
 
 from alembic import op
 
-revision = "0010_generation_exams"
-down_revision = "0009_authoring"
+revision = "0013_generation_exams"
+down_revision = "0012_authoring"
 branch_labels = None
 depends_on = None
 

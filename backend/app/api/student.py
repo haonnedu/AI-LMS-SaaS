@@ -2,7 +2,7 @@
 
 Students are not workspace members, so these routes do NOT use ``workspace_transaction``.
 Each request opens one transaction, applies only the verified identity (``current_user`` ->
-``set_identity``) and calls the narrow SECURITY DEFINER functions of migration 0011, which
+``set_identity``) and calls the narrow SECURITY DEFINER functions of migration 0014, which
 derive the student from that identity. IDs of other students' attempts answer 404.
 
 None of the DTOs used before solution release has a key or explanation field. The results DTO

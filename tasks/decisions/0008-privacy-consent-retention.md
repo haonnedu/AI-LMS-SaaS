@@ -1,7 +1,7 @@
-# 0008 — Quyền riêng tư, đồng ý của người giám hộ và lưu giữ dữ liệu (PILOT-05)
+# 0011 — Quyền riêng tư, đồng ý của người giám hộ và lưu giữ dữ liệu (PILOT-05)
 
 > Ngày: 2026-10-23. Trạng thái: **Đề xuất kỹ thuật, chưa được duyệt.** Owner nghiệp vụ/pháp lý: —.
-> Phạm vi: dữ liệu do schema `edu` (migrations 0001–0011), Redis phiên, object storage, log và Auth0 nắm giữ ở thời điểm viết.
+> Phạm vi: dữ liệu do schema `edu` (migrations 0001–0014), Redis phiên, object storage, log và Auth0 nắm giữ ở thời điểm viết.
 
 ## 0. Tuyên bố bắt buộc
 
@@ -24,6 +24,8 @@ Bảng này được `backend/tests/test_privacy_inventory.py` đối chiếu v�
 | Bảng | Cột cá nhân / liên kết người | Loại | Lưu giữ đề xuất (chờ duyệt) | Đường xóa hiện có | Thiếu |
 |---|---|---|---|---|---|
 | `edu.users` | `email`, `display_name`, `provider_issuer`, `provider_sub` | PII-GV và PII-HS (học sinh cũng là user) | Đến khi tài khoản bị xóa + 30 ngày | Không. Chỉ có `is_active=false` (không qua API). `edu.bootstrap_identity` ghi đè `email`/`display_name` ở mỗi lần đăng nhập | Function SECURITY DEFINER `edu.erase_user` (pseudonymize email/display_name, giữ id), job xóa user Auth0 qua Management API |
+| `edu.user_identities` | `user_id`, `issuer`, `subject` | PII-GV và PII-HS (liên kết đăng nhập, migration 0005 của Duc) | Theo vòng đời tài khoản | Không | Xóa alias khi erase user |
+| `edu.identity_transfers` | `user_id`, `target_issuer`, `target_subject`, `proof_id` | PII-GV (audit chuyển identity, migration 0006) | 1 năm cho audit | Không | Purge sau hạn |
 | `edu.workspaces` | `personal_owner_user_id`, `name` | PII-GV (liên kết) | Theo vòng đời workspace | Không (chỉ `is_active`) | Workflow đóng workspace + xóa dữ liệu tenant |
 | `edu.workspace_members` | `user_id`, `role`, `status` | PII-GV (liên kết) | Theo membership; giữ bản ghi thu hồi cho audit | Không có DELETE qua API | — |
 | `edu.classes` | `created_by_user_id`, `name` | PII-GV (liên kết) | Năm học + 1 năm | Lưu trữ (`archived`), không xóa | Purge lớp đã lưu trữ quá hạn |

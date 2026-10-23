@@ -24,8 +24,8 @@ keys, and versioned exam blueprints (AUTHR-01/02, QB-01/02, BP-01/02).
 
 from alembic import op
 
-revision = "0009_authoring"
-down_revision = "0008_retrieval"
+revision = "0012_authoring"
+down_revision = "0011_retrieval"
 branch_labels = None
 depends_on = None
 

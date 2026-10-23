@@ -4,7 +4,7 @@ const service=process.argv[2];
 const root=resolve("..");
 const python=process.env.AUTH_TEST_PYTHON || resolve(root,"backend",process.platform==="win32"?".venv/Scripts/python.exe":".venv/bin/python");
 let command=python, args=[], cwd=root;
-const env={...process.env,PYTHONPATH:resolve(root,"backend"),APP_ENV:"test",DATABASE_URL:process.env.AUTH_E2E_DATABASE_URL||"postgresql+psycopg://eduvia_runtime:runtime_test_only@127.0.0.1:5434/eduvia_auth_test",AUTH_ISSUER:"http://localhost:9101/",AUTH_JWKS_URL:"http://localhost:9101/jwks",AUTH_AUDIENCE:"https://eduvia-api"};
+const env={...process.env,AUTH_PROVIDER:"auth0",AUTH0_MIGRATION_ENABLED:"0",LEGACY_AUTH_ISSUER:"",LEGACY_AUTH_AUDIENCE:"",LEGACY_AUTH_JWKS_URL:"",OIDC_FIXTURE_CALLBACK:"http://127.0.0.1:3105/auth/callback",PYTHONPATH:resolve(root,"backend"),APP_ENV:"test",DATABASE_URL:process.env.AUTH_E2E_DATABASE_URL||"postgresql+psycopg://eduvia_runtime:runtime_test_only@127.0.0.1:5434/eduvia_auth_test",AUTH_ISSUER:"http://localhost:9101/",AUTH_JWKS_URL:"http://localhost:9101/jwks",AUTH_AUDIENCE:"https://eduvia-api"};
 if(service==="oidc") args=[resolve(root,"frontend/tests/auth/oidc.py")];
 else if(service==="api") args=[resolve(root,"frontend/tests/auth/api.py")];
 else {

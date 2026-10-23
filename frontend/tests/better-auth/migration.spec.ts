@@ -1,0 +1,35 @@
+import { expect, test } from "@playwright/test";
+import { resetRates } from "./reset-rates";
+test.beforeEach(resetRates);
+
+test("Auth0 reauthentication transfers the existing user and workspace to Better Auth", async ({ page, request }) => {
+  const email = "migration@example.test", password = "New-migration-password!";
+  const response = await request.post("/api/auth/sign-up/email", { headers: { Origin: "http://127.0.0.1:3106" }, data: { email, password, name: "Migrated Teacher", callbackURL: "/login" } });
+  expect(response.status()).toBe(200);
+  const messages: string[] = await (await request.get("http://127.0.0.1:9112")).json();
+  const decoded = messages.filter(m => m.includes(email)).at(-1)!.replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  await page.goto(decoded.match(/http:\/\/127\.0\.0\.1:3106\/api\/auth\/verify-email[^\s<>]*/)![0]);
+  await page.goto("/login");
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await page.getByRole("link", { name: "Chuyển tài khoản cũ để giữ workspace" }).click();
+  await page.getByRole("link", { name: "1. Xác thực lại tài khoản Auth0 cũ" }).click();
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Password", { exact: true }).fill("Test-password-123!");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page).toHaveURL(/\/account\/migrate$/);
+  await page.getByRole("button", { name: "2. Xác nhận chuyển và đăng xuất" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Tiếp tục", exact: true }).click();
+  await expect(page).toHaveURL(/\/onboarding$/);
+  await page.getByRole("button", { name: "Mở workspace cá nhân" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  expect((await (await page.request.get("/api/backend/me")).json()).id).toBe("11111111-1111-4111-8111-111111111111");
+  const workspaces = await (await page.request.get("/api/backend/workspaces")).json();
+  expect(workspaces.items).toHaveLength(1);
+  expect(workspaces.items[0].id).toBe("22222222-2222-4222-8222-222222222222");
+});

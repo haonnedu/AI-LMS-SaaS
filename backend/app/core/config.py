@@ -22,6 +22,9 @@ class Settings(BaseSettings):
         default="development", validation_alias="APP_ENV"
     )
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    legacy_auth_issuer: str | None = None
+    legacy_auth_audience: str | None = None
+    legacy_auth_jwks_url: str | None = None
     auth_issuer: str | None = None
     auth_audience: str | None = None
     auth_jwks_url: str | None = None
@@ -51,7 +54,7 @@ class Settings(BaseSettings):
     embedding_revision: str = Field(default="1", pattern=r"^[A-Za-z0-9._-]{1,16}$")
     embedding_base_url: str | None = None
     embedding_api_key: SecretStr | None = None
-    # Fixed by migration 0008 (vector(1024)); another value needs a new migration + re-embed.
+    # Fixed by migration 0011 (vector(1024)); another value needs a new migration + re-embed.
     embedding_dimension: int = 1024
     embedding_timeout_seconds: float = Field(default=20, ge=1, le=120)
     embedding_batch_size: int = Field(default=64, ge=1, le=64)
@@ -114,10 +117,24 @@ class Settings(BaseSettings):
         auth_values = (self.auth_issuer, self.auth_audience, self.auth_jwks_url)
         if any(auth_values) and not all(auth_values):
             raise ValueError("Set AUTH_ISSUER, AUTH_AUDIENCE and AUTH_JWKS_URL together")
-        for endpoint in (self.auth_issuer, self.auth_jwks_url):
+        legacy_values = (
+            self.legacy_auth_issuer,
+            self.legacy_auth_audience,
+            self.legacy_auth_jwks_url,
+        )
+        if any(legacy_values) and (not all(legacy_values) or not self.auth_issuer):
+            raise ValueError("Legacy identity requires a complete primary and legacy verifier")
+        if self.legacy_auth_issuer and self.legacy_auth_issuer == self.auth_issuer:
+            raise ValueError("Identity issuers must be distinct")
+        for endpoint in (
+            self.auth_issuer,
+            self.auth_jwks_url,
+            self.legacy_auth_issuer,
+            self.legacy_auth_jwks_url,
+        ):
             if endpoint:
                 parsed = urlsplit(endpoint)
-                local_test = self.environment == "test" and parsed.hostname in {
+                local_test = self.environment != "production" and parsed.hostname in {
                     "127.0.0.1",
                     "localhost",
                 }
@@ -130,7 +147,7 @@ class Settings(BaseSettings):
                 ):
                     raise ValueError("Identity endpoints require fixed HTTPS URLs")
         if self.embedding_dimension != 1024:
-            raise ValueError("EMBEDDING_DIMENSION is fixed at 1024 by migration 0008_retrieval")
+            raise ValueError("EMBEDDING_DIMENSION is fixed at 1024 by migration 0011_retrieval")
         if self.embedding_provider == "openai_compatible":
             if not self.embedding_base_url or not self.embedding_api_key:
                 raise ValueError("openai_compatible embeddings need EMBEDDING_BASE_URL and key")

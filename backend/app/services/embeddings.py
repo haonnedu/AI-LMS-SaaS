@@ -37,7 +37,7 @@ from app.services.chunking import estimate_tokens
 
 logger = logging.getLogger("eduvia.embeddings")
 
-EMBEDDING_DIMENSION = 1024  # fixed by migration 0008_retrieval
+EMBEDDING_DIMENSION = 1024  # fixed by migration 0011_retrieval
 MAX_BATCH = 64
 MAX_ATTEMPTS = 3
 MAX_INPUT_CHARS = 8000

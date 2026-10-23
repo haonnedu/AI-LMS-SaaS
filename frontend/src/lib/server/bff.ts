@@ -1,6 +1,5 @@
-import { AccessTokenError, AccessTokenErrorCode } from "@auth0/nextjs-auth0/errors";
 import { NextResponse } from "next/server";
-import { auth, backend, HttpError, lockedSession, requireSession } from "./auth";
+import { accessToken, backend, backendOrigin, HttpError, lockedSession } from "./auth";
 import { allowQuery, isInviteToken, isUuid, pickUploadHeaders, QUERY_RULES } from "./validation";
 
 export type Params = Promise<Record<string, string>>;
@@ -81,16 +80,8 @@ export async function csvImport(request: Request, path: string) {
 /** GET that relays a text/csv upstream body (backend() only supports JSON). Reuses auth.ts session + token handling. */
 export async function getCsv(request: Request, path: string) {
   void request;
-  const token = await lockedSession(async () => {
-    try { return (await auth().getAccessToken()).token; }
-    catch (error) {
-      if (error instanceof AccessTokenError && ([AccessTokenErrorCode.MISSING_SESSION, AccessTokenErrorCode.MISSING_REFRESH_TOKEN, AccessTokenErrorCode.SESSION_EXPIRED].includes(error.code as AccessTokenErrorCode) || error.cause?.code === "invalid_grant")) throw new HttpError(401, "session_expired", "Phiên đã hết hạn. Vui lòng đăng nhập lại.");
-      throw new HttpError(503, "refresh_unavailable", "Chưa thể gia hạn phiên. Vui lòng thử lại.");
-    }
-  });
-  await auth().updateSession(await requireSession());
-  const base = new URL(process.env.API_INTERNAL_URL || "http://127.0.0.1:8000");
-  if (!["http:", "https:"].includes(base.protocol) || base.username || base.password) throw new Error("invalid_backend_origin");
+  const token = await lockedSession(() => accessToken());
+  const base = backendOrigin();
   const response = await fetch(new URL(path, base), { method: "GET", headers: { Authorization: `Bearer ${token}`, Accept: "text/csv, application/json" }, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(30000) });
   const type = response.headers.get("content-type") || "";
   if (response.ok && type.toLowerCase().startsWith("text/csv")) {

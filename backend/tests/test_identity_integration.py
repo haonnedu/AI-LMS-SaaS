@@ -30,6 +30,7 @@ def database(tmp_path_factory):
     assert ADMIN_URL and ADMIN_URL.rsplit("/", 1)[-1].endswith("_test"), "Test database required"
     engine = create_engine(ADMIN_URL)
     with engine.begin() as db:
+        db.execute(text("DROP SCHEMA IF EXISTS auth CASCADE"))
         db.execute(text("DROP SCHEMA IF EXISTS edu CASCADE"))
         db.execute(text("DROP TABLE IF EXISTS public.alembic_version"))
         db.execute(
@@ -152,6 +153,71 @@ async def api(database):
             yield client, headers, app
 
 
+async def test_transfer_preserves_uuid_and_workspace(api, database):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    from app.core.auth import TokenVerifier
+
+    client, headers, app = api
+    settings = app.state.settings
+    settings.legacy_auth_issuer = "https://legacy.example/"
+    verifier = TokenVerifier(
+        settings.auth_issuer + "/migration",
+        settings.auth_audience + "/migration",
+        "https://keys.example/jwks",
+    )
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    verifier.jwks.get_signing_key_from_jwt = Mock(
+        return_value=SimpleNamespace(key=key.public_key())
+    )
+    app.state.migration_verifier = verifier
+    with database.connect() as db:
+        source = db.execute(
+            text(
+                "SELECT u.id,w.id AS workspace FROM edu.users u "
+                "JOIN edu.workspaces w ON w.personal_owner_user_id=u.id "
+                "WHERE u.provider_sub='legacy-sub'"
+            )
+        ).one()
+    target = "transfer-" + str(uuid4())
+    now = int(time.time())
+    claims = {
+        "iss": verifier.issuer,
+        "aud": verifier.audience,
+        "sub": target,
+        "iat": now,
+        "exp": now + 300,
+        "jti": str(uuid4()),
+        "purpose": "identity_transfer",
+        "source_issuer": settings.legacy_auth_issuer,
+        "source_subject": "legacy-sub",
+    }
+    proof = jwt.encode(claims, key, algorithm="RS256", headers={"kid": "migration"})
+    response = await client.post("/v1/auth/migrate", headers=headers(target), json={"proof": proof})
+    assert response.status_code == 200, response.text
+    assert response.json()["id"] == str(source.id)
+    # Retrying the exact proof is idempotent, and ordinary bootstrap retains the old ownership.
+    assert (
+        await client.post("/v1/auth/migrate", headers=headers(target), json={"proof": proof})
+    ).status_code == 200
+    result = (await client.post("/v1/auth/bootstrap", headers=headers(target))).json()
+    assert result["user"]["id"] == str(source.id)
+    assert result["personalWorkspace"]["id"] == str(source.workspace)
+    assert (
+        await client.post("/v1/auth/migrate", headers=headers("attacker"), json={"proof": proof})
+    ).status_code == 401
+    conflict = "conflict-" + str(uuid4())
+    assert (await client.post("/v1/auth/bootstrap", headers=headers(conflict))).status_code == 200
+    claims.update(sub=conflict, jti=str(uuid4()))
+    conflicting_proof = jwt.encode(claims, key, algorithm="RS256", headers={"kid": "migration"})
+    assert (
+        await client.post(
+            "/v1/auth/migrate", headers=headers(conflict), json={"proof": conflicting_proof}
+        )
+    ).status_code == 409
+
+
 async def test_bootstrap_concurrency_and_identity(api, database):
     client, headers, _ = api
     subject = "concurrent-" + str(uuid4())
@@ -234,6 +300,14 @@ async def test_runtime_cannot_change_roles_and_rollback(api, database):
         with pytest.raises(DBAPIError):
             async with session.begin():
                 await session.execute(text("UPDATE edu.workspace_members SET role='owner'"))
+        for statement in (
+            "UPDATE edu.user_identities SET subject='forged'",
+            "DELETE FROM edu.identity_transfers",
+            'SELECT id FROM auth."user"',
+        ):
+            with pytest.raises(DBAPIError):
+                async with session.begin():
+                    await session.execute(text(statement))
     with database.connect() as db:
         assert (
             db.scalar(text("SELECT count(*) FROM edu.users WHERE provider_sub=:s"), {"s": subject})

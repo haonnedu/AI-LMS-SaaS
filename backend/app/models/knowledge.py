@@ -1,8 +1,8 @@
-"""Curriculum metadata, immutable document versions and chunks (migrations 0007_knowledge,
-0008_retrieval).
+"""Curriculum metadata, immutable document versions and chunks (migrations 0010_knowledge,
+0011_retrieval).
 
 The authoritative DDL, RLS policies and immutability triggers live in the migrations; these
-mappings mirror their columns and constraint names. The 0008 chunk columns (``search_vector``,
+mappings mirror their columns and constraint names. The 0011 chunk columns (``search_vector``,
 ``embedding``, ``embedding_model``, ``embedding_version``) are deliberately NOT mapped on
 ``DocumentChunk``: no pgvector Python adapter is installed, so the embedding stage and retrieval
 address them with explicit SQL (``app.services.indexing`` / ``app.services.retrieval``), and the
@@ -30,7 +30,7 @@ from app.infrastructure.database import Base
 
 VERSION_STATUSES = ("processing", "active", "failed", "superseded", "withdrawn")
 EMBEDDING_RUN_STATUSES = ("pending", "succeeded", "failed")
-# Fixed by migration 0008 (``vector(1024)``); changing it needs a new migration + full re-embed.
+# Fixed by migration 0011 (``vector(1024)``); changing it needs a new migration + full re-embed.
 EMBEDDING_DIMENSION = 1024
 RIGHTS_SCOPES = ("private",)
 
@@ -173,7 +173,7 @@ class DocumentCurriculumTag(Base):
 
 
 class EmbeddingRun(Base):
-    """One embedding attempt for a version (0008). Never stores texts, only counts/IDs."""
+    """One embedding attempt for a version (0011). Never stores texts, only counts/IDs."""
 
     __tablename__ = "embedding_runs"
     __table_args__ = (

@@ -8,8 +8,8 @@ member of the teacher's workspace and RLS would otherwise hide the invitation ro
 
 from alembic import op
 
-revision = "0005_classes"
-down_revision = "0004_auth_identity"
+revision = "0008_classes"
+down_revision = "0007_auth_revocation"
 branch_labels = None
 depends_on = None
 

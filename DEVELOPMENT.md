@@ -12,11 +12,11 @@ State of the `feat/m5-m6-ui-m7-pilot-readiness` branch (2026-10-23). "Implemente
 - **AI drafts and exams (M4):** generation jobs with provenance (prompt version, model, source chunk hashes), a fake LLM for development/tests and an Anthropic adapter; drafts are never auto-published. Exams built from blueprints or question lists, immutable published snapshots with answer keys, DOCX/PDF export for teacher/student audiences.
 - **Assignments and assessment (M5/M6):** assignments pinned to a published exam version, student start/autosave/submit only through SECURITY DEFINER functions (idempotent, deadline-aware), deterministic grading jobs, append-only grade revisions, teacher overrides with a reason, separate score and solution release, results CSV.
 - **Frontend:** teacher dashboard, library, lessons, questions, blueprints and classes screens and student assignment/quiz/results screens are under active development; several pages outside these flows still show preview sample data.
-- **Pilot readiness (M7, documents and gates):** static QA gates (`backend/tests/test_qa_gates.py`), alert checks (`deploy/alerts/`), runbooks (`deploy/runbooks/`), restore drill (`deploy/restore-drill.sh`), release checklist (`deploy/CHECKLIST-release.md`), threat model and privacy inventory (`tasks/decisions/0007`, `0008`), and a skipped-by-default Playwright journey (`frontend/tests/e2e/`).
+- **Pilot readiness (M7, documents and gates):** static QA gates (`backend/tests/test_qa_gates.py`), alert checks (`deploy/alerts/`), runbooks (`deploy/runbooks/`), restore drill (`deploy/restore-drill.sh`), release checklist (`deploy/CHECKLIST-release.md`), threat model and privacy inventory (`tasks/decisions/0007`, `0011`), and a skipped-by-default Playwright journey (`frontend/tests/e2e/`).
 
 Not yet verified or not yet present:
 
-- The PostgreSQL integration suites for migrations 0005–0011 (`backend/tests/test_*_integration.py`) skip without `AUTH_TEST_DATABASE_URL`, and CI's `auth-integration` job runs only the identity/bootstrap/auth tests. RLS, triggers, definer functions and locking of classes, jobs, knowledge, authoring, generation and assessment are therefore unproven on a real database by the pipeline.
+- The PostgreSQL integration suites for migrations 0008–0014 (`backend/tests/test_*_integration.py`) skip without `AUTH_TEST_DATABASE_URL`, and CI's `auth-integration` job runs only the identity/bootstrap/auth tests. RLS, triggers, definer functions and locking of classes, jobs, knowledge, authoring, generation and assessment are therefore unproven on a real database by the pipeline.
 - The pilot E2E journey has not been run. No real Auth0 tenant, LLM or embedding provider smoke has been recorded.
 - Staging: `compose.staging.yaml` does not pass embedding/LLM settings (production settings then refuse to start the API), runs no Celery beat, and has no object storage or automated backups.
 - No consent workflow for minors, no erasure/export workflow for student data, no CSP/HSTS headers, no centralized logs or audit table. Billing, OMR and the student self-study service are not started.
@@ -225,3 +225,7 @@ The disposable environment file is removed at the end. Do not share it while a r
 ## Historical scaffold validation
 
 The original scaffold was checked with Node 24/Python 3.12, including 16 backend tests and four initial page routes. That record predates the identity migration, expanded preview UI and Docker-backed verification. It is historical context, not evidence for the current revision; use the linked handoffs and current CI runs for acceptance.
+
+### Better Auth + Account Center (2026-10-23)
+
+The user approved replacing Auth0 with Better Auth and retaining legacy workspaces through an explicit two-session migration gate. [Setup/cutover](deploy/better-auth/README.md), [review evidence for Hào](discuss/2026-10-23-better-auth-account-center.md). Local `.env` and existing user database have not been switched by implementation. Do not run backend integration and either browser suite concurrently: they share a disposable auth test database. Secrets and real Google/SMTP setup stay outside Git.
