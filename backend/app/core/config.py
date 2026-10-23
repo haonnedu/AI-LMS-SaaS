@@ -58,6 +58,19 @@ class Settings(BaseSettings):
     # Semantic candidates farther than this cosine distance are not evidence (abstention).
     # Model-dependent: calibrate with the RAG eval set when the provider is chosen.
     retrieval_max_cosine_distance: float = Field(default=0.8, gt=0, le=2)
+    # AI drafting (AUTHR-03). ``fake`` is a deterministic offline provider for development and
+    # tests; production refuses it when the provider is built (``llm.get_llm_provider``) so an
+    # unconfigured deployment fails AI jobs with ``provider_unavailable`` instead of inventing
+    # drafts. Manual authoring never depends on these settings.
+    llm_provider: Literal["fake", "anthropic"] = "fake"
+    llm_model: str = Field(default="claude-sonnet-5-5", min_length=1, max_length=128)
+    llm_api_key: SecretStr | None = None
+    llm_max_output_tokens: int = Field(default=4000, ge=256, le=16000)
+    llm_max_input_tokens: int = Field(default=12000, ge=1000, le=200000)
+    llm_timeout_seconds: float = Field(default=60, ge=5, le=300)
+    llm_units_per_request: int = Field(default=10, ge=1, le=1000)
+    # Anthropic server-side refusal fallback (beta header + ``fallbacks: "default"``).
+    llm_server_fallback: bool = True
 
     @field_validator("database_url")
     @classmethod
@@ -135,6 +148,8 @@ class Settings(BaseSettings):
                 or parsed.fragment
             ):
                 raise ValueError("EMBEDDING_BASE_URL requires a fixed HTTPS URL")
+        if self.llm_provider == "anthropic" and not self.llm_api_key:
+            raise ValueError("LLM_PROVIDER=anthropic requires LLM_API_KEY")
         if bool(self.s3_access_key_id) != bool(self.s3_secret_access_key):
             raise ValueError("Set both S3 credential fields or use the default credential chain")
         if self.environment == "production":

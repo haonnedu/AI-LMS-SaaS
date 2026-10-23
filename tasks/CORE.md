@@ -74,24 +74,24 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 | KNOW-03 | review | Hao | KNOW-02 | Immutable document versions + activation transaction; failed ingest không thay active version. (`document_versions` immutable, partial unique active, trigger chuyển trạng thái; ingest thất bại không thay active version.) |
 | KNOW-04 | review | Hao | KNOW-03 | Sandboxed PDF-text/DOCX/TXT parsing, resource limits và malformed files tests; scan PDF chưa OCR hiển thị unsupported. (Parser TXT/DOCX (stdlib, chống zip bomb, timeout 30s); PDF cần thêm `pypdf` (chưa thêm dependency), PDF scan → `no_text_layer` hiển thị unsupported.) |
 | KNOW-05 | review | Hao | KNOW-04 | Versioned chunking pipeline; preserve page/section offsets, dedupe và reproducible fixtures. (`document_chunks` theo version, offsets page/section/char, dedupe, golden fixtures `tests/fixtures/chunking`.) |
-| KNOW-06 | todo | — | KNOW-05 | Embedding provider adapter + model/index versions; retries metered, reindex không trộn incompatible vectors. |
-| KNOW-07 | todo | — | KNOW-06 | Authorized hybrid retrieval/reranking; tenant/license filters trước trả context, cross-tenant negative evals. |
-| KNOW-08 | todo | — | KNOW-07 | Citation resolver và source preview UI; snippets map đúng version/page, không bịa nguồn khi thiếu context. |
-| KNOW-09 | todo | — | KNOW-08 | Library search/version/delete UI + deletion jobs; remove index/cache/blob theo retention policy, replay không hồi sinh deleted data. |
-| KNOW-10 | todo | — | KNOW-09 | RAG eval dataset được phép dùng; retrieval/citation/abstention và prompt-injection tests, ngưỡng pilot được phê duyệt. |
+| KNOW-06 | review | Hao | KNOW-05 | Embedding provider adapter + model/index versions; retries metered, reindex không trộn incompatible vectors. (Adapter `services/embeddings.py`: local hash embedder (dev/test, production từ chối) + OpenAI-compatible HTTP; migration 0008 cột vector(1024) + embedding_runs; provider/model CHƯA chốt.) |
+| KNOW-07 | review | Hao | KNOW-06 | Authorized hybrid retrieval/reranking; tenant/license filters trước trả context, cross-tenant negative evals. (`services/retrieval.py`: hybrid tsvector(simple)+cosine, RRF, chỉ version active/attested/private, đúng model version; rỗng = abstain, không nới scope.) |
+| KNOW-08 | review | Hao | KNOW-07 | Citation resolver và source preview UI; snippets map đúng version/page, không bịa nguồn khi thiếu context. (`services/citations.py` + API citations/{chunkId}; superseded → 404 trừ allowSuperseded; UI drawer `/dashboard/library`.) |
+| KNOW-09 | review | Hao | KNOW-08 | Library search/version/delete UI + deletion jobs; remove index/cache/blob theo retention policy, replay không hồi sinh deleted data. (UI thư viện + xóa mềm; `edu.purge_document_chunks` SECURITY DEFINER trong job delete, replay idempotent.) |
+| KNOW-10 | review | Hao | KNOW-09 | RAG eval dataset được phép dùng; retrieval/citation/abstention và prompt-injection tests, ngưỡng pilot được phê duyệt. (`app/eval/rag_eval.py` + 18 câu tiếng Việt seed (12 factual/3 abstain/3 injection); ngưỡng CHƯA được duyệt, chỉ báo cáo.) |
 
 ## M4 — Authoring và exam blueprint
 
 | ID | Trạng thái | Owner | Phụ thuộc | Task / nghiệm thu |
 |---|---|---|---|---|
-| AUTHR-01 | todo | — | M3 | Content/revision/review schema + optimistic concurrency; version history và editing conflict tests. |
-| AUTHR-02 | todo | — | AUTHR-01 | Manual lesson/study-guide editor và autosave; AI outage vẫn soạn/sửa/nộp duyệt được. |
+| AUTHR-01 | review | Hao | M3 | Content/revision/review schema + optimistic concurrency; version history và editing conflict tests. (Migration 0009: content_items/revisions/review_requests, optimistic concurrency, trigger immutability.) |
+| AUTHR-02 | review | Hao | AUTHR-01 | Manual lesson/study-guide editor và autosave; AI outage vẫn soạn/sửa/nộp duyệt được. (API autosave `PUT /content-items/{id}/draft` + UI `/dashboard/lessons` (đang làm đợt 4).) |
 | AUTHR-03 | todo | — | AUTHR-02 | AI draft adapter dùng authorized retrieval, schema validation và token/cost budget; source injection không đổi system policy. |
 | AUTHR-04 | todo | — | AUTHR-03 | Review/edit/approve exact content revision; provenance/citations visible, chưa review không tự publish. |
-| QB-01 | todo | — | AUTHR-01 | Single-choice question bank + revision/key separation; constraints choices/correct key, teacher-only DTO. |
-| QB-02 | todo | — | QB-01 | Question editor/filter/import theo format đã chốt; validation từng record, duplicate review và objective mappings. |
-| BP-01 | todo | — | QB-02 | Blueprint draft/version/parts/slots/matrix schema và editor; scope/provenance/effective year rõ. |
-| BP-02 | todo | — | BP-01 | Validator counts/points/topic/cognitive matrix; difficulty không đồng nhất cognitive demand, unsupported item type fail. |
+| QB-01 | review | Hao | AUTHR-01 | Single-choice question bank + revision/key separation; constraints choices/correct key, teacher-only DTO. (questions/question_revisions + `question_keys` tách riêng, runtime chỉ INSERT, đọc qua `edu.question_key` cho giáo viên.) |
+| QB-02 | review | Hao | QB-01 | Question editor/filter/import theo format đã chốt; validation từng record, duplicate review và objective mappings. (CSV import atomic có báo lỗi từng dòng và duplicate review; export teacher/student là hai hàm riêng.) |
+| BP-01 | review | Hao | QB-02 | Blueprint draft/version/parts/slots/matrix schema và editor; scope/provenance/effective year rõ. (blueprints/blueprint_versions với parts/slots/matrix, provenance, effective_year.) |
+| BP-02 | review | Hao | BP-01 | Validator counts/points/topic/cognitive matrix; difficulty không đồng nhất cognitive demand, unsupported item type fail. (`services/blueprints.py` validator: counts/points/matrix/cognitive/unsupported type theo EXAM_BLUEPRINTS.) |
 | BP-03 | todo | — | BP-02, AUTHR-03 | Constrained pool selection/generation; insufficient pool báo thiếu slot, không âm thầm đổi matrix. |
 | BP-04 | todo | — | BP-03, AUTHR-04 | Review và publish immutable exam snapshot pin question/blueprint/scoring versions; approved draft không tự sửa published exam. |
 | EXPORT-01 | todo | — | BP-04 | Student/teacher Word/PDF export riêng qua durable jobs; layout fixtures, student artifacts tuyệt đối không có key/rubric. |
@@ -190,3 +190,8 @@ Phạm vi: migrations `0005_classes`, `0006_jobs_storage`, `0007_knowledge` (for
 Kiểm chứng local (Windows, không Docker): backend `ruff check`/`format --check` PASS; `pytest -q` 333 passed, 23 skipped (toàn bộ integration cần `AUTH_TEST_DATABASE_URL`); OpenAPI export + `npm run api:generate` không drift; frontend lint/typecheck/build PASS, `test:unit` 11/11, `test:workspace` PASS. Review M1 của Duc (nháp) tại [discuss/REVIEW.md](../discuss/REVIEW.md): 0 P1, 5 P2, 18 P3.
 
 Chưa kiểm chứng: SQL của 0005–0007 (RLS, SECURITY DEFINER, trigger, grants) chưa chạy trên PostgreSQL; MinIO image tag/healthcheck chưa chạy; upload stream qua Next→FastAPI; UI ở browser 375px; `pypdf` chưa thêm vào lock (cần uv). Quyết định còn treo trước khi đi tiếp: embedding model/provider (KNOW-06), cấu trúc đề thực tế (trước M4), pháp lý dữ liệu (3.5).
+
+
+### KNOW-06..10 / AUTHR-01,02 / QB-01,02 / BP-01,02 — execution record 2026-10-23 (đợt 3)
+
+Owner: Hao (agent). Branch `feat/m3-rag-m4-authoring-foundation`, commit `90fe49c`, stack trên `feat/m2-m5-know-lean-slice`. Kiểm chứng local: backend 600 passed / 31 skipped, ruff sạch; frontend lint/typecheck/build + 17 unit tests. Chưa chạy SQL 0008–0009 trên PostgreSQL/pgvector; provider embedding từ xa chỉ test với HTTP giả. Quyết định cần chốt: embedding model (đề xuất bge-m3 hoặc multilingual-e5-large, 1024 chiều), ngưỡng eval, metering query.

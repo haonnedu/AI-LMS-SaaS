@@ -41,6 +41,10 @@ QUEUE_BY_KIND = {
     "document.delete": "ingestion",
     "document.reingest": "ingestion",
     "document.embed": "ingestion",
+    "content.generate": "generation",
+    "questions.generate": "generation",
+    "export.render": "export",
+    "attempt.grade": "default",
 }
 CLIENT_KEY_PREFIX = "client:"
 SYSTEM_KEY_PREFIX = "system:"

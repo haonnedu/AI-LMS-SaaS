@@ -9,15 +9,18 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError
 
 from app import __version__
+from app.api.assignments import router as assignments_router
 from app.api.authoring import router as authoring_router
 from app.api.classes import router as classes_router
 from app.api.documents import router as documents_router
+from app.api.generation import router as generation_router
 from app.api.health import router as health_router
 from app.api.identity import ApiError
 from app.api.identity import router as identity_router
 from app.api.jobs import router as jobs_router
 from app.api.knowledge import router as knowledge_router
 from app.api.retrieval import router as retrieval_router
+from app.api.student import router as student_router
 from app.core.auth import TokenVerifier
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
@@ -97,6 +100,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(knowledge_router)
     application.include_router(retrieval_router)
     application.include_router(authoring_router)
+    application.include_router(generation_router)
+    application.include_router(assignments_router)
+    application.include_router(student_router)
     application.add_middleware(RequestContextMiddleware)
     # Last added executes outermost, so CORS headers cover our bounded 500 responses.
     application.add_middleware(

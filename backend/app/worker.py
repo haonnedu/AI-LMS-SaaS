@@ -38,6 +38,10 @@ celery_app.conf.update(
     broker_transport_options={"visibility_timeout": 3600},
     task_soft_time_limit=60,
     task_time_limit=90,
+    # Generation/export jobs call providers with retries; give them a longer budget.
+    task_annotations={
+        "app.tasks.jobs.run": {"soft_time_limit": 300, "time_limit": 360},
+    },
     enable_utc=True,
     timezone="UTC",
 )

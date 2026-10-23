@@ -23,8 +23,19 @@ from app.core.config import get_settings
 from app.infrastructure.sync_database import get_sync_sessionmaker, set_actor_context
 from app.models.documents import Document
 from app.models.jobs import BackgroundJob
-from app.services import embeddings, indexing, knowledge, parsing
+from app.services import (
+    attempts,
+    embeddings,
+    exports,
+    generation,
+    indexing,
+    knowledge,
+    parsing,
+    releases,
+    scoring,
+)
 from app.services import jobs as job_service
+from app.services import llm as llm_service
 from app.services.storage import ObjectStore, ObjectTooLarge
 from app.worker import celery_app
 
@@ -48,6 +59,7 @@ class HandlerContext:
     now: datetime | None = None
     max_bytes: int | None = None
     embedder: embeddings.EmbeddingProvider | None = None
+    llm: llm_service.LLMProvider | None = None
 
     def clock(self) -> datetime:
         return self.now or job_service.utcnow()
@@ -57,6 +69,9 @@ class HandlerContext:
 
     def byte_limit(self) -> int:
         return self.max_bytes or get_settings().upload_max_bytes
+
+    def llm_provider(self) -> llm_service.LLMProvider:
+        return self.llm or default_llm()
 
 
 @dataclass(frozen=True)
@@ -215,11 +230,50 @@ def delete_document_object(ctx: HandlerContext) -> dict[str, Any]:
     return {"deleted": True, "purgedChunks": int(purged or 0)}
 
 
+def _permanent(code: str, source: Exception | None = None) -> PermanentJobError:
+    error = PermanentJobError(code)
+    error.metered = getattr(source, "metered", False)
+    error.request_id = getattr(source, "request_id", None)
+    return error
+
+
+def generate_draft(ctx: HandlerContext) -> dict[str, Any]:
+    """AUTHR-03: ``content.generate`` / ``questions.generate`` (provider outage -> failed)."""
+    try:
+        provider = ctx.llm_provider()
+    except llm_service.ProviderNotConfigured:
+        raise _permanent("provider_unavailable") from None
+    try:
+        return generation.run_generation(ctx, provider=provider)
+    except generation.GenerationFailed as exc:
+        raise _permanent(exc.code, exc) from None
+
+
+def render_export(ctx: HandlerContext) -> dict[str, Any]:
+    """EXPORT-01: render, upload under a server-chosen key and mark the export row."""
+    try:
+        return exports.run_export(ctx)
+    except exports.ExportFailed as exc:
+        raise _permanent(exc.code) from None
+
+
+def grade_attempt(ctx: HandlerContext) -> dict[str, Any]:
+    """ASMT-06: score a submitted attempt under the job's verified teacher context."""
+    try:
+        return scoring.grade_attempt_job(ctx.db, ctx.job, ctx.clock())
+    except scoring.GradingRejected as exc:
+        raise PermanentJobError(exc.code) from None
+
+
 HANDLERS: dict[str, Handler] = {
     "document.ingest": Handler(ingest_document, quarantine_document),
     "document.reingest": Handler(reingest_document, record_reingest_failure),
     "document.delete": Handler(delete_document_object),
     "document.embed": Handler(embed_document),
+    "content.generate": Handler(generate_draft, generation.mark_failed),
+    "questions.generate": Handler(generate_draft, generation.mark_failed),
+    "export.render": Handler(render_export, exports.mark_failed),
+    "attempt.grade": Handler(grade_attempt),
 }
 
 
@@ -253,6 +307,7 @@ def execute_job(
     clock: Callable[[], datetime] = job_service.utcnow,
     max_bytes: int | None = None,
     embedder: embeddings.EmbeddingProvider | None = None,
+    llm_provider: llm_service.LLMProvider | None = None,
 ) -> str:
     with sessions() as db:
         with db.begin():
@@ -278,7 +333,9 @@ def execute_job(
                 handler = HANDLERS.get(job.kind)
                 if handler is None:
                     raise PermanentJobError("unknown_job_kind")
-                result = handler.run(HandlerContext(db, job, store, clock(), max_bytes, embedder))
+                result = handler.run(
+                    HandlerContext(db, job, store, clock(), max_bytes, embedder, llm_provider)
+                )
                 job_service.complete_job(db, job_id, attempt, result, clock())
             return "succeeded"
         except Exception as exc:
@@ -298,7 +355,8 @@ def execute_job(
             handler = HANDLERS.get(job.kind)
             if outcome == "failed" and handler and handler.on_permanent_failure:
                 handler.on_permanent_failure(
-                    HandlerContext(db, job, store, clock(), max_bytes, embedder), failure
+                    HandlerContext(db, job, store, clock(), max_bytes, embedder, llm_provider),
+                    failure,
                 )
         if outcome == "queued":
             try:
@@ -351,8 +409,45 @@ def sweep_jobs(
     return outcomes
 
 
+def sweep_assessments(
+    *,
+    sessions: sessionmaker[Session],
+    send: Callable[..., None] = job_service.send_job,
+    clock: Callable[[], datetime] = job_service.utcnow,
+) -> dict[str, int]:
+    """ASMT-05/07: finalize attempts past ``deadline_at`` + grace (reason ``deadline``), enqueue
+    their grading, then apply due ``after_close`` releases.
+
+    Both steps are cross-tenant SECURITY DEFINER functions returning ids only. Expiry and the
+    release run in separate transactions so a release never waits on attempt locks. A grading
+    job whose dispatch fails stays queued and is re-dispatched by ``sweep_jobs``.
+    """
+    now = clock()
+    with sessions() as db:
+        with db.begin():
+            expired = attempts.expire_due(db, now)
+        with db.begin():
+            released = releases.apply_due_releases(db, now)
+    for item in expired:
+        if item.job_id is None:
+            continue
+        try:
+            send(item.job_id, "attempt.grade")
+        except Exception as exc:
+            logger.warning("job_dispatch_failed", extra={"error_type": type(exc).__name__})
+    return {"expired": len(expired), **releases.release_summary(released)}
+
+
 _store: ObjectStore | None = None
 _embedder: embeddings.EmbeddingProvider | None = None
+_llm: llm_service.LLMProvider | None = None
+
+
+def default_llm() -> llm_service.LLMProvider:
+    global _llm
+    if _llm is None:
+        _llm = llm_service.get_llm_provider(get_settings())
+    return _llm
 
 
 def default_embedder() -> embeddings.EmbeddingProvider:
@@ -382,6 +477,10 @@ def run(job_id: str) -> str:
 @celery_app.task(name="app.tasks.jobs.sweep", ignore_result=True)
 def sweep() -> int:
     started = datetime.now(UTC)
+    try:
+        sweep_assessments(sessions=get_sync_sessionmaker())
+    except Exception as exc:  # never block the job sweep below
+        logger.warning("assessment_sweep_failed", extra={"error_type": type(exc).__name__})
     outcomes = sweep_jobs(sessions=get_sync_sessionmaker())
     logger.info(
         "jobs_swept",

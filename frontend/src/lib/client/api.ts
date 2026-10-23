@@ -1,5 +1,5 @@
 export class RequestError extends Error {
-  constructor(public status: number, public code: string, message: string) { super(message); }
+  constructor(public status: number, public code: string, message: string, public detail?: Record<string, unknown>) { super(message); }
 }
 export type Session = { authenticated: boolean; emailVerified?: boolean; csrfToken?: string; user?: { name: string; email: string } };
 /** Same-origin JSON request. Throws RequestError for non-2xx; 204 resolves to null. */
@@ -10,7 +10,7 @@ export async function read(url: string, init?: RequestInit, timeoutMs = 15000) {
   try { payload = await response.json(); }
   catch { throw new RequestError(response.status, "request_failed", "Chưa thể hoàn thành. Vui lòng thử lại."); }
   if (!response.ok) {
-    throw new RequestError(response.status, payload.error?.code || "request_failed", payload.error?.message || "Chưa thể hoàn thành. Vui lòng thử lại.");
+    throw new RequestError(response.status, payload.error?.code || "request_failed", payload.error?.message || "Chưa thể hoàn thành. Vui lòng thử lại.", payload.error);
   }
   return payload;
 }

@@ -1,6 +1,42 @@
 {
   "components": {
     "schemas": {
+      "AnswerDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "clientSequence": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Clientsequence",
+            "type": "integer"
+          },
+          "expectedRevision": {
+            "maximum": 1000000.0,
+            "minimum": 0.0,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "selectedKey": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selectedkey"
+          }
+        },
+        "required": [
+          "selectedKey",
+          "expectedRevision",
+          "clientSequence"
+        ],
+        "title": "AnswerDTO",
+        "type": "object"
+      },
       "ApproveDTO": {
         "additionalProperties": false,
         "properties": {
@@ -18,6 +54,480 @@
           }
         },
         "title": "ApproveDTO",
+        "type": "object"
+      },
+      "AssignmentCreateDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "closesAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closesat"
+          },
+          "examVersionId": {
+            "format": "uuid",
+            "title": "Examversionid",
+            "type": "string"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          },
+          "maxAttempts": {
+            "default": 1,
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Maxattempts",
+            "type": "integer"
+          },
+          "opensAt": {
+            "format": "date-time",
+            "title": "Opensat",
+            "type": "string"
+          },
+          "scoreRelease": {
+            "default": "manual",
+            "enum": [
+              "immediate",
+              "after_close",
+              "manual"
+            ],
+            "title": "Scorerelease",
+            "type": "string"
+          },
+          "solutionRelease": {
+            "default": "manual",
+            "enum": [
+              "never",
+              "after_close",
+              "manual"
+            ],
+            "title": "Solutionrelease",
+            "type": "string"
+          },
+          "timeLimitSeconds": {
+            "anyOf": [
+              {
+                "maximum": 86400.0,
+                "minimum": 60.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timelimitseconds"
+          },
+          "timezone": {
+            "default": "Asia/Ho_Chi_Minh",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Timezone",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "examVersionId",
+          "title",
+          "opensAt"
+        ],
+        "title": "AssignmentCreateDTO",
+        "type": "object"
+      },
+      "AssignmentDTO": {
+        "properties": {
+          "classId": {
+            "format": "uuid",
+            "title": "Classid",
+            "type": "string"
+          },
+          "closesAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closesat"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "examVersionId": {
+            "format": "uuid",
+            "title": "Examversionid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          },
+          "maxAttempts": {
+            "title": "Maxattempts",
+            "type": "integer"
+          },
+          "opensAt": {
+            "format": "date-time",
+            "title": "Opensat",
+            "type": "string"
+          },
+          "publishedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publishedat"
+          },
+          "scoreRelease": {
+            "enum": [
+              "immediate",
+              "after_close",
+              "manual"
+            ],
+            "title": "Scorerelease",
+            "type": "string"
+          },
+          "scoresReleasedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoresreleasedat"
+          },
+          "solutionRelease": {
+            "enum": [
+              "never",
+              "after_close",
+              "manual"
+            ],
+            "title": "Solutionrelease",
+            "type": "string"
+          },
+          "solutionsReleasedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Solutionsreleasedat"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "published",
+              "closed",
+              "archived"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timeLimitSeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timelimitseconds"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "workspaceId": {
+            "format": "uuid",
+            "title": "Workspaceid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspaceId",
+          "classId",
+          "examVersionId",
+          "title",
+          "instructions",
+          "opensAt",
+          "closesAt",
+          "timeLimitSeconds",
+          "maxAttempts",
+          "timezone",
+          "status",
+          "scoreRelease",
+          "solutionRelease",
+          "scoresReleasedAt",
+          "solutionsReleasedAt",
+          "publishedAt",
+          "createdAt"
+        ],
+        "title": "AssignmentDTO",
+        "type": "object"
+      },
+      "AssignmentListDTO": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AssignmentDTO"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AssignmentListDTO",
+        "type": "object"
+      },
+      "AttemptDTO": {
+        "properties": {
+          "answerSequence": {
+            "title": "Answersequence",
+            "type": "integer"
+          },
+          "assignmentId": {
+            "format": "uuid",
+            "title": "Assignmentid",
+            "type": "string"
+          },
+          "attemptNo": {
+            "title": "Attemptno",
+            "type": "integer"
+          },
+          "deadlineAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadlineat"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AttemptItemDTO"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "serverNow": {
+            "format": "date-time",
+            "title": "Servernow",
+            "type": "string"
+          },
+          "snapshotSha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshotsha256"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "title": "Startedat",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "in_progress",
+              "submitted",
+              "graded",
+              "void"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "submissionReason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "student",
+                  "deadline",
+                  "teacher"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submissionreason"
+          },
+          "submittedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submittedat"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "assignmentId",
+          "title",
+          "attemptNo",
+          "status",
+          "startedAt",
+          "deadlineAt",
+          "submittedAt",
+          "submissionReason",
+          "snapshotSha256",
+          "answerSequence",
+          "serverNow",
+          "items"
+        ],
+        "title": "AttemptDTO",
+        "type": "object"
+      },
+      "AttemptItemDTO": {
+        "properties": {
+          "answerRevision": {
+            "title": "Answerrevision",
+            "type": "integer"
+          },
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/app__api__student__ChoiceDTO"
+            },
+            "title": "Choices",
+            "type": "array"
+          },
+          "clientSequence": {
+            "title": "Clientsequence",
+            "type": "integer"
+          },
+          "itemId": {
+            "format": "uuid",
+            "title": "Itemid",
+            "type": "string"
+          },
+          "points": {
+            "title": "Points",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "savedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Savedat"
+          },
+          "selectedKey": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selectedkey"
+          },
+          "stem": {
+            "title": "Stem",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "position",
+          "stem",
+          "choices",
+          "points",
+          "selectedKey",
+          "answerRevision",
+          "clientSequence",
+          "savedAt"
+        ],
+        "title": "AttemptItemDTO",
         "type": "object"
       },
       "BlueprintCreateDTO": {
@@ -591,7 +1101,7 @@
         "title": "BootstrapDTO",
         "type": "object"
       },
-      "ChoiceDTO": {
+      "ChoiceDTO-Input": {
         "additionalProperties": false,
         "properties": {
           "key": {
@@ -1363,6 +1873,39 @@
         "title": "CurriculumUnitListDTO",
         "type": "object"
       },
+      "DenominatorsDTO": {
+        "properties": {
+          "enrolled": {
+            "title": "Enrolled",
+            "type": "integer"
+          },
+          "graded": {
+            "title": "Graded",
+            "type": "integer"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "integer"
+          },
+          "started": {
+            "title": "Started",
+            "type": "integer"
+          },
+          "submitted": {
+            "title": "Submitted",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enrolled",
+          "started",
+          "submitted",
+          "graded",
+          "pending"
+        ],
+        "title": "DenominatorsDTO",
+        "type": "object"
+      },
       "DocumentChunkDTO": {
         "properties": {
           "charEnd": {
@@ -2017,6 +2560,1067 @@
         "title": "ErrorDetail",
         "type": "object"
       },
+      "ExamCreateDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "blueprintVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blueprintversionid"
+          },
+          "points": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "exclusiveMinimum": 0.0,
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxItems": 200,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Points"
+          },
+          "questionIds": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 200,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Questionids"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "ExamCreateDTO",
+        "type": "object"
+      },
+      "ExamDTO": {
+        "properties": {
+          "blueprintVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blueprintversionid"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdByUserId": {
+            "format": "uuid",
+            "title": "Createdbyuserid",
+            "type": "string"
+          },
+          "currentVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currentversionid"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "blueprintVersionId",
+          "currentVersionId",
+          "createdByUserId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "ExamDTO",
+        "type": "object"
+      },
+      "ExamDetailDTO": {
+        "properties": {
+          "blueprintVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blueprintversionid"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdByUserId": {
+            "format": "uuid",
+            "title": "Createdbyuserid",
+            "type": "string"
+          },
+          "currentVersion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExamVersionDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currentVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currentversionid"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "selectionReport": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SelectionReportDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/ExamVersionSummaryDTO"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "blueprintVersionId",
+          "currentVersionId",
+          "createdByUserId",
+          "createdAt",
+          "updatedAt",
+          "versions",
+          "currentVersion"
+        ],
+        "title": "ExamDetailDTO",
+        "type": "object"
+      },
+      "ExamListDTO": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ExamDTO"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "ExamListDTO",
+        "type": "object"
+      },
+      "ExamVersionDTO": {
+        "properties": {
+          "blueprintVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blueprintversionid"
+          },
+          "contentHash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contenthash"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TeacherExamItemDTO"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "publishedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publishedat"
+          },
+          "publishedByUserId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publishedbyuserid"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "totalPoints": {
+            "title": "Totalpoints",
+            "type": "string"
+          },
+          "versionNo": {
+            "title": "Versionno",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "versionNo",
+          "status",
+          "totalPoints",
+          "contentHash",
+          "blueprintVersionId",
+          "publishedAt",
+          "publishedByUserId",
+          "createdAt",
+          "items"
+        ],
+        "title": "ExamVersionDTO",
+        "type": "object"
+      },
+      "ExamVersionSummaryDTO": {
+        "properties": {
+          "blueprintVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blueprintversionid"
+          },
+          "contentHash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contenthash"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "publishedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publishedat"
+          },
+          "publishedByUserId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publishedbyuserid"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "totalPoints": {
+            "title": "Totalpoints",
+            "type": "string"
+          },
+          "versionNo": {
+            "title": "Versionno",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "versionNo",
+          "status",
+          "totalPoints",
+          "contentHash",
+          "blueprintVersionId",
+          "publishedAt",
+          "publishedByUserId",
+          "createdAt"
+        ],
+        "title": "ExamVersionSummaryDTO",
+        "type": "object"
+      },
+      "ExportAcceptedDTO": {
+        "properties": {
+          "exportJob": {
+            "$ref": "#/components/schemas/ExportJobDTO"
+          },
+          "job": {
+            "$ref": "#/components/schemas/JobDTO"
+          }
+        },
+        "required": [
+          "exportJob",
+          "job"
+        ],
+        "title": "ExportAcceptedDTO",
+        "type": "object"
+      },
+      "ExportJobDTO": {
+        "properties": {
+          "audience": {
+            "enum": [
+              "teacher",
+              "student"
+            ],
+            "title": "Audience",
+            "type": "string"
+          },
+          "backgroundJobId": {
+            "format": "uuid",
+            "title": "Backgroundjobid",
+            "type": "string"
+          },
+          "contentRevisionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contentrevisionid"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "downloadExpiresAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Downloadexpiresat"
+          },
+          "downloadUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Downloadurl"
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          },
+          "examVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Examversionid"
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finishedat"
+          },
+          "format": {
+            "enum": [
+              "docx",
+              "pdf"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "backgroundJobId",
+          "contentRevisionId",
+          "examVersionId",
+          "format",
+          "audience",
+          "status",
+          "errorCode",
+          "createdAt",
+          "finishedAt"
+        ],
+        "title": "ExportJobDTO",
+        "type": "object"
+      },
+      "ExportRequestDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "audience": {
+            "enum": [
+              "teacher",
+              "student"
+            ],
+            "title": "Audience",
+            "type": "string"
+          },
+          "contentRevisionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contentrevisionid"
+          },
+          "examVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Examversionid"
+          },
+          "format": {
+            "enum": [
+              "docx",
+              "pdf"
+            ],
+            "title": "Format",
+            "type": "string"
+          }
+        },
+        "required": [
+          "format",
+          "audience"
+        ],
+        "title": "ExportRequestDTO",
+        "type": "object"
+      },
+      "ExtendDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "closesAt": {
+            "format": "date-time",
+            "title": "Closesat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "closesAt"
+        ],
+        "title": "ExtendDTO",
+        "type": "object"
+      },
+      "GenerationAcceptedDTO": {
+        "properties": {
+          "generationJob": {
+            "$ref": "#/components/schemas/GenerationJobDTO"
+          },
+          "job": {
+            "$ref": "#/components/schemas/JobDTO"
+          }
+        },
+        "required": [
+          "generationJob",
+          "job"
+        ],
+        "title": "GenerationAcceptedDTO",
+        "type": "object"
+      },
+      "GenerationJobDTO": {
+        "properties": {
+          "backgroundJobId": {
+            "format": "uuid",
+            "title": "Backgroundjobid",
+            "type": "string"
+          },
+          "contentItemId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contentitemid"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finishedat"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "inputTokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inputtokens"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "outputTokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outputtokens"
+          },
+          "promptVersion": {
+            "title": "Promptversion",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "lesson_plan",
+              "study_guide",
+              "questions"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          },
+          "questionIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Questionids",
+            "type": "array"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "revisionNo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revisionno"
+          },
+          "validationStatus": {
+            "enum": [
+              "pending",
+              "valid",
+              "invalid",
+              "failed"
+            ],
+            "title": "Validationstatus",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "backgroundJobId",
+          "purpose",
+          "validationStatus",
+          "provider",
+          "model",
+          "promptVersion",
+          "inputTokens",
+          "outputTokens",
+          "reasons",
+          "errorCode",
+          "contentItemId",
+          "revisionNo",
+          "questionIds",
+          "createdAt",
+          "finishedAt"
+        ],
+        "title": "GenerationJobDTO",
+        "type": "object"
+      },
+      "GenerationRequestDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "cognitiveLevel": {
+            "anyOf": [
+              {
+                "enum": [
+                  "remember",
+                  "understand",
+                  "apply",
+                  "analyze"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cognitivelevel"
+          },
+          "contentItemId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contentitemid"
+          },
+          "count": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count"
+          },
+          "curriculumUnitId": {
+            "format": "uuid",
+            "title": "Curriculumunitid",
+            "type": "string"
+          },
+          "documentIds": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Documentids"
+          },
+          "durationMinutes": {
+            "anyOf": [
+              {
+                "maximum": 600.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Durationminutes"
+          },
+          "grade": {
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Grade",
+            "type": "integer"
+          },
+          "objectives": {
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Objectives",
+            "type": "array"
+          },
+          "purpose": {
+            "enum": [
+              "lesson_plan",
+              "study_guide",
+              "questions"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          },
+          "subject": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Subject",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "purpose",
+          "curriculumUnitId",
+          "grade",
+          "subject",
+          "objectives"
+        ],
+        "title": "GenerationRequestDTO",
+        "type": "object"
+      },
+      "GradeRevisionDTO": {
+        "properties": {
+          "approvalMode": {
+            "enum": [
+              "automatic",
+              "teacher"
+            ],
+            "title": "Approvalmode",
+            "type": "string"
+          },
+          "approvedAt": {
+            "format": "date-time",
+            "title": "Approvedat",
+            "type": "string"
+          },
+          "isCurrent": {
+            "title": "Iscurrent",
+            "type": "boolean"
+          },
+          "maxScore": {
+            "title": "Maxscore",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "releasedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Releasedat"
+          },
+          "revisionNo": {
+            "title": "Revisionno",
+            "type": "integer"
+          },
+          "score": {
+            "title": "Score",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revisionNo",
+          "score",
+          "maxScore",
+          "approvalMode",
+          "isCurrent",
+          "reason",
+          "approvedAt",
+          "releasedAt"
+        ],
+        "title": "GradeRevisionDTO",
+        "type": "object"
+      },
       "ImportDuplicateDTO": {
         "properties": {
           "duplicateOfRow": {
@@ -2474,6 +4078,329 @@
         "title": "LiveResponse",
         "type": "object"
       },
+      "MissingSlotDTO": {
+        "properties": {
+          "cognitiveLevel": {
+            "enum": [
+              "remember",
+              "understand",
+              "apply",
+              "analyze"
+            ],
+            "title": "Cognitivelevel",
+            "type": "string"
+          },
+          "curriculumUnitId": {
+            "format": "uuid",
+            "title": "Curriculumunitid",
+            "type": "string"
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "partCode": {
+            "title": "Partcode",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "partCode",
+          "index",
+          "reason",
+          "curriculumUnitId",
+          "cognitiveLevel",
+          "difficulty"
+        ],
+        "title": "MissingSlotDTO",
+        "type": "object"
+      },
+      "OverrideDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Score"
+          }
+        },
+        "required": [
+          "score",
+          "reason"
+        ],
+        "title": "OverrideDTO",
+        "type": "object"
+      },
+      "OverrideResultDTO": {
+        "properties": {
+          "approvedAt": {
+            "format": "date-time",
+            "title": "Approvedat",
+            "type": "string"
+          },
+          "attemptId": {
+            "format": "uuid",
+            "title": "Attemptid",
+            "type": "string"
+          },
+          "maxScore": {
+            "title": "Maxscore",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "released": {
+            "title": "Released",
+            "type": "boolean"
+          },
+          "revisionNo": {
+            "title": "Revisionno",
+            "type": "integer"
+          },
+          "score": {
+            "title": "Score",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attemptId",
+          "revisionNo",
+          "score",
+          "maxScore",
+          "reason",
+          "approvedAt",
+          "released"
+        ],
+        "title": "OverrideResultDTO",
+        "type": "object"
+      },
+      "ProvenanceDTO": {
+        "properties": {
+          "contentItemId": {
+            "format": "uuid",
+            "title": "Contentitemid",
+            "type": "string"
+          },
+          "generationJobId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generationjobid"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "promptVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Promptversion"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "revisionNo": {
+            "title": "Revisionno",
+            "type": "integer"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ProvenanceSourceDTO"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "validationStatus": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending",
+                  "valid",
+                  "invalid",
+                  "failed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validationstatus"
+          }
+        },
+        "required": [
+          "contentItemId",
+          "revisionNo",
+          "generationJobId",
+          "provider",
+          "model",
+          "promptVersion",
+          "validationStatus",
+          "sources"
+        ],
+        "title": "ProvenanceDTO",
+        "type": "object"
+      },
+      "ProvenanceSourceDTO": {
+        "properties": {
+          "chunkId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunkid"
+          },
+          "cited": {
+            "title": "Cited",
+            "type": "boolean"
+          },
+          "documentId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Documentid"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "pageNo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pageno"
+          },
+          "sectionPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sectionpath"
+          },
+          "snippet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snippet"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "superseded",
+              "withdrawn"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "versionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Versionid"
+          }
+        },
+        "required": [
+          "label",
+          "chunkId",
+          "documentId",
+          "versionId",
+          "pageNo",
+          "sectionPath",
+          "snippet",
+          "status",
+          "cited"
+        ],
+        "title": "ProvenanceSourceDTO",
+        "type": "object"
+      },
       "QuestionListDTO": {
         "properties": {
           "items": {
@@ -2594,7 +4521,7 @@
         "properties": {
           "choices": {
             "items": {
-              "$ref": "#/components/schemas/ChoiceDTO"
+              "$ref": "#/components/schemas/ChoiceDTO-Input"
             },
             "maxItems": 5,
             "minItems": 3,
@@ -2734,7 +4661,7 @@
         "properties": {
           "choices": {
             "items": {
-              "$ref": "#/components/schemas/ChoiceDTO"
+              "$ref": "#/components/schemas/ChoiceDTO-Input"
             },
             "maxItems": 5,
             "minItems": 3,
@@ -2901,6 +4828,71 @@
           "checks"
         ],
         "title": "ReadyResponse",
+        "type": "object"
+      },
+      "ReleasedSolutionDTO": {
+        "description": "Populated by the database only after the assignment's solution release.",
+        "properties": {
+          "correctKey": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correctkey"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          }
+        },
+        "required": [
+          "correctKey",
+          "explanation"
+        ],
+        "title": "ReleasedSolutionDTO",
+        "type": "object"
+      },
+      "ResultsDTO": {
+        "properties": {
+          "assignmentId": {
+            "format": "uuid",
+            "title": "Assignmentid",
+            "type": "string"
+          },
+          "denominators": {
+            "$ref": "#/components/schemas/DenominatorsDTO"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "title": "Generatedat",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/app__api__assignments__ResultItemDTO"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "assignmentId",
+          "generatedAt",
+          "denominators",
+          "items"
+        ],
+        "title": "ResultsDTO",
         "type": "object"
       },
       "RetrievalQueryRequest": {
@@ -3448,6 +5440,745 @@
         "title": "RosterEntryDTO",
         "type": "object"
       },
+      "SavedAnswerDTO": {
+        "properties": {
+          "answerRevision": {
+            "title": "Answerrevision",
+            "type": "integer"
+          },
+          "savedAt": {
+            "format": "date-time",
+            "title": "Savedat",
+            "type": "string"
+          },
+          "serverNow": {
+            "format": "date-time",
+            "title": "Servernow",
+            "type": "string"
+          }
+        },
+        "required": [
+          "answerRevision",
+          "savedAt",
+          "serverNow"
+        ],
+        "title": "SavedAnswerDTO",
+        "type": "object"
+      },
+      "ScoreReleaseDTO": {
+        "properties": {
+          "assignment": {
+            "$ref": "#/components/schemas/AssignmentDTO"
+          },
+          "releasedGrades": {
+            "title": "Releasedgrades",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "assignment",
+          "releasedGrades"
+        ],
+        "title": "ScoreReleaseDTO",
+        "type": "object"
+      },
+      "SelectionReportDTO": {
+        "properties": {
+          "missingSlots": {
+            "items": {
+              "$ref": "#/components/schemas/MissingSlotDTO"
+            },
+            "title": "Missingslots",
+            "type": "array"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "seed": {
+            "title": "Seed",
+            "type": "string"
+          },
+          "selected": {
+            "title": "Selected",
+            "type": "integer"
+          },
+          "suggestedGeneration": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedGenerationDTO"
+            },
+            "title": "Suggestedgeneration",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "seed",
+          "selected",
+          "missingSlots",
+          "suggestedGeneration"
+        ],
+        "title": "SelectionReportDTO",
+        "type": "object"
+      },
+      "StartedAttemptDTO": {
+        "properties": {
+          "attemptId": {
+            "format": "uuid",
+            "title": "Attemptid",
+            "type": "string"
+          },
+          "attemptNo": {
+            "title": "Attemptno",
+            "type": "integer"
+          },
+          "created": {
+            "title": "Created",
+            "type": "boolean"
+          },
+          "deadlineAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadlineat"
+          },
+          "serverNow": {
+            "format": "date-time",
+            "title": "Servernow",
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "title": "Startedat",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "in_progress",
+              "submitted",
+              "graded",
+              "void"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attemptId",
+          "created",
+          "status",
+          "attemptNo",
+          "startedAt",
+          "deadlineAt",
+          "serverNow"
+        ],
+        "title": "StartedAttemptDTO",
+        "type": "object"
+      },
+      "StudentAssignmentDTO": {
+        "properties": {
+          "attemptsUsed": {
+            "title": "Attemptsused",
+            "type": "integer"
+          },
+          "availability": {
+            "enum": [
+              "resume",
+              "open",
+              "not_open_yet",
+              "closed",
+              "limit_reached",
+              "done"
+            ],
+            "title": "Availability",
+            "type": "string"
+          },
+          "classId": {
+            "format": "uuid",
+            "title": "Classid",
+            "type": "string"
+          },
+          "className": {
+            "title": "Classname",
+            "type": "string"
+          },
+          "closesAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closesat"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "inProgressAttemptId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inprogressattemptid"
+          },
+          "latestAttemptId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latestattemptid"
+          },
+          "latestAttemptStatus": {
+            "anyOf": [
+              {
+                "enum": [
+                  "in_progress",
+                  "submitted",
+                  "graded",
+                  "void"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latestattemptstatus"
+          },
+          "maxAttempts": {
+            "title": "Maxattempts",
+            "type": "integer"
+          },
+          "opensAt": {
+            "format": "date-time",
+            "title": "Opensat",
+            "type": "string"
+          },
+          "serverNow": {
+            "format": "date-time",
+            "title": "Servernow",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "published",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timeLimitSeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timelimitseconds"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "workspaceId": {
+            "format": "uuid",
+            "title": "Workspaceid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspaceId",
+          "classId",
+          "className",
+          "title",
+          "opensAt",
+          "closesAt",
+          "timeLimitSeconds",
+          "maxAttempts",
+          "timezone",
+          "status",
+          "attemptsUsed",
+          "inProgressAttemptId",
+          "latestAttemptId",
+          "latestAttemptStatus",
+          "availability",
+          "serverNow"
+        ],
+        "title": "StudentAssignmentDTO",
+        "type": "object"
+      },
+      "StudentAssignmentDetailDTO": {
+        "properties": {
+          "attemptsUsed": {
+            "title": "Attemptsused",
+            "type": "integer"
+          },
+          "availability": {
+            "enum": [
+              "resume",
+              "open",
+              "not_open_yet",
+              "closed",
+              "limit_reached",
+              "done"
+            ],
+            "title": "Availability",
+            "type": "string"
+          },
+          "classId": {
+            "format": "uuid",
+            "title": "Classid",
+            "type": "string"
+          },
+          "className": {
+            "title": "Classname",
+            "type": "string"
+          },
+          "closesAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closesat"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "inProgressAttemptId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inprogressattemptid"
+          },
+          "instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instructions"
+          },
+          "itemCount": {
+            "title": "Itemcount",
+            "type": "integer"
+          },
+          "latestAttemptId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latestattemptid"
+          },
+          "latestAttemptStatus": {
+            "anyOf": [
+              {
+                "enum": [
+                  "in_progress",
+                  "submitted",
+                  "graded",
+                  "void"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latestattemptstatus"
+          },
+          "maxAttempts": {
+            "title": "Maxattempts",
+            "type": "integer"
+          },
+          "opensAt": {
+            "format": "date-time",
+            "title": "Opensat",
+            "type": "string"
+          },
+          "serverNow": {
+            "format": "date-time",
+            "title": "Servernow",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "published",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timeLimitSeconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timelimitseconds"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "totalPoints": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Totalpoints"
+          },
+          "workspaceId": {
+            "format": "uuid",
+            "title": "Workspaceid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspaceId",
+          "classId",
+          "className",
+          "title",
+          "opensAt",
+          "closesAt",
+          "timeLimitSeconds",
+          "maxAttempts",
+          "timezone",
+          "status",
+          "attemptsUsed",
+          "inProgressAttemptId",
+          "latestAttemptId",
+          "latestAttemptStatus",
+          "availability",
+          "serverNow",
+          "instructions",
+          "itemCount",
+          "totalPoints"
+        ],
+        "title": "StudentAssignmentDetailDTO",
+        "type": "object"
+      },
+      "StudentAssignmentListDTO": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StudentAssignmentDTO"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "StudentAssignmentListDTO",
+        "type": "object"
+      },
+      "StudentExamItemDTO": {
+        "description": "Student-safe: this class deliberately has NO key, rationale or explanation fields.",
+        "properties": {
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/app__api__authoring__ChoiceDTO"
+            },
+            "title": "Choices",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "itemType": {
+            "title": "Itemtype",
+            "type": "string"
+          },
+          "points": {
+            "title": "Points",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "stem": {
+            "title": "Stem",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "itemType",
+          "stem",
+          "choices",
+          "points"
+        ],
+        "title": "StudentExamItemDTO",
+        "type": "object"
+      },
+      "StudentExamViewDTO": {
+        "properties": {
+          "examId": {
+            "format": "uuid",
+            "title": "Examid",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StudentExamItemDTO"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "published",
+              "archived"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "totalPoints": {
+            "title": "Totalpoints",
+            "type": "string"
+          },
+          "versionNo": {
+            "title": "Versionno",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "examId",
+          "title",
+          "versionNo",
+          "status",
+          "totalPoints",
+          "items"
+        ],
+        "title": "StudentExamViewDTO",
+        "type": "object"
+      },
+      "StudentResultDTO": {
+        "properties": {
+          "assignmentId": {
+            "format": "uuid",
+            "title": "Assignmentid",
+            "type": "string"
+          },
+          "attemptId": {
+            "format": "uuid",
+            "title": "Attemptid",
+            "type": "string"
+          },
+          "gradingStatus": {
+            "enum": [
+              "not_submitted",
+              "pending",
+              "graded",
+              "void"
+            ],
+            "title": "Gradingstatus",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/app__api__student__ResultItemDTO"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "maxScore": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxscore"
+          },
+          "releasedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Releasedat"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "scoreReleased": {
+            "title": "Scorereleased",
+            "type": "boolean"
+          },
+          "solutionsReleased": {
+            "title": "Solutionsreleased",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "in_progress",
+              "submitted",
+              "graded",
+              "void"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "submittedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submittedat"
+          }
+        },
+        "required": [
+          "attemptId",
+          "assignmentId",
+          "status",
+          "submittedAt",
+          "gradingStatus",
+          "scoreReleased",
+          "score",
+          "maxScore",
+          "releasedAt",
+          "solutionsReleased",
+          "items"
+        ],
+        "title": "StudentResultDTO",
+        "type": "object"
+      },
+      "SubmissionDTO": {
+        "properties": {
+          "replayed": {
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "snapshotSha256": {
+            "title": "Snapshotsha256",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "in_progress",
+              "submitted",
+              "graded",
+              "void"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "submissionReason": {
+            "enum": [
+              "student",
+              "deadline",
+              "teacher"
+            ],
+            "title": "Submissionreason",
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "title": "Submittedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "submittedAt",
+          "snapshotSha256",
+          "submissionReason",
+          "replayed"
+        ],
+        "title": "SubmissionDTO",
+        "type": "object"
+      },
       "SubmitDTO": {
         "additionalProperties": false,
         "properties": {
@@ -3467,6 +6198,54 @@
         "title": "SubmitDTO",
         "type": "object"
       },
+      "SuggestedGenerationDTO": {
+        "properties": {
+          "cognitiveLevel": {
+            "enum": [
+              "remember",
+              "understand",
+              "apply",
+              "analyze"
+            ],
+            "title": "Cognitivelevel",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "curriculumUnitId": {
+            "format": "uuid",
+            "title": "Curriculumunitid",
+            "type": "string"
+          },
+          "difficulty": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difficulty"
+          },
+          "purpose": {
+            "const": "questions",
+            "title": "Purpose",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purpose",
+          "curriculumUnitId",
+          "cognitiveLevel",
+          "difficulty",
+          "count"
+        ],
+        "title": "SuggestedGenerationDTO",
+        "type": "object"
+      },
       "TeacherAddDTO": {
         "additionalProperties": false,
         "properties": {
@@ -3482,11 +6261,347 @@
         "title": "TeacherAddDTO",
         "type": "object"
       },
+      "TeacherAttemptDTO": {
+        "properties": {
+          "assignmentId": {
+            "format": "uuid",
+            "title": "Assignmentid",
+            "type": "string"
+          },
+          "attemptNo": {
+            "title": "Attemptno",
+            "type": "integer"
+          },
+          "deadlineAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadlineat"
+          },
+          "displayName": {
+            "title": "Displayname",
+            "type": "string"
+          },
+          "grades": {
+            "items": {
+              "$ref": "#/components/schemas/GradeRevisionDTO"
+            },
+            "title": "Grades",
+            "type": "array"
+          },
+          "gradingStatus": {
+            "enum": [
+              "not_started",
+              "not_submitted",
+              "pending",
+              "graded",
+              "void"
+            ],
+            "title": "Gradingstatus",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TeacherItemDTO"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "snapshotSha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshotsha256"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "title": "Startedat",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "in_progress",
+              "submitted",
+              "graded",
+              "void"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "studentId": {
+            "format": "uuid",
+            "title": "Studentid",
+            "type": "string"
+          },
+          "submissionReason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "student",
+                  "deadline",
+                  "teacher"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submissionreason"
+          },
+          "submittedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submittedat"
+          }
+        },
+        "required": [
+          "id",
+          "assignmentId",
+          "studentId",
+          "displayName",
+          "attemptNo",
+          "status",
+          "startedAt",
+          "deadlineAt",
+          "submittedAt",
+          "submissionReason",
+          "snapshotSha256",
+          "gradingStatus",
+          "items",
+          "grades"
+        ],
+        "title": "TeacherAttemptDTO",
+        "type": "object"
+      },
+      "TeacherExamItemDTO": {
+        "properties": {
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/app__api__authoring__ChoiceDTO"
+            },
+            "title": "Choices",
+            "type": "array"
+          },
+          "cognitiveLevel": {
+            "anyOf": [
+              {
+                "enum": [
+                  "remember",
+                  "understand",
+                  "apply",
+                  "analyze"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cognitivelevel"
+          },
+          "correctKey": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correctkey"
+          },
+          "curriculumUnitId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curriculumunitid"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "itemType": {
+            "title": "Itemtype",
+            "type": "string"
+          },
+          "points": {
+            "title": "Points",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "sourceQuestionRevisionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourcequestionrevisionid"
+          },
+          "stem": {
+            "title": "Stem",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "itemType",
+          "stem",
+          "choices",
+          "points",
+          "sourceQuestionRevisionId",
+          "curriculumUnitId",
+          "cognitiveLevel",
+          "correctKey",
+          "explanation"
+        ],
+        "title": "TeacherExamItemDTO",
+        "type": "object"
+      },
+      "TeacherItemDTO": {
+        "properties": {
+          "answerRevision": {
+            "title": "Answerrevision",
+            "type": "integer"
+          },
+          "awardedPoints": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Awardedpoints"
+          },
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/app__api__assignments__ChoiceDTO"
+            },
+            "title": "Choices",
+            "type": "array"
+          },
+          "correctKey": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correctkey"
+          },
+          "itemId": {
+            "format": "uuid",
+            "title": "Itemid",
+            "type": "string"
+          },
+          "points": {
+            "title": "Points",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "selectedKey": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selectedkey"
+          },
+          "stem": {
+            "title": "Stem",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "position",
+          "stem",
+          "choices",
+          "points",
+          "correctKey",
+          "selectedKey",
+          "answerRevision",
+          "awardedPoints",
+          "reason"
+        ],
+        "title": "TeacherItemDTO",
+        "type": "object"
+      },
       "TeacherQuestionDTO": {
         "properties": {
           "choices": {
             "items": {
-              "$ref": "#/components/schemas/ChoiceDTO"
+              "$ref": "#/components/schemas/app__api__authoring__ChoiceDTO"
             },
             "title": "Choices",
             "type": "array"
@@ -3772,6 +6887,233 @@
           "nextCursor"
         ],
         "title": "WorkspaceListDTO",
+        "type": "object"
+      },
+      "app__api__assignments__ChoiceDTO": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "text"
+        ],
+        "title": "ChoiceDTO",
+        "type": "object"
+      },
+      "app__api__assignments__ResultItemDTO": {
+        "properties": {
+          "attemptId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attemptid"
+          },
+          "attemptNo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attemptno"
+          },
+          "displayName": {
+            "title": "Displayname",
+            "type": "string"
+          },
+          "gradingStatus": {
+            "enum": [
+              "not_started",
+              "not_submitted",
+              "pending",
+              "graded",
+              "void"
+            ],
+            "title": "Gradingstatus",
+            "type": "string"
+          },
+          "maxScore": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxscore"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "status": {
+            "enum": [
+              "not_started",
+              "in_progress",
+              "submitted",
+              "graded"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "studentId": {
+            "format": "uuid",
+            "title": "Studentid",
+            "type": "string"
+          },
+          "submittedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submittedat"
+          }
+        },
+        "required": [
+          "studentId",
+          "displayName",
+          "attemptId",
+          "attemptNo",
+          "status",
+          "score",
+          "maxScore",
+          "gradingStatus",
+          "submittedAt"
+        ],
+        "title": "ResultItemDTO",
+        "type": "object"
+      },
+      "app__api__authoring__ChoiceDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "text"
+        ],
+        "title": "ChoiceDTO",
+        "type": "object"
+      },
+      "app__api__student__ChoiceDTO": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "text"
+        ],
+        "title": "ChoiceDTO",
+        "type": "object"
+      },
+      "app__api__student__ResultItemDTO": {
+        "properties": {
+          "awardedPoints": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Awardedpoints"
+          },
+          "itemId": {
+            "format": "uuid",
+            "title": "Itemid",
+            "type": "string"
+          },
+          "maxPoints": {
+            "title": "Maxpoints",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "selectedKey": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selectedkey"
+          },
+          "solution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReleasedSolutionDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "itemId",
+          "position",
+          "selectedKey",
+          "maxPoints",
+          "awardedPoints",
+          "solution"
+        ],
+        "title": "ResultItemDTO",
         "type": "object"
       }
     },
@@ -4361,6 +7703,742 @@
         ]
       }
     },
+    "/v1/student/assignments": {
+      "get": {
+        "operationId": "list_assignments_v1_student_assignments_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentAssignmentListDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Assignments",
+        "tags": [
+          "student"
+        ]
+      }
+    },
+    "/v1/student/assignments/{assignment_id}": {
+      "get": {
+        "operationId": "assignment_detail_v1_student_assignments__assignment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentAssignmentDetailDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Assignment Detail",
+        "tags": [
+          "student"
+        ]
+      }
+    },
+    "/v1/student/assignments/{assignment_id}/attempts": {
+      "post": {
+        "operationId": "start_attempt_v1_student_assignments__assignment_id__attempts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartedAttemptDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartedAttemptDTO"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Start Attempt",
+        "tags": [
+          "student"
+        ]
+      }
+    },
+    "/v1/student/attempts/{attempt_id}": {
+      "get": {
+        "operationId": "get_attempt_v1_student_attempts__attempt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Attempt",
+        "tags": [
+          "student"
+        ]
+      }
+    },
+    "/v1/student/attempts/{attempt_id}/answers/{item_id}": {
+      "put": {
+        "operationId": "save_answer_v1_student_attempts__attempt_id__answers__item_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswerDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedAnswerDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Answer",
+        "tags": [
+          "student"
+        ]
+      }
+    },
+    "/v1/student/attempts/{attempt_id}/results": {
+      "get": {
+        "operationId": "results_v1_student_attempts__attempt_id__results_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentResultDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Results",
+        "tags": [
+          "student"
+        ]
+      }
+    },
+    "/v1/student/attempts/{attempt_id}/submit": {
+      "post": {
+        "operationId": "submit_v1_student_attempts__attempt_id__submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Submit",
+        "tags": [
+          "student"
+        ]
+      }
+    },
     "/v1/workspaces": {
       "get": {
         "operationId": "workspaces_v1_workspaces_get",
@@ -4573,6 +8651,1232 @@
         "summary": "Workspace",
         "tags": [
           "identity"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/assignments/{assignment_id}": {
+      "get": {
+        "operationId": "get_assignment_v1_workspaces__workspace_id__assignments__assignment_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Assignment",
+        "tags": [
+          "assignments"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/assignments/{assignment_id}/archive": {
+      "post": {
+        "operationId": "archive_v1_workspaces__workspace_id__assignments__assignment_id__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Archive",
+        "tags": [
+          "assignments"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/assignments/{assignment_id}/attempts/{attempt_id}": {
+      "get": {
+        "operationId": "teacher_attempt_v1_workspaces__workspace_id__assignments__assignment_id__attempts__attempt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeacherAttemptDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Teacher Attempt",
+        "tags": [
+          "assignments"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/assignments/{assignment_id}/attempts/{attempt_id}/override": {
+      "post": {
+        "operationId": "override_grade_v1_workspaces__workspace_id__assignments__assignment_id__attempts__attempt_id__override_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverrideDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverrideResultDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Override Grade",
+        "tags": [
+          "assignments"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/assignments/{assignment_id}/close": {
+      "post": {
+        "operationId": "close_v1_workspaces__workspace_id__assignments__assignment_id__close_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Close",
+        "tags": [
+          "assignments"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/assignments/{assignment_id}/extend": {
+      "post": {
+        "operationId": "extend_v1_workspaces__workspace_id__assignments__assignment_id__extend_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtendDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Extend",
+        "tags": [
+          "assignments"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/assignments/{assignment_id}/publish": {
+      "post": {
+        "operationId": "publish_v1_workspaces__workspace_id__assignments__assignment_id__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Publish",
+        "tags": [
+          "assignments"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/assignments/{assignment_id}/release-scores": {
+      "post": {
+        "operationId": "release_scores_v1_workspaces__workspace_id__assignments__assignment_id__release_scores_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreReleaseDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Release Scores",
+        "tags": [
+          "assignments"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/assignments/{assignment_id}/release-solutions": {
+      "post": {
+        "operationId": "release_solutions_v1_workspaces__workspace_id__assignments__assignment_id__release_solutions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Release Solutions",
+        "tags": [
+          "assignments"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/assignments/{assignment_id}/results": {
+      "get": {
+        "operationId": "results_v1_workspaces__workspace_id__assignments__assignment_id__results_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultsDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Results",
+        "tags": [
+          "assignments"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/assignments/{assignment_id}/results/export.csv": {
+      "get": {
+        "operationId": "export_results_v1_workspaces__workspace_id__assignments__assignment_id__results_export_csv_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assignment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Export Results",
+        "tags": [
+          "assignments"
         ]
       }
     },
@@ -5965,6 +11269,230 @@
         "summary": "Archive Class",
         "tags": [
           "classes"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/classes/{class_id}/assignments": {
+      "get": {
+        "operationId": "list_assignments_v1_workspaces__workspace_id__classes__class_id__assignments_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "class_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Class Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentListDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Assignments",
+        "tags": [
+          "assignments"
+        ]
+      },
+      "post": {
+        "operationId": "create_assignment_v1_workspaces__workspace_id__classes__class_id__assignments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "class_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Class Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignmentCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Assignment",
+        "tags": [
+          "assignments"
         ]
       }
     },
@@ -7892,6 +13420,277 @@
         ]
       }
     },
+    "/v1/workspaces/{workspace_id}/content-items/{item_id}/revisions/{revision_no}/approve-with-provenance": {
+      "post": {
+        "operationId": "approve_with_provenance_v1_workspaces__workspace_id__content_items__item_id__revisions__revision_no__approve_with_provenance_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "revision_no",
+            "required": true,
+            "schema": {
+              "title": "Revision No",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ApproveDTO"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Approve With Provenance",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/content-items/{item_id}/revisions/{revision_no}/provenance": {
+      "get": {
+        "operationId": "get_provenance_v1_workspaces__workspace_id__content_items__item_id__revisions__revision_no__provenance_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Item Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "revision_no",
+            "required": true,
+            "schema": {
+              "title": "Revision No",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvenanceDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Provenance",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
     "/v1/workspaces/{workspace_id}/content-items/{item_id}/revisions/{revision_no}/publish": {
       "post": {
         "operationId": "publish_content_revision_v1_workspaces__workspace_id__content_items__item_id__revisions__revision_no__publish_post",
@@ -9770,6 +15569,1274 @@
         "summary": "List Chunks",
         "tags": [
           "knowledge"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/exams": {
+      "get": {
+        "operationId": "list_exams_v1_workspaces__workspace_id__exams_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "draft",
+                    "published",
+                    "archived"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamListDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Exams",
+        "tags": [
+          "generation"
+        ]
+      },
+      "post": {
+        "operationId": "create_exam_v1_workspaces__workspace_id__exams_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExamCreateDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamDetailDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Exam",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/exams/{exam_id}": {
+      "get": {
+        "operationId": "get_exam_v1_workspaces__workspace_id__exams__exam_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamDetailDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Exam",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/exams/{exam_id}/archive": {
+      "post": {
+        "operationId": "archive_exam_v1_workspaces__workspace_id__exams__exam_id__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Archive Exam",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/exams/{exam_id}/versions/{version_no}/publish": {
+      "post": {
+        "operationId": "publish_exam_v1_workspaces__workspace_id__exams__exam_id__versions__version_no__publish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version_no",
+            "required": true,
+            "schema": {
+              "title": "Version No",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamDetailDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Publish Exam",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/exams/{exam_id}/versions/{version_no}/student-view": {
+      "get": {
+        "operationId": "get_student_view_v1_workspaces__workspace_id__exams__exam_id__versions__version_no__student_view_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version_no",
+            "required": true,
+            "schema": {
+              "title": "Version No",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentExamViewDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Student View",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/exports": {
+      "post": {
+        "operationId": "request_export_v1_workspaces__workspace_id__exports_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportAcceptedDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Request Export",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/exports/{export_id}": {
+      "get": {
+        "operationId": "get_export_v1_workspaces__workspace_id__exports__export_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Export Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportJobDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Export",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/generation/drafts": {
+      "post": {
+        "operationId": "request_draft_v1_workspaces__workspace_id__generation_drafts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerationRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationAcceptedDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Request Draft",
+        "tags": [
+          "generation"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/generation/jobs/{generation_id}": {
+      "get": {
+        "operationId": "get_generation_job_v1_workspaces__workspace_id__generation_jobs__generation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "generation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Generation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationJobDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDTO"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Generation Job",
+        "tags": [
+          "generation"
         ]
       }
     },
