@@ -1,4 +1,4 @@
-# 0012 — Quyền riêng tư, đồng ý của người giám hộ và lưu giữ dữ liệu (PILOT-05)
+# 0008 — Quyền riêng tư, đồng ý của người giám hộ và lưu giữ dữ liệu (PILOT-05)
 
 > Ngày: 2026-10-23. Trạng thái: **Đề xuất kỹ thuật, chưa được duyệt.** Owner nghiệp vụ/pháp lý: —.
 > Phạm vi: dữ liệu do schema `edu` (migrations 0001–0014), Redis phiên, object storage, log và Auth0 nắm giữ ở thời điểm viết.
@@ -23,16 +23,19 @@ Bảng này được `backend/tests/test_privacy_inventory.py` đối chiếu v�
 
 | Bảng | Cột cá nhân / liên kết người | Loại | Lưu giữ đề xuất (chờ duyệt) | Đường xóa hiện có | Thiếu |
 |---|---|---|---|---|---|
-| `edu.users` | `email`, `display_name`, `provider_issuer`, `provider_sub` | PII-GV và PII-HS (học sinh cũng là user) | Đến khi tài khoản bị xóa + 30 ngày | Không. Chỉ có `is_active=false` (không qua API). `edu.bootstrap_identity` ghi đè `email`/`display_name` ở mỗi lần đăng nhập | Function SECURITY DEFINER `edu.erase_user` (pseudonymize email/display_name, giữ id), job xóa user Auth0 qua Management API |
+| `edu.users` | `email`, `display_name`, `provider_issuer`, `provider_sub` | PII-GV và PII-HS (học sinh cũng là user) | Đến khi tài khoản bị xóa + 30 ngày | Có (migration 0016): tự phục vụ `POST /v1/student/me/privacy-requests {kind: erasure}` → job `privacy.erase` → `edu.erase_self` (email → `erased+<id>@invalid`, `display_name` → "Người dùng đã xóa", `is_active=false`, thu hồi membership, pseudonymize mọi dòng `students` của user, xóa object tự xuất). `edu.bootstrap_identity` ghi đè `email`/`display_name` ở mỗi lần đăng nhập (user đã xóa không đăng nhập lại được) | Xóa bản ghi `auth.user`/phiên Better Auth; `provider_issuer`/`provider_sub` và `user_identities` còn giữ |
 | `edu.user_identities` | `user_id`, `issuer`, `subject` | PII-GV và PII-HS (liên kết đăng nhập, migration 0005 của Duc) | Theo vòng đời tài khoản | Không | Xóa alias khi erase user |
 | `edu.identity_transfers` | `user_id`, `target_issuer`, `target_subject`, `proof_id` | PII-GV (audit chuyển identity, migration 0006) | 1 năm cho audit | Không | Purge sau hạn |
 | `edu.workspaces` | `personal_owner_user_id`, `name` | PII-GV (liên kết) | Theo vòng đời workspace | Không (chỉ `is_active`) | Workflow đóng workspace + xóa dữ liệu tenant |
 | `edu.workspace_members` | `user_id`, `role`, `status` | PII-GV (liên kết) | Theo membership; giữ bản ghi thu hồi cho audit | Không có DELETE qua API | — |
 | `edu.classes` | `created_by_user_id`, `name` | PII-GV (liên kết) | Năm học + 1 năm | Lưu trữ (`archived`), không xóa | Purge lớp đã lưu trữ quá hạn |
 | `edu.class_teachers` | `user_id` | PII-GV (liên kết) | Theo lớp | DELETE co-teacher qua API | — |
-| `edu.students` | `user_id`, `display_name`, `external_code`, `status` | **PII-HS** | Năm học + 1 năm, hoặc đến khi có yêu cầu xóa | Không. `display_name` được sao từ `users.display_name` lúc join (`edu.accept_class_invitation`); không đồng bộ khi user đổi tên | Function `edu.erase_student(student_id)` (pseudonymize `display_name`→"Học sinh đã xóa", `external_code`→NULL, `user_id`→NULL) + job |
+| `edu.students` | `user_id`, `display_name`, `external_code`, `status`, `birth_year` (chỉ năm, học sinh tự khai một lần), `consent_status`, `erased_at` | **PII-HS** | Năm học + 1 năm, hoặc đến khi có yêu cầu xóa | Có (migration 0016): `POST .../students/{id}/erase` (owner/admin) → job `privacy.erase` → `edu.erase_student` (`display_name`→"Học sinh đã xóa", `external_code`/`user_id`/`birth_year`→NULL, `erased_at`, rút enrollment, thu hồi đồng ý, xóa object xuất). Attempt/điểm giữ lại, trỏ tới học sinh đã pseudonymize. `display_name` sao từ `users.display_name` lúc join | Quyết định pháp lý: giữ điểm ẩn danh hay xóa hẳn; tombstone tái áp dụng sau restore |
 | `edu.class_invitations` | `created_by_user_id`, `token_hash` (chỉ digest) | PII-GV (liên kết) | 30 ngày sau hết hạn | Không (thu hồi qua `revoked_at`) | Purge lời mời hết hạn |
-| `edu.enrollments` | `student_id`, `joined_at`, `withdrawn_at` | **PII-HS** (liên kết) | Theo `students` | Rút học sinh (`withdrawn`), không xóa | Thuộc `edu.erase_student` |
+| `edu.enrollments` | `student_id`, `joined_at`, `withdrawn_at` | **PII-HS** (liên kết) | Theo `students` | Rút học sinh (`withdrawn`); `edu.erase_student` rút mọi enrollment | — |
+| `edu.student_consents` | `student_id`, `recorded_by_user_id`, `guardian_name`, `guardian_contact_hash` (sha256 của email/SĐT đã chuẩn hóa, không lưu bản rõ), `evidence_note` (≤ 500 ký tự), `policy_version` | **PII-HS** + dữ liệu người giám hộ (migration 0016) | Theo `students` + thời hạn chứng minh đồng ý (chờ duyệt) | Append-only; `edu.erase_student`/`edu.erase_self` thu hồi và xóa `guardian_name`/`guardian_contact_hash`/`evidence_note` (NULL) | Hash SĐT có không gian nhỏ (brute-force được): cân nhắc HMAC có pepper |
+| `edu.consent_links` | `student_id`, `created_by_user_id`, `token_hash` (chỉ digest) | PII-HS (liên kết) | 30 ngày sau hết hạn | Một lần dùng; erasure đánh dấu `used_at` | Purge liên kết hết hạn |
+| `edu.privacy_requests` | `student_id`, `user_id`, `requested_by_user_id`, `object_key` (tệp xuất JSON `ws/*/privacy/*` hoặc `users/*/privacy/*`) | PII-HS/PII-GV (liên kết); tệp xuất là dữ liệu cá nhân | Bản ghi: lâu dài (bằng chứng xử lý yêu cầu); tệp xuất: ngắn (đề xuất 7 ngày) | Erasure xóa object xuất của chủ thể và đặt `object_key`=NULL | Lifecycle rule cho `*/privacy/*`; tombstone sau restore |
 | `edu.background_jobs` | `requested_by_user_id`, `input` (jsonb), `result` | PII-GV (liên kết); `input` của `attempt.grade` chứa `attemptId` | 90 ngày sau khi kết thúc | Không | Purge job đã kết thúc theo tuổi |
 | `edu.usage_events` | — (workspace, đơn vị, chi phí) | Không cá nhân | Theo kế toán (đề xuất 2 năm) | Append-only, không xóa (đúng thiết kế) | — |
 | `edu.documents` | `owner_user_id`, `file_name`, `object_key` | PII-GV; **nội dung tệp có thể chứa PII-HS** nếu giáo viên tải lên | Đến khi giáo viên xóa | Có: soft delete → job `document.delete` → `edu.purge_document_chunks` xóa chunks/vector, đánh dấu version `withdrawn`, xóa object | Cảnh báo UI "không tải lên tài liệu chứa dữ liệu học sinh"; purge hàng `documents` đã xóa (metadata còn lại) |
@@ -152,3 +155,14 @@ Quy tắc pseudonymization (bắt buộc, kể cả khi sau này thêm trợ lý
 | 6 | Văn bản thông báo quyền riêng tư (có phiên bản) cho giáo viên, học sinh, phụ huynh | Pháp lý + product | — |
 | 7 | Cấu hình provider (zero-retention/region) và hợp đồng xử lý dữ liệu | Vận hành + pháp lý | — |
 | 8 | Lifecycle object storage cho exports, backup có hạn | Vận hành | — |
+
+## Tài liệu liên quan
+
+Bản dự thảo cho luật sư (chưa duyệt), xem `docs/legal/README.md`:
+
+- [Thông báo xử lý dữ liệu cá nhân](../../docs/legal/privacy-notice.md)
+- [Phiếu đồng ý của cha mẹ/người giám hộ](../../docs/legal/guardian-consent.md)
+- [Thông báo cho học sinh](../../docs/legal/student-notice.md)
+- [Điều khoản giáo viên](../../docs/legal/teacher-terms.md)
+- [Tóm tắt cho luật sư](../../docs/legal/lawyer-brief.md)
+- Văn bản trong ứng dụng: `frontend/src/content/privacy-notice.ts`, `frontend/src/content/consent-text.ts`

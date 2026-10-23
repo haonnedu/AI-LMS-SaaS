@@ -3,7 +3,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import type { components } from "@/lib/api/generated";
 import { jsonInit, read } from "@/lib/client/api";
+import { ConsentPanel } from "./consent-panel";
 import { Modal } from "./modal";
+import { Tabs, panelId, tabId } from "./tabs";
 import { TeachingNav } from "./teaching-nav";
 import { useTeaching } from "./use-teaching";
 import styles from "./teaching.module.css";
@@ -27,6 +29,7 @@ export function ClassDetailScreen({ classId }: { classId: string }) {
   const [copied, setCopied] = useState("");
   const [options, setOptions] = useState({ expiresInHours: "168", maxUses: "1" });
   const [withdraw, setWithdraw] = useState<Entry | null>(null);
+  const [tab, setTab] = useState("students");
   const epoch = useRef(0);
   const invalidate = useCallback(() => { epoch.current++; }, []);
   const base = workspace ? `/api/backend/workspaces/${workspace.id}/classes/${classId}` : "";
@@ -94,7 +97,9 @@ export function ClassDetailScreen({ classId }: { classId: string }) {
         <Link className="button button-secondary" href={`/dashboard/classes/${classId}/assignments`}>Bài giao</Link>
       </div>}
     </section>
-    {roster && <section className={styles.card} aria-label="Danh sách học sinh">
+    {klass && <Tabs prefix="class" label="Nội dung lớp" tabs={[{ id: "students", label: "Học sinh" }, { id: "consent", label: "Đồng ý phụ huynh" }]} active={tab} onChange={setTab} />}
+    {tab === "consent" && klass && workspace && <div role="tabpanel" id={panelId("class", "consent")} aria-labelledby={tabId("class", "consent")}><ConsentPanel workspaceId={workspace.id} classId={classId} csrf={csrf} handle={handle} readOnly={klass.status !== "active"} /></div>}
+    {tab === "students" && roster && <section className={styles.card} role="tabpanel" id={panelId("class", "students")} aria-labelledby={tabId("class", "students")} aria-label="Danh sách học sinh">
       <h2>Học sinh</h2>
       <div className={styles.counts}><div><strong>{roster.counts.enrolled}</strong>Đang học</div><div><strong>{roster.counts.invited}</strong>Đã mời</div><div><strong>{roster.counts.withdrawn}</strong>Đã rút</div></div>
       {roster.items.length === 0 ? <p className={styles.muted}>Lớp chưa có học sinh. Tạo mã mời và gửi cho học sinh để tham gia.</p> :

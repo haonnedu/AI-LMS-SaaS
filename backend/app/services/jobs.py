@@ -45,6 +45,8 @@ QUEUE_BY_KIND = {
     "questions.generate": "generation",
     "export.render": "export",
     "attempt.grade": "default",
+    "privacy.export": "default",
+    "privacy.erase": "default",
 }
 CLIENT_KEY_PREFIX = "client:"
 SYSTEM_KEY_PREFIX = "system:"

@@ -1,4 +1,4 @@
-# 0011 — Threat model cho pilot (PILOT-02)
+# 0007 — Threat model cho pilot (PILOT-02)
 
 > Ngày: 2026-10-23. Trạng thái: **Đề xuất, chờ review bảo mật bởi người thứ hai.** Owner: —.
 > Phạm vi: code trên nhánh `feat/m5-m6-ui-m7-pilot-readiness` (migrations 0001–0015, backend FastAPI/Celery, BFF Next.js, `compose.staging.yaml`). Số dòng `file:line` là ở thời điểm viết; khi code đổi, cập nhật bảng hoặc tham chiếu theo tên hàm.

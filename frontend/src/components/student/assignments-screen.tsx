@@ -6,16 +6,18 @@ import { read } from "@/lib/client/api";
 import { AVAILABILITY_GROUP, AVAILABILITY_LABEL, AVAILABILITY_TONE, canStart, formatDuration, groupByAvailability, startLabel, windowHint } from "@/lib/client/assessment";
 import { StudentShell } from "./student-shell";
 import { useServerClock, useStudent } from "./use-student";
+import { ConsentGate } from "./consent-gate";
 import styles from "./student.module.css";
 
 type Item = components["schemas"]["StudentAssignmentDTO"];
 
 export function StudentAssignmentsScreen() {
-  const { ready, message, handle, reload } = useStudent();
+  const { csrf, ready, message, handle, reload } = useStudent();
   const { offset, now, sync } = useServerClock(15000);
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [needsYear, setNeedsYear] = useState(false);
   const epoch = useRef(0);
 
   const load = useCallback(async () => {
@@ -34,12 +36,14 @@ export function StudentAssignmentsScreen() {
 
   return <StudentShell><div className={styles.content}>
     <h1 style={{ fontSize: 24 }}>Bài được giao</h1>
+    {ready && <ConsentGate csrf={csrf} onPending={setNeedsYear} />}
     {!ready && !message && <p role="status">Đang tải…</p>}
     {message && <div className={styles.card}><p role="alert" className={styles.error}>{message}</p><button className={styles.btn} onClick={() => void reload()}>Thử lại</button></div>}
     {error && <div className={styles.card}><p role="alert" className={styles.error}>{error}</p><button className={styles.btn} onClick={() => void load()}>Tải lại</button></div>}
     {loading && !items && !error && <p role="status">Đang tải bài được giao…</p>}
-    {items && items.length === 0 && <div className={styles.card}><p className={styles.muted}>Bạn chưa có bài nào được giao. Khi giáo viên giao bài, bài sẽ xuất hiện ở đây.</p></div>}
-    {items && groupByAvailability(items).map(group => <section key={group.availability} className={styles.group} aria-label={AVAILABILITY_GROUP[group.availability]}>
+    {items && needsYear && <p className={styles.muted}>Em hãy chọn năm sinh ở trên để xem bài được giao.</p>}
+    {items && !needsYear && items.length === 0 && <div className={styles.card}><p className={styles.muted}>Bạn chưa có bài nào được giao. Khi giáo viên giao bài, bài sẽ xuất hiện ở đây.</p></div>}
+    {items && !needsYear && groupByAvailability(items).map(group => <section key={group.availability} className={styles.group} aria-label={AVAILABILITY_GROUP[group.availability]}>
       <h2>{AVAILABILITY_GROUP[group.availability]} ({group.items.length})</h2>
       <ul className={styles.list}>{group.items.map(item => <li key={item.id} className={styles.card}>
         <div><strong>{item.title}</strong><p className={styles.muted}>{item.className}</p></div>

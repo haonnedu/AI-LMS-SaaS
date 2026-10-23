@@ -6,8 +6,9 @@ export function StudentShell({ children, nav = true }: { children: ReactNode; na
   return <div className={styles.shell}>
     <header className={styles.header}>
       <Link href="/student/assignments" className={styles.brandLink} aria-label="Eduvia · Bài được giao">eduvia.</Link>
-      {nav && <nav className={styles.headerNav} aria-label="Điều hướng học sinh"><Link href="/student/assignments">Bài được giao</Link></nav>}
+      {nav && <nav className={styles.headerNav} aria-label="Điều hướng học sinh"><Link href="/student/assignments">Bài được giao</Link><Link href="/student/privacy">Dữ liệu của em</Link></nav>}
     </header>
     {children}
+    {nav && <footer className={styles.footer}><Link href="/privacy">Thông báo quyền riêng tư</Link></footer>}
   </div>;
 }

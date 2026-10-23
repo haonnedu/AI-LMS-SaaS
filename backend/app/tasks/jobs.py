@@ -31,6 +31,7 @@ from app.services import (
     indexing,
     knowledge,
     parsing,
+    privacy,
     releases,
     scoring,
 )
@@ -265,6 +266,22 @@ def grade_attempt(ctx: HandlerContext) -> dict[str, Any]:
         raise PermanentJobError(exc.code) from None
 
 
+def export_privacy(ctx: HandlerContext) -> dict[str, Any]:
+    """PILOT-05: write the SECURITY DEFINER export JSON to private storage."""
+    try:
+        return privacy.run_export(ctx)
+    except privacy.PrivacyJobFailed as exc:
+        raise PermanentJobError(exc.code) from None
+
+
+def erase_privacy(ctx: HandlerContext) -> dict[str, Any]:
+    """PILOT-05: purge the subject's export objects, then pseudonymise in the database."""
+    try:
+        return privacy.run_erasure(ctx)
+    except privacy.PrivacyJobFailed as exc:
+        raise PermanentJobError(exc.code) from None
+
+
 HANDLERS: dict[str, Handler] = {
     "document.ingest": Handler(ingest_document, quarantine_document),
     "document.reingest": Handler(reingest_document, record_reingest_failure),
@@ -274,6 +291,8 @@ HANDLERS: dict[str, Handler] = {
     "questions.generate": Handler(generate_draft, generation.mark_failed),
     "export.render": Handler(render_export, exports.mark_failed),
     "attempt.grade": Handler(grade_attempt),
+    "privacy.export": Handler(export_privacy, privacy.mark_failed),
+    "privacy.erase": Handler(erase_privacy, privacy.mark_failed),
 }
 
 

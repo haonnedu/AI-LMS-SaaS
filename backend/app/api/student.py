@@ -19,7 +19,7 @@ from decimal import Decimal
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Header, Response
+from fastapi import APIRouter, Header, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -312,14 +312,18 @@ async def assignment_detail(assignment_id: UUID, db: Database, claims: Claims):
 )
 async def start_attempt(
     assignment_id: UUID,
+    request: Request,
     response: Response,
     db: Database,
     claims: Claims,
     key: IdempotencyKey = None,
 ):
     client_key = idempotency_key(key)
+    consent_age = request.app.state.settings.privacy_consent_age
     async with student_transaction(db, claims):
-        started = await service.start_attempt(db, assignment_id, client_key)
+        started = await service.start_attempt(
+            db, assignment_id, client_key, consent_age=consent_age
+        )
     response.status_code = 201 if started.created else 200
     return StartedAttemptDTO(
         attemptId=started.attempt_id,

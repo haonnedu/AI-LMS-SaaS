@@ -13,6 +13,7 @@ from app.models import (
     identity,  # noqa: F401
     jobs,  # noqa: F401
     knowledge,  # noqa: F401
+    privacy,  # noqa: F401
     teaching,  # noqa: F401
 )
 

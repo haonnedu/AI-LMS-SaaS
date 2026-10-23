@@ -40,8 +40,10 @@ from app.services.assessment_common import (
     ASSIGNMENT_NOT_FOUND,
     ATTEMPT_NOT_FOUND,
     GRACE,
+    Forbidden,
     NotFound,
     map_db_error,
+    sqlstate,
 )
 from app.services.jobs import request_hash
 
@@ -306,19 +308,36 @@ async def assignment_detail(db: AsyncSession, assignment_id: UUID) -> StudentAss
     return _assignment(rows[0], detailed=True)
 
 
+CONSENT_REQUIRED = (
+    "consent_required",
+    "Cần có xác nhận đồng ý của cha mẹ/người giám hộ trước khi làm bài.",
+)
+
+
 async def start_attempt(
-    db: AsyncSession, assignment_id: UUID, idempotency_key: str
+    db: AsyncSession,
+    assignment_id: UUID,
+    idempotency_key: str,
+    *,
+    consent_age: int | None = None,
 ) -> StartedAttempt:
-    rows = await _rows(
-        db,
-        "SELECT * FROM edu.student_start_attempt(:assignment, :key, :hash)",
-        {
-            "assignment": assignment_id,
-            "key": idempotency_key,
-            "hash": start_request_hash(assignment_id),
-        },
-        ASSIGNMENT_NOT_FOUND,
-    )
+    """``consent_age`` (settings.privacy_consent_age) selects the 0016 consent-gated function;
+    without it the 0015 signature runs (its wrapper applies the default age 16)."""
+    params: dict[str, Any] = {
+        "assignment": assignment_id,
+        "key": idempotency_key,
+        "hash": start_request_hash(assignment_id),
+    }
+    sql = "SELECT * FROM edu.student_start_attempt(:assignment, :key, :hash)"
+    if consent_age is not None:
+        sql = "SELECT * FROM edu.student_start_attempt(:assignment, :key, :hash, :consent_age)"
+        params["consent_age"] = consent_age
+    try:
+        rows = await _rows(db, sql, params, ASSIGNMENT_NOT_FOUND)
+    except DBAPIError as exc:
+        if sqlstate(exc) == "EV017":  # PILOT-05 gate (migration 0016)
+            raise Forbidden(*CONSENT_REQUIRED) from None
+        raise
     row = rows[0]
     return StartedAttempt(
         attempt_id=row.out_attempt_id,

@@ -1,3 +1,14 @@
+## 2026-10-24 — PILOT-05 consent/xóa/xuất dữ liệu + văn bản pháp lý nháp — bàn giao
+
+- Tác giả: Hao Nguyen (3 agent)
+- Task / trao đổi chi tiết: [Core tracker](../tasks/CORE.md) (record đợt 6), [docs/legal/lawyer-brief.md](../docs/legal/lawyer-brief.md) để gửi luật sư
+- Branch / commit / PR: `feat/privacy-consent` stack trên `feat/m5-m6-ui-m7-pilot-readiness`; migration `0016_privacy_consent`. Chưa mở PR.
+- Đã thay đổi: xem record đợt 6. Hai số quan trọng trong `backend/.env`: `PRIVACY_CONSENT_AGE` (16) và `PRIVACY_POLICY_VERSION` (`2026-10-draft`); đổi version khi văn bản được duyệt.
+- Kiểm chứng: backend 1125 passed / 45 skipped; frontend lint/typecheck/build + 58 unit tests.
+- Chưa kiểm chứng: SQL 0016 trên PostgreSQL; browser; `erase_self` với Better Auth (cần Duc: xóa `auth.user` + revoke session khi user bị erase).
+- Đề nghị Duc: nối `edu.erase_self` với Better Auth (xóa `auth.user`, `session_revocations`); review rate limit public `/v1/public/consent-links`.
+- Hao: gửi `docs/legal/lawyer-brief.md` + `privacy-notice.md` + `guardian-consent.md` cho luật sư; sau khi duyệt đổi `PRIVACY_POLICY_VERSION`.
+
 ## 2026-10-23 23:30 +07:00 — Đợt 3–5: RAG, authoring, exams, assessment, UI, M7 — bàn giao cho Duc review
 
 - Tác giả: Hao Nguyen (agent thực hiện theo chỉ đạo, 11 work package qua 3 đợt)

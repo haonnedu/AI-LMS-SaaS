@@ -71,6 +71,13 @@ class Settings(BaseSettings):
     llm_units_per_request: int = Field(default=10, ge=1, le=1000)
     # Anthropic server-side refusal fallback (beta header + ``fallbacks: "default"``).
     llm_server_fallback: bool = True
+    # Privacy/consent (PILOT-05). Legal assumptions pending review (decision 0008): students
+    # younger than this need a recorded guardian consent before starting attempts.
+    privacy_consent_age: int = Field(default=16, ge=12, le=18)
+    # Version of the privacy notice every new consent row records.
+    privacy_policy_version: str = Field(default="2026-10-draft", pattern=r"^[A-Za-z0-9._-]{1,32}$")
+    # Lifetime of signed download URLs for privacy exports (capped at 300 s by storage).
+    privacy_export_url_seconds: int = Field(default=300, ge=30, le=300)
 
     @field_validator("database_url")
     @classmethod

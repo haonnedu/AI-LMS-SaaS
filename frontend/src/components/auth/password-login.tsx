@@ -38,5 +38,6 @@ export function PasswordLogin({ initialMode = "login", google = false }: { initi
     {google && mode === "login" && <button disabled={busy || !hydrated} className="button button-secondary" onClick={() => void submit(true)}>Đăng nhập bằng Google</button>}
     <p><button disabled={busy || !hydrated} onClick={() => setMode(mode === "login" ? "signup" : "login")}>{mode === "login" ? "Tạo tài khoản" : "Đăng nhập"}</button> · <button disabled={busy || !hydrated} onClick={() => setMode("forgot")}>Quên mật khẩu</button></p>
     <Link href="/">Xem giao diện minh họa</Link>
+    <p><Link href="/privacy">Thông báo quyền riêng tư</Link></p>
   </div></section></div>;
 }

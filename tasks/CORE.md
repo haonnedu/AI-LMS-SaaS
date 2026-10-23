@@ -225,3 +225,12 @@ Owner Duc; reviewer đề xuất Hào, chưa signoff. User chốt bỏ một acc
 ### Gộp `main` lần 2 (Auth0 retired, `0008_remove_auth0_transfer`) — 2026-10-24
 
 Duc push `947856e` (bỏ Auth0 hoàn toàn, migration `0008_remove_auth0_transfer`, xóa `legacy-auth.ts` và `playwright.config.ts`). Xử lý: merge lại; migration của Hao thành `0009_classes` … `0015_assessment` (`0009_classes` revises `0008_remove_auth0_transfer`), một head `0015_assessment`; `auth.ts` chỉ còn Better Auth với `accessToken()`/`backend(options)`; E2E chuyển sang `playwright.e2e.config.ts` (`npm run test:e2e`); DEVELOPMENT.md ghi trạng thái theo Better Auth. Kiểm chứng: backend 1000 passed / 41 skipped; frontend lint/typecheck/build + 51 unit tests. Đề nghị thống nhất với Duc: ai thêm migration thì báo trước số kế tiếp để tránh trùng.
+
+
+### PILOT-05 (code) — execution record 2026-10-24 (đợt 6, branch `feat/privacy-consent`)
+
+Owner: Hao (3 agent). Giả định pháp lý để code, CHƯA được luật sư xác nhận: ngưỡng cần phụ huynh = `privacy_consent_age` (mặc định 16, cấu hình được); hình thức `paper_school` / `guardian_link` / `self_adult`; mọi consent gắn `privacy_policy_version` (hiện `2026-10-draft`).
+Backend: migration `0016_privacy_consent` (students.birth_year/consent_status/erased_at; `student_consents`, `consent_links`, `privacy_requests`; SECURITY DEFINER `student_set_birth_year`, `guardian_consent_by_link`, `consent_link_info`, `erase_student`, `erase_self`, `student_export`, `self_export`; `student_start_attempt` 4 tham số chặn EV017 khi thiếu consent). Router `privacy`, `student_privacy`, `consent_links` (`/v1/public`, rate limit in-process). Job `privacy.export`/`privacy.erase`; export không bao giờ chứa key.
+Frontend: gate năm sinh + thẻ "Cần sự đồng ý của phụ huynh" ở `/student/assignments` và sau join; `/student/privacy` (xuất/xóa dữ liệu); tab "Đồng ý phụ huynh" ở chi tiết lớp (ghi nhận, link phụ huynh, thu hồi, xuất/xóa); trang công khai `/consent/[token]`; `/privacy`.
+Văn bản nháp: `docs/legal/` (privacy-notice, guardian-consent, student-notice, teacher-terms, lawyer-brief) với 22 điểm "[Cần pháp lý xác nhận]"; `frontend/src/content/*.ts` đồng bộ.
+Kiểm chứng: backend 1125 passed / 45 skipped, một head `0016_privacy_consent`; frontend lint/typecheck/build + 58 unit tests. Chưa chạy SQL trên PostgreSQL; `erase_self` chưa xóa `auth.user`/session Better Auth; save/submit chưa gate consent (chỉ start); hash số điện thoại nên dùng HMAC có pepper.

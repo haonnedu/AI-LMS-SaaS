@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { components } from "@/lib/api/generated";
 import { read, RequestError } from "@/lib/client/api";
 import { AVAILABILITY_LABEL, AVAILABILITY_TONE, canStart, clearIdempotencyKey, formatDuration, getIdempotencyKey, isRetryableStatus, startLabel, windowHint } from "@/lib/client/assessment";
+import { CONSENT_REQUIRED_MESSAGE } from "@/lib/client/privacy";
+import { ConsentRequiredCard } from "./consent-gate";
 import { StudentShell } from "./student-shell";
 import { sessionKeys, useServerClock, useStudent } from "./use-student";
 import styles from "./student.module.css";
@@ -20,6 +22,7 @@ export function StudentAssignmentScreen({ assignmentId }: { assignmentId: string
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState("");
   const [starting, setStarting] = useState(false);
+  const [consentBlocked, setConsentBlocked] = useState(false);
   const epoch = useRef(0);
 
   const load = useCallback(async () => {
@@ -36,7 +39,7 @@ export function StudentAssignmentScreen({ assignmentId }: { assignmentId: string
   useEffect(() => { if (ready) void load(); }, [ready, load]);
 
   async function start() {
-    setStarting(true); setError("");
+    setStarting(true); setError(""); setConsentBlocked(false);
     // The same key is reused by every retry for this assignment until the server answers definitively.
     const key = getIdempotencyKey(sessionKeys(), "start", assignmentId);
     try {
@@ -45,7 +48,9 @@ export function StudentAssignmentScreen({ assignmentId }: { assignmentId: string
       router.push(`/student/attempts/${started.attemptId}`);
     } catch (e) {
       if (e instanceof RequestError && !isRetryableStatus(e.status)) clearIdempotencyKey(sessionKeys(), "start", assignmentId);
-      setError(handle(e)); setStarting(false);
+      if (e instanceof RequestError && e.status === 403 && e.code === "consent_required") { setConsentBlocked(true); setError(CONSENT_REQUIRED_MESSAGE); }
+      else setError(handle(e));
+      setStarting(false);
       void load();
     }
   }
@@ -69,7 +74,8 @@ export function StudentAssignmentScreen({ assignmentId }: { assignmentId: string
         <div><dt className={styles.muted}>Số lần làm</dt><dd style={{ margin: 0 }}>{detail.attemptsUsed}/{detail.maxAttempts}</dd></div>
       </dl>
       {detail.instructions && <div><h2>Hướng dẫn</h2><p style={{ whiteSpace: "pre-wrap" }}>{detail.instructions}</p></div>}
-      {error && <p role="alert" className={styles.error}>{error}</p>}
+      {error && !consentBlocked && <p role="alert" className={styles.error}>{error}</p>}
+      {consentBlocked && <ConsentRequiredCard />}
       {detail.availability === "resume" && detail.inProgressAttemptId && <Link className={styles.btn} data-primary="true" href={`/student/attempts/${detail.inProgressAttemptId}`}>Tiếp tục</Link>}
       {detail.availability === "open" && <button className={styles.btn} data-primary="true" disabled={starting} onClick={() => void start()}>{starting ? "Đang bắt đầu…" : startLabel("open")}</button>}
       {detail.availability === "resume" && !detail.inProgressAttemptId && canStart("resume") && <button className={styles.btn} data-primary="true" disabled={starting} onClick={() => void start()}>{starting ? "Đang mở bài…" : "Tiếp tục"}</button>}
@@ -78,6 +84,6 @@ export function StudentAssignmentScreen({ assignmentId }: { assignmentId: string
       {detail.availability === "limit_reached" && <p className={styles.muted}>Bạn đã dùng hết số lần làm bài.</p>}
       {detail.latestAttemptId && detail.latestAttemptStatus !== "in_progress" && <Link className={styles.btn} href={`/student/attempts/${detail.latestAttemptId}/results`}>Xem kết quả</Link>}
     </section>}
-    {error && !detail && <div className={styles.card}><p role="alert" className={styles.error}>{error}</p><button className={styles.btn} onClick={() => void load()}>Tải lại</button></div>}
+    {error && !detail && !consentBlocked && <div className={styles.card}><p role="alert" className={styles.error}>{error}</p><button className={styles.btn} onClick={() => void load()}>Tải lại</button></div>}
   </div></StudentShell>;
 }

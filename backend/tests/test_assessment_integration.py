@@ -226,6 +226,11 @@ async def setup_class(client, headers, database):
     for student in (s1, s2):
         joined = await client.post(f"/v1/invitations/{token}/accept", headers=student.h)
         assert joined.status_code == 200, joined.text
+        # Adult students: the consent gate (migration 0016) must not block attempt start here.
+        adult = await client.put(
+            "/v1/student/me/birth-year", json={"birthYear": 2000}, headers=student.h
+        )
+        assert adult.status_code == 200, adult.text
     version, items = published_exam(database, teacher)
     return teacher, s1, s2, class_id, version, items
 
