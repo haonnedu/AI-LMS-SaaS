@@ -179,3 +179,7 @@ Owner tích hợp: Duc, theo người dùng xác nhận Hào đã bàn giao scop
 Thay đổi: Auth0-hosted email/password signup/login, verification/resend, Redis server sessions, RS256 verifier, identity/workspace bootstrap và các endpoint thật; frontend dashboard riêng, CSRF và server route guards. Dùng migration mới 0004, không sửa SQL của các migration đã phát hành. Runtime role và NOLOGIN function owner tách biệt.
 
 Evidence và giới hạn: [bản ghi triển khai](../discuss/2026-10-23-auth-implementation.md); setup tại [Auth0 runbook](../deploy/auth0/README.md). Tenant development đã tạo; người dùng xác nhận smoke Auth0/verification/reset email thật trên local. Resend bị skip, refresh thật chưa xác nhận, HTTPS staging/máy thứ hai chưa kiểm chứng. Người dùng quyết định giữ Auth0. CI workflow đã thêm test, chưa chạy GitHub CI cho diff này. Giữ các task liên quan `in_progress`, chưa nghiệm thu M1, chưa xác nhận review/merge/deploy.
+
+### Better Auth / Account Center — execution 2026-10-23
+
+Người dùng thay quyết định provider và duyệt implementation: email/password + Google, Account Center, explicit linking cùng email, giữ user/workspace cũ qua chuyển đổi có hai bằng chứng; không merge user đã có dữ liệu. Owner Duc, reviewer đề xuất Hào. Các task liên quan tiếp tục `in_progress`, chưa signoff/cutover. [Evidence](../discuss/2026-10-23-better-auth-account-center.md), [runbook](../deploy/better-auth/README.md). Checkpoint Auth0 `912c0d2` giữ lịch sử; không diễn giải smoke Auth0 cũ như nghiệm thu Better Auth.

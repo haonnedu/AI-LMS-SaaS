@@ -184,3 +184,7 @@ jobs:
       - name: OIDC browser and Redis session tests
         working-directory: frontend
         run: npm run test:auth
+
+      - name: Better Auth email, Google linking and session regression
+        working-directory: frontend
+        run: npm run test:better-auth

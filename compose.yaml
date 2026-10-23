@@ -13,6 +13,9 @@ x-backend: &backend
     AUTH_ISSUER: ${AUTH_ISSUER-}
     AUTH_AUDIENCE: ${AUTH_AUDIENCE-}
     AUTH_JWKS_URL: ${AUTH_JWKS_URL-}
+    LEGACY_AUTH_ISSUER: ${LEGACY_AUTH_ISSUER-}
+    LEGACY_AUTH_AUDIENCE: ${LEGACY_AUTH_AUDIENCE-}
+    LEGACY_AUTH_JWKS_URL: ${LEGACY_AUTH_JWKS_URL-}
     CORS_ORIGINS: '["http://localhost:${FRONTEND_PORT:-3000}","http://127.0.0.1:${FRONTEND_PORT:-3000}"]'
 
 services:
@@ -23,6 +26,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-eduvia}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eduvia_dev_only}
       DB_MIGRATOR_PASSWORD: ${DB_MIGRATOR_PASSWORD:-migrator_dev_only}
+      DB_AUTH_PASSWORD: ${DB_AUTH_PASSWORD:-auth_dev_only}
       DB_RUNTIME_PASSWORD: ${DB_RUNTIME_PASSWORD:-runtime_dev_only}
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
@@ -30,6 +34,8 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./deploy/postgres/10-bootstrap.sh:/docker-entrypoint-initdb.d/10-bootstrap.sh:ro
       - ./deploy/postgres/bootstrap.sql:/opt/eduvia/bootstrap.sql:ro
+      - ./deploy/postgres/20-auth-role.sh:/docker-entrypoint-initdb.d/20-auth-role.sh:ro
+      - ./deploy/postgres/auth-role.sql:/opt/eduvia/auth-role.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
@@ -91,6 +97,15 @@ services:
     build:
       context: ./frontend
     environment:
+      AUTH_PROVIDER: ${AUTH_PROVIDER:-auth0}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET-}
+      BETTER_AUTH_AUDIENCE: ${BETTER_AUTH_AUDIENCE:-https://eduvia-api}
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET-}
+      SMTP_URL: ${SMTP_URL-}
+      AUTH_EMAIL_FROM: ${AUTH_EMAIL_FROM-}
+      AUTH0_MIGRATION_ENABLED: ${AUTH0_MIGRATION_ENABLED:-0}
       API_INTERNAL_URL: http://api:8000
       APP_BASE_URL: ${APP_BASE_URL-}
       AUTH0_DOMAIN: ${AUTH0_DOMAIN-}

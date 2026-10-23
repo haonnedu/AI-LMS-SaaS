@@ -1,4 +1,5 @@
 """Loopback-only OIDC fixture. Never imported by application code."""
+import os
 import base64
 import hashlib
 import html
@@ -11,6 +12,7 @@ import jwt
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 ISSUER="http://localhost:9101/"
+CALLBACK=os.environ.get("OIDC_FIXTURE_CALLBACK", "http://127.0.0.1:3105/auth/callback")
 key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
 jwk=json.loads(jwt.algorithms.RSAAlgorithm.to_jwk(key.public_key()))
 jwk.update(kid="fixture-key",alg="RS256",use="sig")
@@ -36,10 +38,10 @@ class Handler(BaseHTTPRequestHandler):
         if url.path=="/jwks": return self.output({"keys":[jwk]})
         if url.path=="/stats": return self.output({"refreshes":refresh_count,"verificationEmails":verification_count})
         if url.path=="/authorize":
-            if params.get("redirect_uri")!="http://127.0.0.1:3105/auth/callback": return self.output({},400)
+            if params.get("redirect_uri")!=CALLBACK: return self.output({},400)
             transaction=secrets.token_urlsafe(); transactions[transaction]=params
             return self.output('<h1>Test identity provider</h1><form method="post" action="/authorize"><input type="hidden" name="transaction" value="'+html.escape(transaction)+'"><label>Email<input name="email" type="email"></label><label>Password<input name="password" type="password"></label><button>Continue</button></form>',content_type="text/html")
-        if url.path=="/logout": return self.redirect("http://127.0.0.1:3105/login")
+        if url.path=="/logout": return self.redirect(CALLBACK.rsplit("/auth/callback",1)[0]+"/login")
         return self.output({},404)
     def do_POST(self):
         global refresh_count,verification_count
@@ -75,7 +77,7 @@ class Handler(BaseHTTPRequestHandler):
             common={"iss":ISSUER,"sub":sub,"iat":now,"exp":now+duration}
             profile={"email":email,"email_verified":is_verified,"name":"Test Teacher"}
             access={**common,"aud":"https://eduvia-api",**{"https://eduvia.app/claims/"+k:v for k,v in profile.items()}}
-            identity={**common,"exp":now+300,"aud":"test-client","nonce":transaction.get("nonce"),"sid":email,**profile}
+            identity={**common,"exp":now+300,"aud":"test-client","nonce":transaction.get("nonce"),"sid":email,"auth_time":now,**profile}
             refresh=secrets.token_urlsafe(); refreshes[refresh]=(transaction,email)
             return self.output({"access_token":jwt.encode(access,key,algorithm="RS256",headers={"kid":"fixture-key"}),"id_token":jwt.encode(identity,key,algorithm="RS256",headers={"kid":"fixture-key"}),"refresh_token":refresh,"expires_in":duration,"token_type":"Bearer","scope":"openid profile email offline_access"})
         return self.output({},404)

@@ -216,3 +216,7 @@ The disposable environment file is removed at the end. Do not share it while a r
 ## Historical scaffold validation
 
 The original scaffold was checked with Node 24/Python 3.12, including 16 backend tests and four initial page routes. That record predates the identity migration, expanded preview UI and Docker-backed verification. It is historical context, not evidence for the current revision; use the linked handoffs and current CI runs for acceptance.
+
+### Better Auth + Account Center (2026-10-23)
+
+The user approved replacing Auth0 with Better Auth and retaining legacy workspaces through an explicit two-session migration gate. [Setup/cutover](deploy/better-auth/README.md), [review evidence for Hào](discuss/2026-10-23-better-auth-account-center.md). Local `.env` and existing user database have not been switched by implementation. Do not run backend integration and either browser suite concurrently: they share a disposable auth test database. Secrets and real Google/SMTP setup stay outside Git.

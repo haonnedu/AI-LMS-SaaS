@@ -37,3 +37,7 @@ Chọn **Phương án C (Managed OIDC Provider / Supabase Auth hoặc Auth0 kế
 ## Chốt triển khai — 2026-10-23
 
 Theo yêu cầu trực tiếp của người dùng sau bàn giao từ Hào: dùng **Auth0 Database Connection + Universal Login**, email/mật khẩu, tự đăng ký và bắt buộc xác minh email. Google/social login không thuộc slice này. Password/verification/reset do Auth0 quản lý; Eduvia định danh theo `(issuer, subject)`, không gộp email. Ban đầu chưa có tenant; sau đó đã setup tenant development và smoke Auth0/email thật trên local. Người dùng cân nhắc chi phí rồi xác nhận giữ Auth0; chưa xác nhận gói production hoặc email provider production. [Runbook](../../deploy/auth0/README.md), [evidence](../../discuss/2026-10-23-auth-implementation.md). Quyết định này thay các lựa chọn provider còn mở phía trên; chưa phải xác nhận reviewer hay nghiệm thu production.
+
+## Thay thế quyết định — Better Auth, 2026-10-23
+
+Người dùng chốt chuyển hoàn toàn khỏi Auth0 sang Better Auth self-hosted, email/password + Google và Account Center. Eduvia nay quản lý auth database/password hashes qua thư viện chính thức, SMTP và cập nhật bảo mật; không tự viết crypto password. Giữ Auth0 tạm thời chỉ cho chuyển dữ liệu có xác thực hai phía. Không implicit/email-only linking; giữ UUID/workspace và chặn gộp hai user đã tồn tại. Quyết định Auth0 phía trên là lịch sử checkpoint, không còn mục tiêu cuối. [Runbook](../../deploy/better-auth/README.md), [execution evidence](../../discuss/2026-10-23-better-auth-account-center.md). Chưa nghiệm thu production/cutover.

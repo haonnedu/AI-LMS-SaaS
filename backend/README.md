@@ -59,3 +59,7 @@ Tests replace infrastructure probes and do not require live services. `uv.lock` 
 From the repo root, start `docker compose -f compose.auth-test.yaml up -d --wait`. Set `AUTH_TEST_DATABASE_URL` to the administrator test URL documented in `compose.auth-test.yaml`, then run `python -m pytest tests/test_identity_integration.py tests/test_auth.py -q` from this directory. Other tests do not need live infrastructure. Windows tests select the same Selector event loop as the API launcher; async tests require local socket permission outside restrictive sandboxes. A per-test timeout prevents silent hangs.
 
 The new identity endpoints return `{error:{code,message},requestId}` and `Cache-Control: no-store`; health retains its existing contract. Tokens are never accepted through user/workspace identity headers. Public CORS still supports only the health browser request: authenticated browser calls go through the Next.js BFF.
+
+## Multiple identities and Better Auth
+
+Migrations 0005/0006 preserve Eduvia UUIDs and backfill `user_identities`. `POST /v1/auth/migrate` is available only with a configured legacy issuer, accepts a verified primary bearer plus a server-signed transfer proof, and does not merge by email. Migration 0007 adds durable auth session revocation. Auth storage is owned separately and accessed by `eduvia_auth_runtime`; API keeps `eduvia_runtime`. See [runbook](../deploy/better-auth/README.md). `scripts/report_identity_migration.py --source <legacy-issuer> --target <primary-issuer>` prints counts only, with an operator/migrator database connection.

@@ -12,7 +12,7 @@ from app import __version__
 from app.api.health import router as health_router
 from app.api.identity import ApiError
 from app.api.identity import router as identity_router
-from app.core.auth import TokenVerifier
+from app.core.auth import TokenVerifier, TokenVerifierSet
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
@@ -53,6 +53,28 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.token_verifier = (
         TokenVerifier(settings.auth_issuer, settings.auth_audience, settings.auth_jwks_url)
         if settings.auth_issuer
+        else None
+    )
+
+    if settings.legacy_auth_issuer:
+        application.state.token_verifier = TokenVerifierSet(
+            [
+                application.state.token_verifier,
+                TokenVerifier(
+                    settings.legacy_auth_issuer,
+                    settings.legacy_auth_audience,
+                    settings.legacy_auth_jwks_url,
+                ),
+            ]
+        )
+
+    application.state.migration_verifier = (
+        TokenVerifier(
+            settings.auth_issuer + "/migration",
+            settings.auth_audience + "/migration",
+            settings.auth_jwks_url,
+        )
+        if settings.legacy_auth_issuer
         else None
     )
 
