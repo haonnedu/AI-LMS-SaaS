@@ -1,9 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/components/auth/auth-provider";
-import { useWorkspace } from "@/components/workspace/workspace-provider";
-import workspaceStyles from "@/components/workspace/workspace.module.css";
 import { useState } from "react";
 import { ArrowDownToLine, ArrowRight, ArrowUpRight, BookOpen, CalendarDays, Check, ClipboardList, Clock3, FileText, Plus, Sparkles, Users } from "lucide-react";
 
@@ -15,12 +12,8 @@ const resources = [
 
 export function Dashboard({ onOpenMaterial }: { onOpenMaterial: (title: string) => void }) {
   const [day, setDay] = useState(21);
-  const { session } = useAuth();
-  const { workspace } = useWorkspace();
   return <div className="dashboard-v2">
-    <header className="dashboard-welcome"><div><span className="overline">KHÔNG GIAN GIẢNG DẠY / TỔNG QUAN</span><h1>Chào {session?.user.name ?? "bạn"}<span className="greeting-spark" aria-hidden="true">✳</span></h1><p>Cùng tạo nên một ngày học thật ý nghĩa.</p></div><Link className="button button-primary" href="/lessons"><Plus size={18} />Tạo học liệu</Link></header>
-    {session && !workspace && <section className={workspaceStyles.reminder} aria-label="Hoàn thành onboarding"><div><strong>Không gian cá nhân mẫu đang chờ bạn</strong><p>Hoàn thành bước chuẩn bị để xem workspace trong phiên này.</p></div><Link href="/onboarding" className="button button-secondary">Hoàn thành onboarding</Link></section>}
-    {workspace && <p className="form-hint">{workspace.name} · Dữ liệu minh họa · <Link href="/onboarding" className="text-link">Xem không gian mẫu</Link></p>}
+    <header className="dashboard-welcome"><div><span className="overline">KHÔNG GIAN GIẢNG DẠY / TỔNG QUAN</span><h1>Chào bạn<span className="greeting-spark" aria-hidden="true">✳</span></h1><p>Cùng tạo nên một ngày học thật ý nghĩa.</p></div><Link className="button button-primary" href="/lessons"><Plus size={18} />Tạo học liệu</Link></header>
     <section className="dashboard-v2-hero"><div className="hero-v2-copy"><span className="hero-v2-label"><span />EDUVIA AI · ĐỒNG HÀNH CÙNG GIÁO VIÊN</span><h2>Dạy hay hơn.<br /><span>Nhẹ việc hơn.</span></h2><p>Từ kiến thức của bạn đến bài học truyền cảm hứng.<br />Để AI giúp bạn chuẩn bị phần còn lại.</p><Link href="/lessons" className="button hero-v2-button">Soạn bài cùng AI <ArrowUpRight size={18} /></Link></div><div className="hero-v2-art" aria-hidden="true"><div className="orbit-v2 one" /><div className="orbit-v2 two" /><div className="orbit-v2 three" /><span className="hero-v2-star">✳</span><div className="floating-note"><Sparkles size={18} /><span>Ý tưởng của bạn.<br /><strong>Khả năng mới.</strong></span></div></div><span className="hero-v2-number" aria-hidden="true">01 / CREATE</span></section>
     <section className="dashboard-v2-stats" aria-label="Số liệu không gian minh họa">{[
       { label: "Lớp đang giảng dạy", value: "03", note: "Học kỳ I · 2026–2027", Icon: Users, bars: [12, 19, 15, 27, 23, 34, 40] },

@@ -7,10 +7,10 @@ This repository is a runnable foundation for the design in [ARCHITECTURE.md](ARC
 - A Next.js App Router/TypeScript frontend with 11 interactive preview pages and API connectivity feedback; educational records shown in the previews are sample data.
 - A FastAPI application with environment configuration, request IDs, logging, health probes, and an OpenAPI contract.
 - Async PostgreSQL sessions, Redis connectivity, Alembic migration setup, and a Celery worker entry point.
-- Bootstrap migration for `edu`/pgvector and an identity migration for users, workspaces and workspace members. Runtime roles, tenant context and RLS are not implemented yet.
+- Migrations for `edu`/pgvector, issuer-scoped users, personal workspaces, memberships, restricted database roles, transaction context and RLS.
 - Local Docker Compose, native Windows scripts, dependency lock files, and CI checks.
 
-Authentication, workspace membership APIs/RLS, document upload, RAG, generation, enrollment, quiz submission, OMR, and billing are **planned**, not connected functionality. The UI previews do not create real accounts or persist educational records. A green API indicator means the API process is reachable; it does not imply database readiness or completed product workflows.
+Auth0-based authentication and membership-scoped workspace APIs are implemented locally, with real PostgreSQL and OIDC fixture tests; tenant/email setup and real-provider smoke remain outstanding. [Setup and troubleshooting](deploy/auth0/README.md). Document upload, RAG, generation, enrollment, quiz submission, OMR and billing remain planned. The public UI previews do not persist educational records. A green API indicator means the API process is reachable; it does not imply database readiness or completed product workflows.
 
 ## Repository layout
 

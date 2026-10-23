@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, pool
 
 from app.core.config import get_settings
 from app.infrastructure.database import Base
+from app.models import identity  # noqa: F401
 
 target_metadata = Base.metadata
 database_url = get_settings().database_url.get_secret_value()

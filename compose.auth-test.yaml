@@ -1,0 +1,22 @@
+name: eduvia-auth-test
+services:
+  db:
+    image: pgvector/pgvector:0.8.6-pg17-trixie@sha256:724a4041afdb1750446e3f6b5cfa8f3b0ac5a2cf538ddfa6bfee4f94c2fa85c6
+    environment:
+      POSTGRES_DB: eduvia_auth_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: auth_test_only
+    ports: ["127.0.0.1:5434:5432"]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d eduvia_auth_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis:7.4-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
+    ports: ["127.0.0.1:6381:6379"]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 2s
+      timeout: 3s
+      retries: 30

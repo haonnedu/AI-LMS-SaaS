@@ -32,3 +32,8 @@ Chọn **Phương án C (Managed OIDC Provider / Supabase Auth hoặc Auth0 kế
 1. **Issuer/Subject Binding:** Backend FastAPI xác thực JWT dựa trên `iss` và `sub` chuẩn OIDC. Không tin tưởng bất kỳ thông tin user định danh nào do client gửi lên ngoài token đã được verify chữ ký số.
 2. **Local Provisioning:** Khi token hợp lệ lần đầu, backend tự động khởi tạo bản ghi trong bảng `users` cục bộ theo cơ chế idempotent (dựa trên stable subject ID).
 3. **Dev Mode:** Hỗ trợ mode phát triển giả lập token (mock token) để dev không có mạng hoặc chưa cấu hình IdP bên ngoài vẫn chạy được toàn bộ test suite.
+
+
+## Chốt triển khai — 2026-10-23
+
+Theo yêu cầu trực tiếp của người dùng sau bàn giao từ Hào: dùng **Auth0 Database Connection + Universal Login**, email/mật khẩu, tự đăng ký và bắt buộc xác minh email. Google/social login không thuộc slice này. Password/verification/reset do Auth0 quản lý; Eduvia định danh theo `(issuer, subject)`, không gộp email. Ban đầu chưa có tenant; sau đó đã setup tenant development và smoke Auth0/email thật trên local. Người dùng cân nhắc chi phí rồi xác nhận giữ Auth0; chưa xác nhận gói production hoặc email provider production. [Runbook](../../deploy/auth0/README.md), [evidence](../../discuss/2026-10-23-auth-implementation.md). Quyết định này thay các lựa chọn provider còn mở phía trên; chưa phải xác nhận reviewer hay nghiệm thu production.

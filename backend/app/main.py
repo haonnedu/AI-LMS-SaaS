@@ -1,11 +1,18 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import DBAPIError
 
 from app import __version__
 from app.api.health import router as health_router
+from app.api.identity import ApiError
+from app.api.identity import router as identity_router
+from app.core.auth import TokenVerifier
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
@@ -14,6 +21,11 @@ from app.infrastructure.resources import Infrastructure
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
+    if (
+        settings.auth_issuer
+        and make_url(settings.database_url.get_secret_value()).username != "eduvia_runtime"
+    ):
+        raise ValueError("Authenticated API requires the restricted eduvia_runtime database role")
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
@@ -29,8 +41,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         title="Eduvia API",
         version=__version__,
         description=(
-            "Development foundation. Health checks are implemented; tenant, teaching, "
-            "AI, and grading endpoints require the identity and authorization milestone."
+            "Eduvia identity API: verified access tokens, atomic personal workspace bootstrap "
+            "and membership-scoped workspace access. Teaching, AI and grading remain planned."
         ),
         docs_url="/docs" if settings.environment != "production" else None,
         redoc_url=None,
@@ -38,7 +50,41 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     application.state.settings = settings
+    application.state.token_verifier = (
+        TokenVerifier(settings.auth_issuer, settings.auth_audience, settings.auth_jwks_url)
+        if settings.auth_issuer
+        else None
+    )
+
+    def error_response(request: Request, status: int, code: str, message: str):
+        return JSONResponse(
+            status_code=status,
+            content={
+                "error": {"code": code, "message": message},
+                "requestId": getattr(request.state, "request_id", ""),
+            },
+            headers={
+                "Cache-Control": "no-store",
+                **({"WWW-Authenticate": "Bearer"} if status == 401 else {}),
+            },
+        )
+
+    @application.exception_handler(ApiError)
+    async def api_error(request: Request, exc: ApiError):
+        return error_response(request, exc.status, exc.code, exc.message)
+
+    @application.exception_handler(RequestValidationError)
+    async def validation_error(request: Request, exc: RequestValidationError):
+        return error_response(request, 422, "invalid_request", "Invalid request parameters.")
+
+    @application.exception_handler(DBAPIError)
+    async def database_error(request: Request, exc: DBAPIError):
+        return error_response(
+            request, 503, "database_unavailable", "The service is temporarily unavailable."
+        )
+
     application.include_router(health_router)
+    application.include_router(identity_router)
     application.add_middleware(RequestContextMiddleware)
     # Last added executes outermost, so CORS headers cover our bounded 500 responses.
     application.add_middleware(

@@ -39,3 +39,5 @@ Thumbs.db
 *.log
 tmp/
 
+
+.next-auth-test/

@@ -7,9 +7,12 @@ x-backend: &backend
     context: ./backend
   environment: &backend-environment
     APP_ENV: development
-    DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-eduvia}:${POSTGRES_PASSWORD:-eduvia_dev_only}@db:5432/${POSTGRES_DB:-eduvia}
+    DATABASE_URL: postgresql+psycopg://eduvia_runtime:${DB_RUNTIME_PASSWORD:-runtime_dev_only}@db:5432/${POSTGRES_DB:-eduvia}
     REDIS_URL: redis://redis:6379/0
     CELERY_BROKER_URL: redis://redis:6379/1
+    AUTH_ISSUER: ${AUTH_ISSUER-}
+    AUTH_AUDIENCE: ${AUTH_AUDIENCE-}
+    AUTH_JWKS_URL: ${AUTH_JWKS_URL-}
     CORS_ORIGINS: '["http://localhost:${FRONTEND_PORT:-3000}","http://127.0.0.1:${FRONTEND_PORT:-3000}"]'
 
 services:
@@ -19,10 +22,14 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-eduvia}
       POSTGRES_USER: ${POSTGRES_USER:-eduvia}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eduvia_dev_only}
+      DB_MIGRATOR_PASSWORD: ${DB_MIGRATOR_PASSWORD:-migrator_dev_only}
+      DB_RUNTIME_PASSWORD: ${DB_RUNTIME_PASSWORD:-runtime_dev_only}
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./deploy/postgres/10-bootstrap.sh:/docker-entrypoint-initdb.d/10-bootstrap.sh:ro
+      - ./deploy/postgres/bootstrap.sql:/opt/eduvia/bootstrap.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
@@ -43,6 +50,9 @@ services:
 
   migrate:
     <<: *backend
+    environment:
+      <<: *backend-environment
+      DATABASE_URL: postgresql+psycopg://eduvia_migrator:${DB_MIGRATOR_PASSWORD:-migrator_dev_only}@db:5432/${POSTGRES_DB:-eduvia}
     command: ["alembic", "upgrade", "head"]
     depends_on:
       db:
@@ -82,6 +92,17 @@ services:
       context: ./frontend
     environment:
       API_INTERNAL_URL: http://api:8000
+      APP_BASE_URL: ${APP_BASE_URL-}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN-}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID-}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET-}
+      AUTH0_SECRET: ${AUTH0_SECRET-}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE-}
+      AUTH0_CONNECTION: ${AUTH0_CONNECTION-}
+      SESSION_ENCRYPTION_KEY: ${SESSION_ENCRYPTION_KEY-}
+      AUTH0_MANAGEMENT_CLIENT_ID: ${AUTH0_MANAGEMENT_CLIENT_ID-}
+      AUTH0_MANAGEMENT_CLIENT_SECRET: ${AUTH0_MANAGEMENT_CLIENT_SECRET-}
+      SESSION_REDIS_URL: redis://redis:6379/2
       HOSTNAME: 0.0.0.0
       PORT: "3000"
       NEXT_TELEMETRY_DISABLED: "1"

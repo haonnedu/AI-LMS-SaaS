@@ -75,7 +75,7 @@ def test_compose_redacts_diagnostics_and_has_timeout(verifier, monkeypatch, fail
 
 def scenario(verifier, monkeypatch, fail_step=None, fail_cleanup=False, timeout=False):
     check = verifier.Verification()
-    state = {"revision": "", "tables": [], "schema": "0", "vector": "0"}
+    state = {"revision": "", "tables": [], "schema": "1", "vector": "1"}
     calls = []
 
     def compose(*args):
@@ -92,7 +92,7 @@ def scenario(verifier, monkeypatch, fail_step=None, fail_cleanup=False, timeout=
             return '["future_head"]'
         if args[0] == "run":
             if "downgrade" in args:
-                state.update(revision="", tables=[], schema="0")
+                raise RuntimeError("forward-only migration")
             elif "0001_bootstrap" in args:
                 state.update(revision="0001_bootstrap", tables=[], schema="1", vector="1")
             else:

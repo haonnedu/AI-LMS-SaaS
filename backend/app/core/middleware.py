@@ -38,6 +38,8 @@ class RequestContextMiddleware:
                 response_started = True
                 status_code = message["status"]
                 MutableHeaders(scope=message)["X-Request-ID"] = request_id
+                if scope.get("path", "").startswith("/v1/"):
+                    MutableHeaders(scope=message)["Cache-Control"] = "no-store"
             await send(message)
 
         try:
@@ -48,13 +50,23 @@ class RequestContextMiddleware:
                 raise
             response = JSONResponse(
                 status_code=500,
-                content={
-                    "error": {
-                        "code": "INTERNAL_ERROR",
-                        "message": "The request could not be completed.",
-                        "request_id": request_id,
+                content=(
+                    {
+                        "error": {
+                            "code": "internal_error",
+                            "message": "The request could not be completed.",
+                        },
+                        "requestId": request_id,
                     }
-                },
+                    if scope.get("path", "").startswith("/v1/")
+                    else {
+                        "error": {
+                            "code": "INTERNAL_ERROR",
+                            "message": "The request could not be completed.",
+                            "request_id": request_id,
+                        }
+                    }
+                ),
             )
             await response(scope, receive, send_with_context)
         finally:

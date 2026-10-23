@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  distDir: process.env.AUTH_TEST_MODE === "1" ? ".next-auth-test" : ".next",
   poweredByHeader: false,
   async headers() {
     return [

@@ -1,52 +1,59 @@
-"""SQLAlchemy ORM Models for Core Identity and Workspaces (M1)."""
+"""Identity metadata shared by runtime and Alembic."""
 
-import datetime
-import uuid
-
-from sqlalchemy import Boolean, Column, DateTime, String, UniqueConstraint
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import declarative_base
 
-Base = declarative_base()
+from app.infrastructure.database import Base
 
 
 class User(Base):
     __tablename__ = "users"
-    __table_args__ = {"schema": "edu"}
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email = Column(String(255), unique=True, nullable=False)
-    provider_sub = Column(String(255), unique=True, nullable=False)
-    display_name = Column(String(255), nullable=True)
-    is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
+    __table_args__ = (UniqueConstraint("provider_issuer", "provider_sub", name="uq_user_identity"),)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    provider_issuer = Column(String(512), nullable=False)
+    provider_sub = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=False)
+    display_name = Column(String(255))
+    is_active = Column(Boolean, nullable=False, server_default="true")
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.clock_timestamp()
+    )
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.clock_timestamp()
+    )
 
 
 class Workspace(Base):
     __tablename__ = "workspaces"
-    __table_args__ = {"schema": "edu"}
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
     name = Column(String(255), nullable=False)
-    slug = Column(String(255), unique=True, nullable=False)
-    workspace_type = Column(String(50), nullable=False, default="personal")
-    is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
+    slug = Column(String(255), nullable=False, unique=True)
+    workspace_type = Column(String(50), nullable=False, server_default="personal")
+    personal_owner_user_id = Column(UUID(as_uuid=True), ForeignKey("edu.users.id"), unique=True)
+    is_active = Column(Boolean, nullable=False, server_default="true")
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.clock_timestamp()
+    )
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.clock_timestamp()
+    )
 
 
 class WorkspaceMember(Base):
     __tablename__ = "workspace_members"
-    __table_args__ = (
-        UniqueConstraint("workspace_id", "user_id", name="uq_workspace_user"),
-        {"schema": "edu"},
+    __table_args__ = (UniqueConstraint("workspace_id", "user_id", name="uq_workspace_user"),)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    workspace_id = Column(
+        UUID(as_uuid=True), ForeignKey("edu.workspaces.id", ondelete="CASCADE"), nullable=False
     )
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    workspace_id = Column(UUID(as_uuid=True), nullable=False)
-    user_id = Column(UUID(as_uuid=True), nullable=False)
-    role = Column(String(50), nullable=False, default="teacher")
-    status = Column(String(50), nullable=False, default="active")
-    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.datetime.utcnow)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("edu.users.id", ondelete="CASCADE"), nullable=False
+    )
+    role = Column(String(50), nullable=False, server_default="teacher")
+    status = Column(String(50), nullable=False, server_default="active")
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.clock_timestamp()
+    )
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.clock_timestamp()
+    )

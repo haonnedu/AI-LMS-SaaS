@@ -98,6 +98,21 @@ class Verification:
             POSTGRES_DB="eduvia_m0",
             POSTGRES_USER="eduvia_m0",
             POSTGRES_PASSWORD=secrets.token_hex(24),
+            DB_MIGRATOR_PASSWORD=secrets.token_hex(24),
+            DB_RUNTIME_PASSWORD=secrets.token_hex(24),
+            AUTH_ISSUER="",
+            AUTH_AUDIENCE="",
+            AUTH_JWKS_URL="",
+            AUTH0_DOMAIN="",
+            AUTH0_CLIENT_ID="",
+            AUTH0_CLIENT_SECRET="",
+            AUTH0_SECRET="",
+            AUTH0_AUDIENCE="",
+            AUTH0_CONNECTION="",
+            APP_BASE_URL="",
+            SESSION_ENCRYPTION_KEY="",
+            AUTH0_MANAGEMENT_CLIENT_ID="",
+            AUTH0_MANAGEMENT_CLIENT_SECRET="",
         )
         self.env_file = self.directory / "compose.env"
         self.env_file.write_text("".join(f"{k}={v}\n" for k, v in self.values.items()))
@@ -131,7 +146,11 @@ class Verification:
     def redact(self, value):
         if isinstance(value, bytes):
             value = value.decode("utf-8", errors="replace")
-        return str(value or "").replace(self.values["POSTGRES_PASSWORD"], "[REDACTED]")
+        result = str(value or "")
+        for name, secret in self.values.items():
+            if name.endswith("PASSWORD") and secret:
+                result = result.replace(secret, "[REDACTED]")
+        return result
 
     def compose(self, *args):
         assert_project(self.project)
@@ -234,11 +253,9 @@ class Verification:
             self.passed("current-source container production builds")
             self.compose("up", "-d", "--wait", "db", "redis")
             self.report["step"] = "bootstrap"
-            if (
-                self.sql("SELECT count(*) FROM information_schema.schemata WHERE schema_name='edu'")
-                != "0"
-            ):
-                raise RuntimeError("Expected a fresh database")
+            # Administrator init now creates the namespace/roles/vector, but no domain tables.
+            self.schema(1)
+            self.tables([])
             head = self.expected_head()
             self.compose("run", "--rm", "migrate", "alembic", "upgrade", "0001_bootstrap")
             self.schema(1)
@@ -251,16 +268,15 @@ class Verification:
                 self.revision(head)
                 self.tables(IDENTITY_TABLES)
             self.passed("upgrade head twice; expected revision and identity tables")
-            self.report["step"] = "downgrade-upgrade"
-            self.compose("run", "--rm", "migrate", "alembic", "downgrade", "base")
-            self.schema(0)
-            if self.sql("SELECT count(*) FROM alembic_version") != "0":
-                raise RuntimeError("Downgrade retained revision")
-            self.compose("run", "--rm", "migrate")
-            self.schema(1)
-            self.revision(head)
-            self.tables(IDENTITY_TABLES)
-            self.passed("downgrade preserves vector; upgrade restores head and identity tables")
+            self.report["step"] = "downgrade-guard"
+            try:
+                self.compose("run", "--rm", "migrate", "alembic", "downgrade", "base")
+            except RuntimeError:
+                self.revision(head)
+                self.tables(IDENTITY_TABLES)
+                self.passed("forward-only downgrade refused; identity schema and head preserved")
+            else:
+                raise RuntimeError("Forward-only migration unexpectedly allowed downgrade")
             self.report["step"] = "production-smoke"
             self.compose("up", "-d", "--wait", "api", "frontend", "worker")
             self.healthy()

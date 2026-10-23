@@ -31,20 +31,20 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 | DB-03 | done | Hao | DB-02 | Transaction-local verified actor/workspace context; reset an toàn khi commit/rollback/pool reuse. (Đã hiện thực tại backend/app/infrastructure/context.py và unit test). |
 | DB-04 | done | Hao | DB-03 | RLS + FORCE RLS, active membership checks; missing context deny, bootstrap flow không mở quyền tùy ý. (Đã tạo migration backend/migrations/versions/0003_row_level_security.py). |
 | DB-05 | done | Hao | DB-04 | Runtime-role integration tests: tenant A/B, forged IDs, revoked member, pool reuse, negative writes và joins. (Đã chạy deploy/test/rls-smoke.sql trên PostgreSQL 17 staging bằng role eduvia_runtime: 8/8 PASS, transaction rollback. Lưu ý: chưa có test connection-pool thật; pool reuse dựa trên ngữ nghĩa set_config(... , true).) |
-| BE-01 | in_progress | Hao | DB-02, AUTH-02 | Verify provider identity/session server-side; bad issuer/audience/expiry/signature và spoofed headers bị chặn. Bản nháp: chưa xác minh chữ ký RS256/ES256; chưa đủ điều kiện triển khai. |
-| BE-02 | in_progress | Hao | BE-01, DB-04 | Idempotent user provisioning theo stable provider subject; không merge email tùy tiện. Bản nháp và mock tests; còn thiếu issuer-scoped identity, kiểm chứng schema/migration và concurrency bằng DB thật. |
-| BE-03 | todo | — | BE-02 | Personal workspace provisioning atomic; concurrent requests chỉ tạo một ownership hợp lệ. |
-| BE-04 | todo | — | BE-03 | Current-user/workspace-list endpoints, paginated DTO tối thiểu; chỉ membership hợp lệ. |
-| BE-05 | todo | — | BE-04, DB-05 | Workspace auth dependency; client-selected context luôn được verify; revoke có hiệu lực không dựa UI. |
-| BE-06 | todo | — | BE-05 | Export OpenAPI và generate frontend types theo scripts repo; CI phát hiện contract drift. |
+| BE-01 | in_progress | Duc | DB-02, AUTH-02 | Verify provider identity/session server-side; bad issuer/audience/expiry/signature và spoofed headers bị chặn. Đã thay verifier bằng RS256/JWKS và negative tests; đã smoke Auth0 local, còn các gate phát hành và review. Xem execution record 2026-10-23. |
+| BE-02 | in_progress | Duc | BE-01, DB-04 | Idempotent user provisioning theo stable provider subject; không merge email tùy tiện. Đã có issuer-scoped identity, async bootstrap và PostgreSQL concurrency/migration tests; đã smoke provider local, còn review và gate phát hành. |
+| BE-03 | in_progress | Duc | BE-02 | Personal workspace provisioning atomic; concurrent requests chỉ tạo một ownership hợp lệ. |
+| BE-04 | in_progress | Duc | BE-03 | Current-user/workspace-list endpoints, paginated DTO tối thiểu; chỉ membership hợp lệ. |
+| BE-05 | in_progress | Duc | BE-04, DB-05 | Workspace auth dependency; client-selected context luôn được verify; revoke có hiệu lực không dựa UI. |
+| BE-06 | in_progress | Duc | BE-05 | Export OpenAPI và generate frontend types theo scripts repo; CI phát hiện contract drift. |
 | FE-01 | in_progress | Duc | BE-01 | Login/logout/callback UI; loading/error/session expiry, không chứa provider secrets. |
-| FE-02 | todo | — | BE-06, FE-01 | Onboarding + dashboard workspace thật; không cần Library/Classes API chưa tồn tại. |
+| FE-02 | in_progress | Duc | BE-06, FE-01 | Onboarding + dashboard workspace thật; không cần Library/Classes API chưa tồn tại. |
 | FE-02a | in_progress | Duc | — | Chuẩn bị onboarding/workspace mock độc lập; prerequisite phần mock FE-01 đã merge PR #5 (2379a6e), không thay gate FE-02 thật. React-memory theo session; pending/retry/logout/expiry và responsive có evidence. |
-| FE-03 | todo | — | FE-02 | Protected routes và 401/403 states; không rò dữ liệu qua SSR/cache; server authorization độc lập. |
-| FE-04 | todo | — | FE-02 | Workspace selector và tên context hiện hành; switch invalidate tenant caches. |
-| QA-01 | todo | — | FE-03, FE-04 | Automated E2E login → provision → workspace → logout; bổ sung manual smoke cho provider. |
-| QA-02 | todo | — | QA-01, DB-05 | Security suite hai users, CSRF, session/revocation, concurrent onboarding và workspace switch; evidence pass. |
-| DOC-01 | todo | — | QA-02 | Setup/auth troubleshooting và implemented-status cập nhật, người thứ hai chạy lại được. |
+| FE-03 | in_progress | Duc | FE-02 | Protected routes và 401/403 states; không rò dữ liệu qua SSR/cache; server authorization độc lập. |
+| FE-04 | in_progress | Duc | FE-02 | Workspace selector và tên context hiện hành; switch invalidate tenant caches. |
+| QA-01 | in_progress | Duc | FE-03, FE-04 | Automated E2E login → provision → workspace → logout; bổ sung manual smoke cho provider. |
+| QA-02 | in_progress | Duc | QA-01, DB-05 | Security suite hai users, CSRF, session/revocation, concurrent onboarding và workspace switch; evidence pass. |
+| DOC-01 | in_progress | Duc | QA-02 | Setup/auth troubleshooting và implemented-status cập nhật, người thứ hai chạy lại được. |
 
 ## M2 — Jobs, cost, storage
 
@@ -170,3 +170,12 @@ Ngày cập nhật: 2026-10-22
 FE-02a review trước commit (2026-10-22): đã rà diff + toàn bộ file mới, chưa xác nhận lỗi chức năng mới trong phạm vi mock; lượt review chỉ cập nhật docs, không sửa source/test. Baseline lint/typecheck/build + 4 adapter tests + 14 backlog tests được giữ nguyên, không tuyên bố là lượt chạy mới. Findings còn mở: visual acceptance (P2), CI frontend chưa gọi test:workspace (P2, phối hợp Hào; không sửa workflow), provider/race E2E coverage chỉ manual. FE-02a.md có checklist visual, file manifest và review boundaries; FE-02a-PR.md theo PR template. FE-02a/FE-01 vẫn in_progress, FE-02 todo; chưa có reviewer approval/commit/push/PR/deploy.
 
 Bàn giao discuss (2026-10-22 22:12 +07:00): đã thêm ghi chú phía Duc tại [discuss/DUC.md](../discuss/DUC.md) và yêu cầu review đề xuất tại [discuss/REVIEW.md](../discuss/REVIEW.md); chưa có phản hồi/chấp thuận của Hao. Discuss chỉ dẫn evidence và hành động phối hợp, không thay authority owner/status tại tracker.
+
+
+### BE-01..06 / FE-01..04 / QA-01..02 / DOC-01 — execution record 2026-10-23
+
+Owner tích hợp: Duc, theo người dùng xác nhận Hào đã bàn giao scope backend/frontend của flow đăng ký và đăng nhập. Đây là một slice tích hợp đang thực hiện qua các work package M1; không phải nhiều luồng agent song song. Reviewer đề xuất: Hào, chưa có xác nhận review.
+
+Thay đổi: Auth0-hosted email/password signup/login, verification/resend, Redis server sessions, RS256 verifier, identity/workspace bootstrap và các endpoint thật; frontend dashboard riêng, CSRF và server route guards. Dùng migration mới 0004, không sửa SQL của các migration đã phát hành. Runtime role và NOLOGIN function owner tách biệt.
+
+Evidence và giới hạn: [bản ghi triển khai](../discuss/2026-10-23-auth-implementation.md); setup tại [Auth0 runbook](../deploy/auth0/README.md). Tenant development đã tạo; người dùng xác nhận smoke Auth0/verification/reset email thật trên local. Resend bị skip, refresh thật chưa xác nhận, HTTPS staging/máy thứ hai chưa kiểm chứng. Người dùng quyết định giữ Auth0. CI workflow đã thêm test, chưa chạy GitHub CI cho diff này. Giữ các task liên quan `in_progress`, chưa nghiệm thu M1, chưa xác nhận review/merge/deploy.

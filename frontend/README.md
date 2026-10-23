@@ -1,6 +1,6 @@
 # Eduvia frontend
 
-Next.js App Router + React + TypeScript + Tailwind CSS. The base source provides a responsive, accessible teacher workspace and a real API liveness connection. Product workflows are explicitly marked as upcoming; there are no simulated accounts, generated lessons, saved classes, or grades.
+Next.js App Router + React + TypeScript + Tailwind CSS. The app includes public teaching previews and a separate authenticated account flow: Auth0-hosted signup/login, email verification, personal workspace bootstrap and a real `/dashboard`. Preview educational records remain sample data; accounts require the [Auth0 setup](../deploy/auth0/README.md).
 
 ## Run locally
 
@@ -22,6 +22,10 @@ Open http://127.0.0.1:3000. Start the FastAPI backend on port 8000 to see the co
 | `/library` | Honest library empty state and intended ownership model |
 | `/classes` | Classroom empty state and pilot roadmap |
 | `/settings` | Foundation state, connection check with retry, implementation milestones |
+| `/login` | Hosted Auth0 login and signup entry points |
+| `/verify-email` | Signed-in account verification and resend controls |
+| `/onboarding` | Protected personal workspace bootstrap/retry |
+| `/dashboard` | Protected current user and membership-scoped workspace selector |
 | `/api/backend/health` | Server-only fixed-upstream liveness proxy |
 
 ## API boundary
@@ -62,9 +66,17 @@ The build uses Webpack for consistent native Windows behavior. Its postbuild ste
 
 ## Next implementation milestones
 
-1. Integrate a reviewed identity provider and server-validated workspace context.
-2. Add authorized workspace APIs and typed clients; never treat navigation or a selected workspace as authorization.
+1. Configure Auth0/email and complete the real-provider smoke described in the setup guide.
+2. Obtain independent review and second-machine evidence for the implemented identity/workspace slice.
 3. Add source ingestion and teacher-reviewed drafts before student publication.
 4. Implement enrollment and the online quiz flow before OMR.
 
 Do not place tenant records or answer keys in static page data. Authenticated fetches must opt out of shared caches. Do not add mutation controls until the corresponding authorized backend workflow exists. Keep personal and school workspaces separate, and implement explicit copy semantics before enabling cross-workspace reuse.
+
+## Authentication and test boundaries
+
+The production entrypoints no longer mount the mock auth/workspace providers. Old mock adapters remain as historical preview fixtures/tests; they do not grant access to `/dashboard` or backend data. Session/token data is encrypted in Redis and a host-only HttpOnly cookie identifies the session. Refresh, logout and session updates use the same per-session distributed lock. No SDK access-token endpoint is exposed to the browser. All BFF mutations check Origin and a session CSRF token.
+
+`npm run test:auth` runs Playwright with a loopback OIDC fixture, the actual FastAPI backend and Redis. First initialize the disposable PostgreSQL schema with backend identity integration tests. Default ports are frontend 3105, API 8005, OIDC 9101, PostgreSQL 5434 and Redis 6381. Set `AUTH_TEST_PYTHON` if the backend virtualenv is elsewhere; CI uses `python`. The fixture is a test executable outside application code and cannot enable mock auth in production. Its private signing key is generated at startup.
+
+Use `npx playwright install chromium` once. Tests write `.next-auth-test`, `test-results` and fixture-only captures under `evidence/auth`; do not upload traces from real-user sessions. `AUTH_TEST_MODE` is for the fixture runner only. Tests cover hosted auth redirects, provisioning, persistence, logout/cookie replay, unverified email, verification quotas, refresh serialization, Redis timeout/recovery and session lifetime. Actual verification/reset emails require manual smoke with Auth0 and a real mailbox.

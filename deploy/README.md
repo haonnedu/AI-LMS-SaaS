@@ -46,3 +46,8 @@ Build cache is host-wide and shared with other stacks on this machine, so it is 
 ## Validation
 
 Offline checks: `python3 deploy/test-staging.py` (PyYAML), `bash -n deploy/deploy.sh deploy/postgres/10-bootstrap.sh`. Deployment itself validates the resolved Compose JSON without printing secrets, including internal network/no-external-network restrictions, role credential shape, exact origin settings, and loopback-only publishing. Local Windows development environment had no Docker CLI, so real Compose rendering/builds, bootstrap SQL, migration permissions, network reachability and container health require a Docker-enabled integration smoke test. Offline checks are not evidence of a successful deployment.
+
+
+## Identity/session configuration
+
+The authenticated flow now requires [Auth0 setup](auth0/README.md). The staging frontend joins `app` and an internal `session` network; its dedicated `sessions` Redis uses SESSION_REDIS_PASSWORD, distinct from worker Redis, and has no published port or persistence volume. Frontend still cannot reach the database `data` network. The env generator creates distinct session/auth encryption secrets; tenant/client settings must be supplied separately. Existing env files need the new session secret before Compose validation passes. Existing databases also need the NOLOGIN identity function owner prepared by an administrator before migration 0004.

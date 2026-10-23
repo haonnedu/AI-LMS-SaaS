@@ -22,6 +22,9 @@ class Settings(BaseSettings):
         default="development", validation_alias="APP_ENV"
     )
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    auth_issuer: str | None = None
+    auth_audience: str | None = None
+    auth_jwks_url: str | None = None
     database_url: SecretStr = SecretStr(
         "postgresql+psycopg://eduvia:eduvia_dev_only@localhost:5432/eduvia"
     )
@@ -78,11 +81,35 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_storage_and_production(self) -> "Settings":
+        auth_values = (self.auth_issuer, self.auth_audience, self.auth_jwks_url)
+        if any(auth_values) and not all(auth_values):
+            raise ValueError("Set AUTH_ISSUER, AUTH_AUDIENCE and AUTH_JWKS_URL together")
+        for endpoint in (self.auth_issuer, self.auth_jwks_url):
+            if endpoint:
+                parsed = urlsplit(endpoint)
+                local_test = self.environment == "test" and parsed.hostname in {
+                    "127.0.0.1",
+                    "localhost",
+                }
+                if (
+                    (parsed.scheme != "https" and not local_test)
+                    or not parsed.hostname
+                    or parsed.username
+                    or parsed.password
+                    or parsed.fragment
+                ):
+                    raise ValueError("Identity endpoints require fixed HTTPS URLs")
         if bool(self.s3_access_key_id) != bool(self.s3_secret_access_key):
             raise ValueError("Set both S3 credential fields or use the default credential chain")
         if self.environment == "production":
             database = make_url(self.database_url.get_secret_value())
-            if database.password == "eduvia_dev_only":
+            if database.password in {
+                "eduvia_dev_only",
+                "runtime_dev_only",
+                "migrator_dev_only",
+                "runtime_test_only",
+                "auth_test_only",
+            }:
                 raise ValueError("Production requires a non-development database credential")
             if self.s3_secret_access_key and (
                 self.s3_secret_access_key.get_secret_value() == "eduvia_dev_only"

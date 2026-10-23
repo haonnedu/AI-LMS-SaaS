@@ -1,8 +1,5 @@
 "use client";
 import Link from "next/link";
-import { useAuth } from "@/components/auth/auth-provider";
-import { useWorkspace } from "@/components/workspace/workspace-provider";
-import authStyles from "@/components/auth/mock-auth.module.css";
 import { usePathname } from "next/navigation";
 import { BookOpen, ChevronDown, ChevronRight, LayoutDashboard, Library, Users, Settings2, Sparkles, ClipboardList, ChartNoAxesCombined, GraduationCap, Building2, ShieldCheck, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -21,9 +18,7 @@ const spaces = [
 ];
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { session, signOut } = useAuth();
-  const { workspace } = useWorkspace();
-  const standalone = pathname === "/login" || pathname === "/onboarding";
+  const standalone = ["/login", "/onboarding", "/verify-email", "/dashboard"].includes(pathname);
   const [menu, setMenu] = useState({ pathname, open: false });
   const open = menu.pathname === pathname && menu.open;
   // Reset route-owned menu state before children mount on the new route.
@@ -57,11 +52,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     {open && <button className="nav-scrim" aria-label="Đóng menu" onClick={() => setOpen(false)} />}
     <aside ref={sidebar} id="workspace-navigation" className={`sidebar ${open ? "is-open" : ""}`} aria-label="Điều hướng không gian">
       <Link href="/" aria-label="Eduvia · Trang tổng quan" className="brand" onClick={() => setOpen(false)}><span className="brand-mark"><BookOpen size={24} /></span><span>eduvia<span className="brand-dot">.</span></span></Link>
-      <div className="workspace-card"><span className="workspace-avatar">{alternate ? "DEMO" : "GV"}</span><div><strong>{workspace?.name ?? roleLabel}</strong><span>Dữ liệu minh họa</span></div></div>
+      <div className="workspace-card"><span className="workspace-avatar">{alternate ? "DEMO" : "GV"}</span><div><strong>{roleLabel}</strong><span>Dữ liệu minh họa</span></div></div>
       <p className="nav-label">{alternate ? "KHÔNG GIAN HIỆN TẠI" : "GIẢNG DẠY"}</p>
       <nav className="main-nav" aria-label="Điều hướng chính">{visibleLinks.map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} title={label} onClick={() => setOpen(false)} className={`nav-link ${pathname === href ? "active" : ""}`} aria-current={pathname === href ? "page" : undefined}><Icon size={19} /><span>{label}</span>{href === "/lessons" && <span className="ai-mini">AI</span>}</Link>)}</nav>
       <details className="role-picker"><summary>Xem giao diện vai trò khác <ChevronDown size={14} aria-hidden="true" /></summary><p className="nav-label">BẢN MẪU · KHÔNG ĐỔI QUYỀN</p><nav aria-label="Khám phá vai trò mẫu">{[{ href: "/", label: "Không gian giáo viên", icon: BookOpen }, ...spaces].map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} title={label} onClick={() => setOpen(false)} className="nav-link"><Icon size={18} /><span>{label}</span></Link>)}</nav></details>
-      <div className="sidebar-bottom">{!alternate && <Link href="/settings" onClick={() => setOpen(false)} aria-label="Cài đặt không gian" title="Cài đặt không gian" className={`nav-link ${pathname === "/settings" ? "active" : ""}`} aria-current={pathname === "/settings" ? "page" : undefined}><Settings2 size={19} />Cài đặt không gian</Link>}{session ? <div className={authStyles.profile}><strong>{session.user.name}</strong><small>Phiên minh họa</small><button className={`button button-secondary ${authStyles.logout}`} onClick={() => { setOpen(false); void signOut(); }}>Đăng xuất thử</button></div> : <Link href="/login" aria-label="Xem giao diện đăng nhập" className="profile" onClick={() => setOpen(false)}><span className="avatar">EV</span><span><strong>Khám phá Eduvia</strong><small>Đăng nhập thử</small></span><ChevronRight size={16} /></Link>}</div>
+      <div className="sidebar-bottom">{!alternate && <Link href="/settings" onClick={() => setOpen(false)} aria-label="Cài đặt không gian" title="Cài đặt không gian" className={`nav-link ${pathname === "/settings" ? "active" : ""}`} aria-current={pathname === "/settings" ? "page" : undefined}><Settings2 size={19} />Cài đặt không gian</Link>}<Link href="/dashboard" aria-label="Mở tài khoản Eduvia" className="profile" onClick={() => setOpen(false)}><span className="avatar">EV</span><span><strong>Tài khoản Eduvia</strong><small>Đăng nhập hoặc mở workspace</small></span><ChevronRight size={16} /></Link></div>
     </aside>
     <div className="workspace-main"><header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-toggle" aria-expanded={open} aria-controls="workspace-navigation" aria-label={open ? "Đóng menu" : "Mở menu"} onClick={() => setOpen(!open)}>{open ? <X size={20} /> : <Menu size={20} />}</button><span>Không gian làm việc</span><ChevronRight size={14} /><strong>{currentPage}</strong></div><span className="preview-label"><span />Bản mẫu tương tác</span></header><main id="main-content" className="page-content" tabIndex={-1}>{children}</main><footer className="page-footer"><span>Mỗi bài học hay bắt đầu từ người thầy.</span><span>Eduvia · Dữ liệu minh họa</span></footer></div>
   </div>;

@@ -1,6 +1,6 @@
 # Eduvia backend
 
-FastAPI/Python foundation for Eduvia. The current public surface is limited to liveness and readiness. Product modules are planned in [app/modules/README.md](app/modules/README.md); no fake authentication or tenant routes are enabled.
+FastAPI/Python API for Eduvia. Health endpoints and `/v1` identity/workspace endpoints are implemented. Authentication uses fixed-issuer RS256 access tokens; user and workspace bootstrap runs atomically under a restricted runtime role. See [Auth0 setup](../deploy/auth0/README.md) before enabling real accounts. Product teaching/AI/grading modules remain planned.
 
 ## Local development
 
@@ -28,7 +28,7 @@ Run the bootstrap migration separately:
 alembic upgrade head
 ```
 
-The migration enables pgvector and creates the `edu` namespace. It does not create the proposed domain schema or tenant/RLS policies. Migration credentials and restricted runtime credentials must be separated before tenant tables are added. No schema creation occurs during API startup.
+Migrations enable pgvector and create `edu.users`, `edu.workspaces`, and `edu.workspace_members`, issuer-scoped identities and RLS. Migration 0004 is forward-only and requires an explicit mapping for existing user issuers; see the Auth0 setup guide. Run migrations as `eduvia_migrator`; API uses `eduvia_runtime`, never a superuser. No schema creation occurs during API startup.
 
 ## Worker
 
@@ -51,3 +51,11 @@ python scripts/export_openapi.py ../contracts/openapi.json
 ```
 
 Tests replace infrastructure probes and do not require live services. `uv.lock` is the cross-platform resolution source; exported `requirements.lock` and `requirements-dev.lock` support pip/containers. Update dependencies deliberately with uv, regenerate both exports, and rerun the checks. See [DEVELOPMENT.md](../DEVELOPMENT.md) for the full workflow.
+
+## Auth integration tests
+
+`AUTH_TEST_DATABASE_URL` enables destructive setup **only on a disposable database ending in `_test`**. It recreates the `edu` schema, checks upgrade from 0003 with existing data, concurrent bootstrap, rollback and runtime-role isolation. It must never point to a development database containing work to preserve.
+
+From the repo root, start `docker compose -f compose.auth-test.yaml up -d --wait`. Set `AUTH_TEST_DATABASE_URL` to the administrator test URL documented in `compose.auth-test.yaml`, then run `python -m pytest tests/test_identity_integration.py tests/test_auth.py -q` from this directory. Other tests do not need live infrastructure. Windows tests select the same Selector event loop as the API launcher; async tests require local socket permission outside restrictive sandboxes. A per-test timeout prevents silent hangs.
+
+The new identity endpoints return `{error:{code,message},requestId}` and `Cache-Control: no-store`; health retains its existing contract. Tokens are never accepted through user/workspace identity headers. Public CORS still supports only the health browser request: authenticated browser calls go through the Next.js BFF.
