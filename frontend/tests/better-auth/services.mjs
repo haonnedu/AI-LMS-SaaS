@@ -7,7 +7,7 @@ import { createServer as smtpServer } from 'node:net';
 
 const root = resolve('..'), service = process.argv[2];
 const python = process.env.AUTH_TEST_PYTHON || resolve(root, 'backend', process.platform === 'win32' ? '.venv/Scripts/python.exe' : '.venv/bin/python');
-const env = { ...process.env, PYTHONPATH: resolve(root, 'backend'), APP_ENV: 'test', AUTH_TEST_MODE: '1', AUTH_PROVIDER: 'better-auth', AUTH0_MIGRATION_ENABLED: '1', LEGACY_AUTH_ISSUER: 'http://localhost:9101/', LEGACY_AUTH_AUDIENCE: 'https://eduvia-api', LEGACY_AUTH_JWKS_URL: 'http://localhost:9101/jwks', OIDC_FIXTURE_CALLBACK: 'http://127.0.0.1:3106/auth/callback', AUTH0_DOMAIN: 'http://localhost:9101', AUTH0_CLIENT_ID: 'test-client', AUTH0_CLIENT_SECRET: 'test-secret', AUTH0_SECRET: 'a'.repeat(64), AUTH0_AUDIENCE: 'https://eduvia-api',
+const env = { ...process.env, PYTHONPATH: resolve(root, 'backend'), APP_ENV: 'test', AUTH_TEST_MODE: '1',
   AUTH_TEST_DATABASE_URL: 'postgresql+psycopg://postgres:auth_test_only@127.0.0.1:5434/eduvia_auth_test',
   DATABASE_URL: 'postgresql+psycopg://eduvia_runtime:runtime_test_only@127.0.0.1:5434/eduvia_auth_test', AUTH_DATABASE_URL: 'postgresql://eduvia_auth_runtime:auth_runtime_test_only@127.0.0.1:5434/eduvia_auth_test',
   AUTH_ISSUER: 'http://127.0.0.1:3106', AUTH_AUDIENCE: 'https://eduvia-api', AUTH_JWKS_URL: 'http://127.0.0.1:3106/api/auth/jwks',
@@ -55,8 +55,6 @@ if (service === 'mail') {
     } else response.end(JSON.stringify(messages));
   }).listen(9112, '127.0.0.1');
 } else {
-  if (service === 'legacy') { const child = spawn(python, [resolve(root, 'frontend/tests/auth/oidc.py')], { cwd: root, env, stdio: 'inherit' }); for (const signal of ['SIGINT','SIGTERM']) process.on(signal, () => child.kill(signal)); child.on('exit', code => process.exit(code || 0)); }
-  else {
   const command = service === 'api' ? python : process.execPath;
   const args = service === 'api' ? ['-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', '8006', '--no-access-log', '--loop', 'asyncio'] : ['node_modules/next/dist/bin/next', 'dev', '--webpack', '--hostname', '127.0.0.1', '--port', '3106'];
   // On Windows use the project's selector-loop entrypoint.
@@ -65,6 +63,4 @@ if (service === 'mail') {
   const child = spawn(command, args, { cwd: resolve(root, service === 'api' ? 'backend' : 'frontend'), env, stdio: 'inherit' });
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));
   child.on('exit', code => process.exit(code || 0));
-}
-
 }

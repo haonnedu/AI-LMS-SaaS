@@ -1,6 +1,6 @@
 # Eduvia frontend
 
-Next.js App Router + React + TypeScript + Tailwind CSS. The app includes public teaching previews and a separate authenticated account flow: Auth0-hosted signup/login, email verification, personal workspace bootstrap and a real `/dashboard`. Preview educational records remain sample data; accounts require the [Auth0 setup](../deploy/auth0/README.md).
+Next.js App Router + React + TypeScript + Tailwind CSS. The app includes public teaching previews and a separate authenticated account flow: Better Auth email/password and Google login, email verification, personal workspace bootstrap and a real `/dashboard`. Preview educational records remain sample data; accounts require the [Better Auth setup](../deploy/better-auth/SETUP-LOCAL.md).
 
 ## Run locally
 
@@ -22,8 +22,8 @@ Open http://127.0.0.1:3000. Start the FastAPI backend on port 8000 to see the co
 | `/library` | Honest library empty state and intended ownership model |
 | `/classes` | Classroom empty state and pilot roadmap |
 | `/settings` | Foundation state, connection check with retry, implementation milestones |
-| `/login` | Hosted Auth0 login and signup entry points |
-| `/verify-email` | Signed-in account verification and resend controls |
+| `/login` | Eduvia email/password form and Google login |
+| `/verify-email` | Email verification instructions and rate-limited resend |
 | `/onboarding` | Protected personal workspace bootstrap/retry |
 | `/dashboard` | Protected current user and membership-scoped workspace selector |
 | `/api/backend/health` | Server-only fixed-upstream liveness proxy |
@@ -66,7 +66,7 @@ The build uses Webpack for consistent native Windows behavior. Its postbuild ste
 
 ## Next implementation milestones
 
-1. Configure Auth0/email and complete the real-provider smoke described in the setup guide.
+1. Configure Google OAuth/email and complete the real-provider smoke described in the setup guide.
 2. Obtain independent review and second-machine evidence for the implemented identity/workspace slice.
 3. Add source ingestion and teacher-reviewed drafts before student publication.
 4. Implement enrollment and the online quiz flow before OMR.
@@ -77,10 +77,10 @@ Do not place tenant records or answer keys in static page data. Authenticated fe
 
 The production entrypoints no longer mount the mock auth/workspace providers. Old mock adapters remain as historical preview fixtures/tests; they do not grant access to `/dashboard` or backend data. Session/token data is encrypted in Redis and a host-only HttpOnly cookie identifies the session. Refresh, logout and session updates use the same per-session distributed lock. No SDK access-token endpoint is exposed to the browser. All BFF mutations check Origin and a session CSRF token.
 
-`npm run test:auth` runs Playwright with a loopback OIDC fixture, the actual FastAPI backend and Redis. First initialize the disposable PostgreSQL schema with backend identity integration tests. Default ports are frontend 3105, API 8005, OIDC 9101, PostgreSQL 5434 and Redis 6381. Set `AUTH_TEST_PYTHON` if the backend virtualenv is elsewhere; CI uses `python`. The fixture is a test executable outside application code and cannot enable mock auth in production. Its private signing key is generated at startup.
+`npm run test:better-auth` (alias `test:auth`) runs Playwright against actual Next.js/FastAPI, disposable PostgreSQL/Redis, SMTP and signed Google fixtures. Ports: frontend 3106, API 8006, fixture control 9112, SMTP 1026, PostgreSQL 5434, Redis 6381. Set AUTH_TEST_PYTHON if needed. Setup resets only the database ending in `_test`; do not run alongside backend integration tests.
 
-Use `npx playwright install chromium` once. Tests write `.next-auth-test`, `test-results` and fixture-only captures under `evidence/auth`; do not upload traces from real-user sessions. `AUTH_TEST_MODE` is for the fixture runner only. Tests cover hosted auth redirects, provisioning, persistence, logout/cookie replay, unverified email, verification quotas, refresh serialization, Redis timeout/recovery and session lifetime. Actual verification/reset emails require manual smoke with Auth0 and a real mailbox.
+Install Chromium with `npx playwright install chromium`. Generated diagnostics are ignored; never upload real-user session traces. Real Google/email and HTTPS staging smoke remain separate gates. Account linking is explicit and same-email; `/account` manages methods. No Auth0 SDK, provider switch or identity-transfer endpoint remains. See [runbook](../deploy/better-auth/README.md).
 
-## Better Auth transition
+## Native local email smoke
 
-See [setup and migration runbook](../deploy/better-auth/README.md). `AUTH_PROVIDER=better-auth` enables local email/password + Google and `/account`; absent/`auth0` retains the previous provider during migration. Do not enable against a populated database before migrations and identity-transfer setup. `npm run test:better-auth` uses only disposable PostgreSQL/Redis, SMTP and signed Google/OIDC fixtures. Run it sequentially with backend integration and `test:auth`, not in parallel (shared fixture database and Next test build directory).
+Start `docker compose --profile dev-mail up -d --wait db redis mailpit` from root, then run native backend/frontend per [setup](../deploy/better-auth/SETUP-LOCAL.md). Mailpit UI is http://127.0.0.1:8025, SMTP loopback 1025; messages are not delivered externally. `npm run test:auth:local` exercises the existing native app and Mailpit without schema reset, creates a synthetic local account/workspace each run and requires Chromium. This is separate from disposable CI fixtures; real Google setup remains manual.

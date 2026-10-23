@@ -41,3 +41,7 @@ Theo yêu cầu trực tiếp của người dùng sau bàn giao từ Hào: dùn
 ## Thay thế quyết định — Better Auth, 2026-10-23
 
 Người dùng chốt chuyển hoàn toàn khỏi Auth0 sang Better Auth self-hosted, email/password + Google và Account Center. Eduvia nay quản lý auth database/password hashes qua thư viện chính thức, SMTP và cập nhật bảo mật; không tự viết crypto password. Giữ Auth0 tạm thời chỉ cho chuyển dữ liệu có xác thực hai phía. Không implicit/email-only linking; giữ UUID/workspace và chặn gộp hai user đã tồn tại. Quyết định Auth0 phía trên là lịch sử checkpoint, không còn mục tiêu cuối. [Runbook](../../deploy/better-auth/README.md), [execution evidence](../../discuss/2026-10-23-better-auth-account-center.md). Chưa nghiệm thu production/cutover.
+
+## 2026-10-23 — Superseding decision: discard legacy test data
+
+User explicitly approved Better Auth only and discarding the single Auth0 test account plus its personal workspace. Remove the SDK, legacy verifier and transfer endpoints; no migration gate or email-based ownership recovery. Preserve historical migrations; forward migration 0008 retires transfer storage/function after reviewed cleanup. Local backup/restore and scoped deletion are recorded in [retirement evidence](../../discuss/2026-10-23-auth0-retirement.md). Cloud teardown and real-provider smoke require separate evidence.

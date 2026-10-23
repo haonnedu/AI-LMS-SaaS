@@ -1,3 +1,5 @@
+> **SUPERSEDED — historical reference only.** Auth0 is retired. Use [Better Auth setup](../better-auth/README.md); do not deploy this configuration.
+
 # Setup Auth0 cho Eduvia
 
 Triển khai code không tự tạo tenant hoặc gửi email. Tenant development đã được tạo và người dùng đã kiểm tra flow Auth0/email thật trên local ngày 2026-10-23. Email provider production, HTTPS staging và máy thứ hai chưa được nghiệm thu.
@@ -11,7 +13,7 @@ Triển khai code không tự tạo tenant hoặc gửi email. Tenant developmen
 5. Trong Eduvia API → Application Access → Eduvia Local → Edit, cấp **User-Delegated Access** và lưu. Nếu dùng per-app authorization mà thiếu grant này, Auth0 trả `invalid_request`: client is not authorized to access resource server. Đây là quyền user flow, không thay bằng quyền Client Access/M2M.
 6. Application settings: callback `http://127.0.0.1:3000/auth/callback`, logout URL `http://127.0.0.1:3000/login`, web origin `http://127.0.0.1:3000`. Dùng đúng một origin khi chạy local; nếu dùng localhost thì thêm URL tương ứng và đổi APP_BASE_URL.
 7. Bật Authorization Code + Refresh Token grants, refresh token rotation; đặt absolute lifetime 24 giờ, idle 2 giờ. Không dùng implicit hoặc password grant.
-8. Actions → Triggers → Post Login: tạo Action từ `post-login.js`, thêm secret `EDUVIA_API_AUDIENCE=https://eduvia-api`, deploy và gắn Action vào flow. Claim namespace cố định `https://eduvia.app/claims/` là định danh, không phải endpoint phải deploy.
+8. Actions → Triggers → Post Login: tạo Action từ artifact ở checkpoint `912c0d2` (đã gỡ khỏi source hiện tại), thêm secret `EDUVIA_API_AUDIENCE=https://eduvia-api`, deploy và gắn Action vào flow. Claim namespace cố định `https://eduvia.app/claims/` là định danh, không phải endpoint phải deploy.
 
 ## 2. Email và tài khoản chưa xác minh
 

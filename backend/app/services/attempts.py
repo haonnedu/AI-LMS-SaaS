@@ -1,5 +1,5 @@
 """Student assignments and attempts (ASSIGN-02, ASMT-01/02/04/05): thin, typed wrappers around
-the SECURITY DEFINER functions of migration 0014.
+the SECURITY DEFINER functions of migration 0015.
 
 Students are not workspace members, so these calls run in a plain transaction with only the
 verified identity applied (``current_user`` -> ``set_identity``); the database derives the

@@ -1,4 +1,4 @@
-"""Static checks of the 0012 authoring migration SQL and model drift (no database)."""
+"""Static checks of the 0012 retrieval migration SQL and model drift (no database)."""
 
 import importlib.util
 import re
@@ -6,26 +6,17 @@ from pathlib import Path
 
 import pytest
 
+from app.core.config import Settings
 from app.infrastructure.database import Base
-from app.models import authoring, documents, jobs, knowledge  # noqa: F401
+from app.models import knowledge
+from app.services import embeddings
 
-PATH = Path(__file__).parents[1] / "migrations" / "versions" / "0012_authoring.py"
-TENANT_TABLES = (
-    "content_items",
-    "content_revisions",
-    "review_requests",
-    "questions",
-    "question_revisions",
-    "question_keys",
-    "question_objectives",
-    "blueprints",
-    "blueprint_versions",
-)
+PATH = Path(__file__).parents[1] / "migrations" / "versions" / "0012_retrieval.py"
 
 
 @pytest.fixture(scope="module")
 def migration():
-    spec = importlib.util.spec_from_file_location("migration_0009", PATH)
+    spec = importlib.util.spec_from_file_location("migration_0008", PATH)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -48,150 +39,109 @@ def sql(migration):
     return re.sub(r"\s+", " ", "\n".join(statements))
 
 
-def create_body(sql: str, table: str) -> str:
-    match = re.search(rf"CREATE TABLE edu\.{table} \((.*?)\); (?:CREATE|ALTER)", sql)
-    assert match, table
-    return match.group(1)
-
-
-def runtime_grants(sql: str) -> list[str]:
-    block = re.search(r"rolname = 'eduvia_runtime'\) THEN (.*?) END IF;", sql)
-    assert block
-    return re.findall(r"GRANT [^;]*? TO eduvia_runtime", block.group(1))
-
-
-def test_revision_chain(migration):
-    assert migration.revision == "0012_authoring"
-    assert migration.down_revision == "0011_retrieval"
+def test_revision_chain_and_forward_only(migration):
+    assert migration.revision == "0012_retrieval"
+    assert migration.down_revision == "0011_knowledge"
     with pytest.raises(RuntimeError):
         migration.downgrade()
 
 
-@pytest.mark.parametrize("table", TENANT_TABLES)
-def test_every_table_is_tenant_scoped_with_force_rls(sql, table):
-    assert f"ALTER TABLE edu.{table} ENABLE ROW LEVEL SECURITY" in sql
-    assert f"ALTER TABLE edu.{table} FORCE ROW LEVEL SECURITY" in sql
-    policy = re.search(rf"CREATE POLICY {table}_tenant ON edu\.{table} FOR ALL (.*?);", sql)
-    assert policy, table
-    body = policy.group(1)
-    assert body.count("current_setting('edu.current_workspace_id', true)") == 2
-    assert body.count("edu.can_read_workspace(workspace_id)") == 2
-    assert "workspace_id uuid NOT NULL REFERENCES edu.workspaces(id)" in create_body(sql, table)
+def test_dimension_is_consistent_everywhere(migration, sql):
+    assert migration.EMBEDDING_DIMENSION == 1024
+    assert knowledge.EMBEDDING_DIMENSION == migration.EMBEDDING_DIMENSION
+    assert embeddings.EMBEDDING_DIMENSION == migration.EMBEDDING_DIMENSION
+    assert Settings(_env_file=None).embedding_dimension == migration.EMBEDDING_DIMENSION
+    assert "ADD COLUMN embedding public.vector(1024)" in sql
+    with pytest.raises(ValueError):
+        Settings(_env_file=None, embedding_dimension=1536)
 
 
-@pytest.mark.parametrize(
-    "table,column,parent",
-    [
-        ("content_revisions", "content_item_id", "content_items"),
-        ("review_requests", "content_revision_id", "content_revisions"),
-        ("question_revisions", "question_id", "questions"),
-        ("question_keys", "question_revision_id", "question_revisions"),
-        ("question_objectives", "question_id", "questions"),
-        ("blueprint_versions", "blueprint_id", "blueprints"),
-    ],
-)
-def test_composite_tenant_foreign_keys(sql, table, column, parent):
-    fk = f"FOREIGN KEY (workspace_id, {column}) REFERENCES edu.{parent}(workspace_id, id)"
-    assert fk in create_body(sql, table)
-
-
-@pytest.mark.parametrize(
-    "table", [t for t in TENANT_TABLES if t not in ("question_keys", "question_objectives")]
-)
-def test_workspace_id_unique_pairs(sql, table):
-    assert f"CONSTRAINT uq_{table}_workspace_id UNIQUE (workspace_id, id)" in create_body(
-        sql, table
+def test_lexical_column_is_generated_with_simple_config_and_gin(sql):
+    assert (
+        "ADD COLUMN search_vector tsvector GENERATED ALWAYS AS "
+        "(to_tsvector('simple'::regconfig, text)) STORED" in sql
     )
+    assert "CREATE INDEX ix_document_chunks_search_vector ON edu.document_chunks USING gin" in sql
+    # Exact scan for the pilot: no ANN index that could post-filter authorized rows away.
+    assert not re.search(r"USING (hnsw|ivfflat)", sql, re.IGNORECASE)
 
 
-def test_current_pointers_are_deferred_composite_fks(sql):
-    for column, target, parent in (
-        ("current_revision_id", "content_revisions", "content_item_id"),
-        ("current_revision_id", "question_revisions", "question_id"),
-        ("current_version_id", "blueprint_versions", "blueprint_id"),
-    ):
-        assert (
-            f"FOREIGN KEY (workspace_id, id, {column}) "
-            f"REFERENCES edu.{target}(workspace_id, {parent}, id) DEFERRABLE INITIALLY DEFERRED"
-        ) in sql
+def test_embedding_identity_triple_and_chunk_update_guard(sql):
+    assert "ck_document_chunks_embedding_identity" in sql
+    assert "BEFORE UPDATE ON edu.document_chunks" in sql
+    guard = re.search(r"FUNCTION edu\.document_chunk_update_guard\(\)(.*?)END \$\$", sql)
+    assert guard
+    body = guard.group(1)
+    for column in ("text", "text_sha256", "document_version_id", "chunk_index", "page_no"):
+        assert f"NEW.{column}" in body and f"OLD.{column}" in body
+    assert "NEW.embedding" not in body  # the embedding triple is the only mutable part
 
 
-def test_question_keys_have_no_runtime_select(sql):
-    grants = runtime_grants(sql)
-    assert "GRANT INSERT ON edu.question_keys TO eduvia_runtime" in grants
-    for grant in grants:
-        if "question_keys" in grant:
-            assert not re.search(r"\b(SELECT|UPDATE|DELETE|ALL)\b", grant.split(" ON ")[0]), grant
-    # Default privileges are replaced first, so nothing implicit survives on the key table.
-    assert re.search(r"REVOKE ALL ON [^;]*edu\.question_keys[^;]* FROM eduvia_runtime", sql)
-    assert "GRANT SELECT ON edu.question_keys TO eduvia_identity_owner" in sql
+def test_withdrawn_status_is_terminal(sql):
+    assert "CHECK (status IN ('processing','active','failed','superseded','withdrawn'))" in sql
+    assert "OLD.status IN ('active','superseded') AND NEW.status = 'withdrawn'" in sql
+    assert "OLD.status = 'processing' AND NEW.status IN ('active','failed')" in sql
+    assert "withdrawn" in knowledge.VERSION_STATUSES
+    assert not re.search(r"OLD\.status = 'withdrawn'", sql)
 
 
-def test_key_function_is_narrow_definer(sql):
-    function = re.search(r"CREATE FUNCTION edu\.question_key\(p_revision_id uuid\) (.*?)\$\$;", sql)
+def test_embedding_runs_force_rls_and_composite_keys(sql):
+    assert "ALTER TABLE edu.embedding_runs ENABLE ROW LEVEL SECURITY" in sql
+    assert "ALTER TABLE edu.embedding_runs FORCE ROW LEVEL SECURITY" in sql
+    policy = re.search(
+        r"CREATE POLICY embedding_runs_tenant ON edu\.embedding_runs FOR ALL (.*?);", sql
+    )
+    assert policy
+    assert policy.group(1).count("current_setting('edu.current_workspace_id', true)") == 2
+    assert policy.group(1).count("edu.can_read_workspace(workspace_id)") == 2
+    assert (
+        "FOREIGN KEY (workspace_id, document_version_id) "
+        "REFERENCES edu.document_versions(workspace_id, id)" in sql
+    )
+    assert "CHECK (status IN ('pending','succeeded','failed'))" in sql
+    assert "CHECK ((status = 'failed') = (error_code IS NOT NULL))" in sql
+
+
+def test_purge_function_is_narrow_security_definer(sql):
+    function = re.search(
+        r"CREATE FUNCTION edu\.purge_document_chunks\(p_document_id uuid\)(.*?)END \$\$", sql
+    )
     assert function
     body = function.group(1)
+    assert "RETURNS integer" in body
     assert "SECURITY DEFINER SET search_path=pg_catalog,edu" in body
     assert "current_setting('edu.current_workspace_id', true)" in body
-    assert "edu.can_read_workspace(k.workspace_id)" in body
-    assert "m.user_id = edu.actor_id()" in body
-    assert "m.role IN ('owner','admin','teacher')" in body
-    assert "ALTER FUNCTION edu.question_key(uuid) OWNER TO eduvia_identity_owner" in sql
+    assert "edu.can_read_workspace(ws)" in body
+    assert "doc_status <> 'deleted'" in body
+    assert "DELETE FROM edu.document_chunks" in body
+    assert "SET status = 'withdrawn'" in body
+    assert "EXECUTE" not in body  # no dynamic SQL
+    assert "ALTER FUNCTION edu.purge_document_chunks(uuid) OWNER TO eduvia_identity_owner" in sql
+    assert "REVOKE ALL ON FUNCTION edu.purge_document_chunks(uuid) FROM PUBLIC" in sql
+    assert "REVOKE CREATE ON SCHEMA edu FROM eduvia_identity_owner" in sql
+    # No bypass policy for the definer role: tenant policies keep applying inside it.
+    assert not re.search(r"CREATE POLICY \w+ ON edu\.\w+ (FOR \w+ )?TO eduvia_identity_owner", sql)
+
+
+def test_runtime_grants_are_least_privilege(sql):
+    assert "IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'eduvia_runtime')" in sql
+    assert "GRANT SELECT, INSERT, UPDATE ON edu.embedding_runs TO eduvia_runtime" in sql
     assert (
-        "REVOKE ALL ON FUNCTION edu.question_key(uuid), edu.workspace_staff_count(uuid) FROM PUBLIC"
-        in sql
+        "GRANT UPDATE (embedding, embedding_model, embedding_version) "
+        "ON edu.document_chunks TO eduvia_runtime" in sql
     )
-    assert (
-        "CREATE POLICY question_keys_key_function ON edu.question_keys FOR SELECT "
-        "TO eduvia_identity_owner" in sql
-    )
-    assert sql.count("GRANT CREATE ON SCHEMA edu TO eduvia_identity_owner") == sql.count(
-        "REVOKE CREATE ON SCHEMA edu FROM eduvia_identity_owner"
-    )
+    assert "GRANT EXECUTE ON FUNCTION edu.purge_document_chunks(uuid) TO eduvia_runtime" in sql
+    assert not re.search(r"GRANT[^;]*DELETE[^;]*TO eduvia_runtime", sql)
+    assert not re.search(r"GRANT UPDATE ON edu\.document_chunks", sql)
 
 
-def test_least_privilege_grants(sql):
-    grants = runtime_grants(sql)
-    deletes = [g for g in grants if "DELETE" in g.split(" ON ")[0]]
-    assert deletes == ["GRANT SELECT, INSERT, DELETE ON edu.question_objectives TO eduvia_runtime"]
-    assert "GRANT SELECT, INSERT ON edu.question_revisions TO eduvia_runtime" in grants
-    assert not any("question_revisions" in g and "UPDATE" in g for g in grants)
-
-
-def test_item_type_is_check_constrained_and_extendable(sql):
-    body = create_body(sql, "questions")
-    assert (
-        "item_type text NOT NULL DEFAULT 'single_choice' CHECK (item_type IN ('single_choice'))"
-        in body
-    )
-    assert "jsonb_array_length(choices) BETWEEN 3 AND 5" in create_body(sql, "question_revisions")
-    assert "correct_key char(1) NOT NULL CHECK (correct_key IN ('A','B','C','D','E'))" in sql
-
-
-def test_immutability_triggers(sql):
-    assert "BEFORE INSERT OR UPDATE ON edu.content_revisions" in sql
-    assert "OLD.status <> 'draft' AND (NEW.body, NEW.body_sha256, NEW.audience)" in sql
-    assert "OLD.status = 'draft' AND NEW.status = 'in_review'" in sql
-    assert "OLD.status = 'in_review' AND NEW.status = 'approved'" in sql
-    assert "OLD.status = 'approved' AND NEW.status = 'published'" in sql
-    assert "OLD.status <> 'archived' AND NEW.status = 'archived'" in sql
-    assert "BEFORE UPDATE ON edu.blueprint_versions" in sql
-    assert "published blueprint version is immutable" in sql
-    assert "BEFORE INSERT ON edu.question_keys" in sql
-    assert "BEFORE UPDATE ON edu.questions" in sql
-    assert "CHECK (origin_kind IN ('teacher_defined'))" in sql
-    assert "octet_length(body::text) <= 204800" in sql
-
-
-@pytest.mark.parametrize("table", TENANT_TABLES)
-def test_models_match_migration_columns(sql, table):
-    model = Base.metadata.tables[f"edu.{table}"]
-    body = create_body(sql, table)
-    for column in model.columns:
-        assert re.search(rf"(^\s*|, ){column.name} ", body), (table, column.name)
-    declared = re.findall(
-        r"(?:^\s*|, )([a-z_0-9]+) "
-        r"(?:uuid|text|integer|smallint|jsonb|bytea|timestamptz|numeric|char)",
-        body,
-    )
-    assert sorted(declared) == sorted(c.name for c in model.columns), table
+def test_embedding_run_model_matches_migration(sql):
+    columns = (
+        "id workspace_id document_version_id job_id model version status chunk_count units "
+        "provider_request_ids error_code created_at finished_at"
+    ).split()
+    model = Base.metadata.tables["edu.embedding_runs"]
+    assert [c.name for c in model.columns] == columns
+    body = re.search(r"CREATE TABLE edu\.embedding_runs \((.*?)\); CREATE INDEX", sql).group(1)
+    for column in columns:
+        assert re.search(rf"(^\s*|, ){column} ", body), column

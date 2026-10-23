@@ -24,11 +24,4 @@ os.environ["DATABASE_URL"] = url
 command.upgrade(Config("alembic.ini"), "head")
 with engine.begin() as db:
     db.execute(text("GRANT USAGE ON SCHEMA edu TO eduvia_runtime"))
-with engine.begin() as db:
-    db.execute(text("""INSERT INTO edu.users(id,provider_issuer,provider_sub,email,display_name)
-      VALUES('11111111-1111-4111-8111-111111111111','http://localhost:9101/','auth0|migration@example.test','migration@example.test','Legacy Teacher');
-      INSERT INTO edu.user_identities(issuer,subject,user_id) VALUES('http://localhost:9101/','auth0|migration@example.test','11111111-1111-4111-8111-111111111111');
-      INSERT INTO edu.workspaces(id,name,slug,workspace_type,personal_owner_user_id) VALUES('22222222-2222-4222-8222-222222222222','Existing workspace','existing-workspace','personal','11111111-1111-4111-8111-111111111111');
-      INSERT INTO edu.workspace_members(workspace_id,user_id,role,status) VALUES('22222222-2222-4222-8222-222222222222','11111111-1111-4111-8111-111111111111','owner','active');
-    """))
 engine.dispose()

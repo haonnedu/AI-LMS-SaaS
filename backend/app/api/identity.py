@@ -6,8 +6,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, Field
-from sqlalchemy import select, text
+from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -192,60 +192,3 @@ async def workspace(workspace_id: UUID, db: Database, claims: Claims):
             raise ApiError(404, "workspace_not_found", "Workspace not found.")
         await WorkspaceContext(user.id, workspace_id).apply(db)
         return workspace_dto(row)
-
-
-class TransferRequest(BaseModel):
-    proof: str = Field(min_length=1, max_length=16384)
-
-
-@router.post("/auth/migrate", response_model=UserDTO)
-async def migrate_identity(body: TransferRequest, request: Request, db: Database, claims: Claims):
-    settings = request.app.state.settings
-    verifier = request.app.state.migration_verifier
-    if verifier is None:
-        raise ApiError(404, "not_found", "Migration is not enabled.")
-    try:
-        proof = await asyncio.to_thread(verifier.verify_token, body.proof)
-    except TokenError:
-        raise ApiError(401, "invalid_migration_proof", "The migration proof is invalid.") from None
-    except IdentityUnavailable:
-        raise ApiError(
-            503, "identity_unavailable", "Migration is temporarily unavailable."
-        ) from None
-    if (
-        claims["iss"] != settings.auth_issuer
-        or proof.get("sub") != claims["sub"]
-        or proof.get("purpose") != "identity_transfer"
-        or proof.get("source_issuer") != settings.legacy_auth_issuer
-        or not isinstance(proof.get("source_subject"), str)
-        or not proof["source_subject"]
-        or not isinstance(proof.get("jti"), str)
-        or len(proof["jti"]) > 100
-        or proof["exp"] - proof["iat"] > 300
-    ):
-        raise ApiError(401, "invalid_migration_proof", "The migration proof is invalid.")
-    try:
-        async with db.begin():
-            await set_identity(db, claims["iss"], claims["sub"])
-            await db.execute(
-                text(
-                    "SELECT edu.transfer_identity(:source_issuer,:source_subject,"
-                    ":target_issuer,:target_subject,:proof_id)"
-                ),
-                {
-                    "source_issuer": proof["source_issuer"],
-                    "source_subject": proof["source_subject"],
-                    "target_issuer": claims["iss"],
-                    "target_subject": claims["sub"],
-                    "proof_id": proof["jti"],
-                },
-            )
-            return user_dto(await current_user(db, claims))
-    except DBAPIError as exc:
-        if getattr(exc.orig, "sqlstate", None) == "23505":
-            raise ApiError(
-                409, "identity_conflict", "This identity belongs to another account."
-            ) from None
-        if getattr(exc.orig, "sqlstate", None) == "28000":
-            raise ApiError(403, "account_disabled", "The source account is unavailable.") from None
-        raise

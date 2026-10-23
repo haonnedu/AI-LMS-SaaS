@@ -1,4 +1,4 @@
-# 0011 — Quyền riêng tư, đồng ý của người giám hộ và lưu giữ dữ liệu (PILOT-05)
+# 0012 — Quyền riêng tư, đồng ý của người giám hộ và lưu giữ dữ liệu (PILOT-05)
 
 > Ngày: 2026-10-23. Trạng thái: **Đề xuất kỹ thuật, chưa được duyệt.** Owner nghiệp vụ/pháp lý: —.
 > Phạm vi: dữ liệu do schema `edu` (migrations 0001–0014), Redis phiên, object storage, log và Auth0 nắm giữ ở thời điểm viết.

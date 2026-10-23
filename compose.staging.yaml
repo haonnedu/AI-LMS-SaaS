@@ -32,9 +32,6 @@ x-backend: &backend
     LLM_PROVIDER: ${LLM_PROVIDER:?Set anthropic and LLM_API_KEY for staging}
     LLM_MODEL: ${LLM_MODEL-}
     LLM_API_KEY: ${LLM_API_KEY-}
-    LEGACY_AUTH_ISSUER: ${LEGACY_AUTH_ISSUER-}
-    LEGACY_AUTH_AUDIENCE: ${LEGACY_AUTH_AUDIENCE-}
-    LEGACY_AUTH_JWKS_URL: ${LEGACY_AUTH_JWKS_URL-}
     CORS_ORIGINS: ${CORS_ORIGINS:?Set exact HTTPS staging origin JSON}
     # No storage service is provisioned. Empty endpoint fails closed if invoked;
     # do not silently use the development endpoint or cloud metadata credentials.
@@ -153,7 +150,6 @@ services:
     build:
       context: ./frontend
     environment:
-      AUTH_PROVIDER: ${AUTH_PROVIDER:-auth0}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET-}
       BETTER_AUTH_AUDIENCE: ${BETTER_AUTH_AUDIENCE:-https://eduvia-api}
       AUTH_DATABASE_URL: postgresql://eduvia_auth_runtime:${DB_AUTH_PASSWORD:?Generate staging auth DB secret}@db:5432/eduvia
@@ -161,18 +157,9 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET-}
       SMTP_URL: ${SMTP_URL-}
       AUTH_EMAIL_FROM: ${AUTH_EMAIL_FROM-}
-      AUTH0_MIGRATION_ENABLED: ${AUTH0_MIGRATION_ENABLED:-0}
       API_INTERNAL_URL: http://api:8000
       APP_BASE_URL: ${APP_BASE_URL-}
-      AUTH0_DOMAIN: ${AUTH0_DOMAIN-}
-      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID-}
-      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET-}
-      AUTH0_SECRET: ${AUTH0_SECRET-}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE-}
-      AUTH0_CONNECTION: ${AUTH0_CONNECTION-}
       SESSION_ENCRYPTION_KEY: ${SESSION_ENCRYPTION_KEY-}
-      AUTH0_MANAGEMENT_CLIENT_ID: ${AUTH0_MANAGEMENT_CLIENT_ID-}
-      AUTH0_MANAGEMENT_CLIENT_SECRET: ${AUTH0_MANAGEMENT_CLIENT_SECRET-}
       SESSION_REDIS_URL: redis://:${SESSION_REDIS_PASSWORD:?Generate staging session secret}@sessions:6379/0
       HOSTNAME: 0.0.0.0
       PORT: '3000'

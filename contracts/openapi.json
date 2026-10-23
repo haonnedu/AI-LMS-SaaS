@@ -6746,21 +6746,6 @@
         "title": "TeacherQuestionDTO",
         "type": "object"
       },
-      "TransferRequest": {
-        "properties": {
-          "proof": {
-            "maxLength": 16384,
-            "minLength": 1,
-            "title": "Proof",
-            "type": "string"
-          }
-        },
-        "required": [
-          "proof"
-        ],
-        "title": "TransferRequest",
-        "type": "object"
-      },
       "UserDTO": {
         "properties": {
           "email": {
@@ -7281,102 +7266,6 @@
           }
         ],
         "summary": "Bootstrap",
-        "tags": [
-          "identity"
-        ]
-      }
-    },
-    "/v1/auth/migrate": {
-      "post": {
-        "operationId": "migrate_identity_v1_auth_migrate_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TransferRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserDTO"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDTO"
-                }
-              }
-            },
-            "description": "Unauthorized"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDTO"
-                }
-              }
-            },
-            "description": "Forbidden"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDTO"
-                }
-              }
-            },
-            "description": "Not Found"
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDTO"
-                }
-              }
-            },
-            "description": "Conflict"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDTO"
-                }
-              }
-            },
-            "description": "Unprocessable Entity"
-          },
-          "503": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorDTO"
-                }
-              }
-            },
-            "description": "Service Unavailable"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Migrate Identity",
         "tags": [
           "identity"
         ]

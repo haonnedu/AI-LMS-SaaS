@@ -131,7 +131,7 @@ test.describe("pilot journey: teacher → student → score", () => {
     const workspaces = await t.get("workspaces");
     const ws: string = workspaces.items.find((w: any) => w.role === "owner")?.id ?? workspaces.items[0].id;
 
-    // ---- curriculum metadata (seeded by migration 0010)
+    // ---- curriculum metadata (seeded by migration 0011)
     const subjects = await t.get("curriculum/subjects");
     const toan = subjects.items.find((s: any) => s.code === "toan");
     expect(toan, "seeded subject 'toan'").toBeTruthy();

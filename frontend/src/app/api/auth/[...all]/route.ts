@@ -1,16 +1,16 @@
 import { allowEmail } from "@/lib/server/email-limit";
-import { better, betterEnabled, origin } from "@/lib/server/better-auth";
+import { better, origin } from "@/lib/server/better-auth";
 import { failure, HttpError } from "@/lib/server/auth";
 
 const posts = new Set(["sign-in/email", "sign-up/email", "sign-in/social", "request-password-reset", "reset-password", "send-verification-email"]);
 const gets = new Set(["jwks", "verify-email", "reset-password"]);
 async function handle(request: Request) {
   try {
-    if (!betterEnabled()) return new Response(null, { status: 404 });
     const path = new URL(request.url).pathname.slice("/api/auth/".length);
     const callback = /^callback\/google$/.test(path);
     if (request.method === "POST") {
-      if (!posts.has(path) || request.headers.get("origin") !== origin()) throw new HttpError(403, "invalid_request", "Yêu cầu không hợp lệ.");
+      if (!posts.has(path)) return new Response(null, { status: 404 });
+      if (request.headers.get("origin") !== origin()) throw new HttpError(403, "invalid_request", "Yêu cầu không hợp lệ.");
       if (!request.headers.get("content-type")?.startsWith("application/json")) throw new HttpError(415, "invalid_request", "Yêu cầu JSON.");
       const body = await request.clone().json().catch(() => { throw new HttpError(400, "invalid_request", "JSON không hợp lệ."); });
       if (["send-verification-email", "request-password-reset"].includes(path)) {

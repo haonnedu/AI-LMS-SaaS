@@ -8,7 +8,7 @@ Mỗi yêu cầu ghi task và revision. Người yêu cầu đề xuất reviewe
 
 - Người chuẩn bị: agent theo yêu cầu người dùng; reviewer đề xuất: Hao (chưa xác nhận nhận review). Ngày 2026-10-23 (Asia/Ho_Chi_Minh).
 - Task: [Core BE-01..06, FE-01..04, QA-01..02, DOC-01](../tasks/CORE.md) (execution record 2026-10-23), bàn giao của Duc: [2026-10-23-auth-implementation.md](2026-10-23-auth-implementation.md), runbook [deploy/auth0/README.md](../deploy/auth0/README.md), ADR [0001](../tasks/decisions/0001-identity-provider-adr.md) / [0002](../tasks/decisions/0002-session-token-trust-boundary-adr.md).
-- **Revision đã xem:** commit `912c0d2` (merge `5f05030`), diff `git diff 77d2aa6 5f05030` (79 file). Working tree lúc review có file ngoài diff (`backend/app/api/workspace_access.py`, `backend/migrations/versions/0008_classes.py` untracked; `backend/app/core/config.py` sửa thêm `upload_max_bytes`); không thuộc phạm vi review này và không được đánh giá.
+- **Revision đã xem:** commit `912c0d2` (merge `5f05030`), diff `git diff 77d2aa6 5f05030` (79 file). Working tree lúc review có file ngoài diff (`backend/app/api/workspace_access.py`, `backend/migrations/versions/0009_classes.py` untracked; `backend/app/core/config.py` sửa thêm `upload_max_bytes`); không thuộc phạm vi review này và không được đánh giá.
 - Phạm vi đọc: `backend/app/core/auth.py`, `app/api/identity.py`, `app/main.py`, `app/services/user_provisioning.py`, `app/infrastructure/context.py`, `migrations/versions/0004_auth_identity.py`, `deploy/postgres/bootstrap.sql`, compose/CI, `frontend/src/lib/server/*`, `src/proxy.ts`, `src/app/api/**`, `account-screen.tsx`, tests backend và `frontend/tests/auth/*`, docs/`.env.example`.
 
 ### Lệnh đã chạy (trên revision trên, Windows/Git Bash)
@@ -142,3 +142,7 @@ Bản sửa đã merge qua PR #1; [Foundation CI tại 302762b](https://github.c
 ```
 
 Trước khi chốt: acceptance đạt, tests phù hợp, migration/contract được xem xét, không rò secrets/dữ liệu, giới hạn evidence được ghi. Reviewer chấp thuận chưa tự đồng nghĩa task `done`; áp dụng đầy đủ [Definition of Done](../tasks/BACKLOG.md).
+
+2026-10-23 — Đề xuất Hào review [retirement diff](2026-10-23-auth0-retirement.md): single-issuer verifier, cleanup guards/transaction, migration 0008 và session boundaries. Chưa có reviewer signoff.
+
+2026-10-23 — Đề xuất Hào review Compose loopback/profile isolation và native smoke không reset dữ liệu; chưa reviewer signoff. [Evidence](2026-10-23-local-auth-mailpit.md).

@@ -57,3 +57,9 @@ test("Google-first account cannot unlink its final method; Redis expiry removes 
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login$/);
 });
+
+test("retired Auth0 and transfer routes are unavailable", async ({ request }) => {
+  for (const path of ["/auth/login", "/auth/callback", "/auth/logout", "/account/migrate"]) expect((await request.get(path)).status()).toBe(404);
+  expect((await request.post("/api/account/migrate", { data: {} })).status()).toBe(404);
+  expect((await request.post("/api/auth/resend-verification", { data: {} })).status()).toBe(404);
+});

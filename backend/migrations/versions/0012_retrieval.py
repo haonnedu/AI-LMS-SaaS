@@ -26,8 +26,8 @@ narrow deletion helper used by ``document.delete`` jobs.
 
 from alembic import op
 
-revision = "0011_retrieval"
-down_revision = "0010_knowledge"
+revision = "0012_retrieval"
+down_revision = "0011_knowledge"
 branch_labels = None
 depends_on = None
 

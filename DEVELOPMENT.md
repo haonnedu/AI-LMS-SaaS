@@ -4,7 +4,7 @@
 
 State of the `feat/m5-m6-ui-m7-pilot-readiness` branch (2026-10-23). "Implemented" means code plus unit/static tests; it does not mean verified on PostgreSQL or in a deployed environment (see the last list).
 
-- **Identity (M1):** Auth0 OIDC through the Next.js BFF (server-side encrypted Redis sessions, CSRF on mutations), RS256 access-token verification in the API, issuer-scoped users and personal workspaces created by `edu.bootstrap_identity`, restricted `eduvia_runtime` role, transaction-local context and FORCE row-level security on every tenant table. Setup: [deploy/auth0/README.md](deploy/auth0/README.md).
+- **Identity (M1, Duc):** Better Auth (email/password + Google) through the Next.js BFF (server sessions in PostgreSQL `auth` schema + Redis, CSRF on mutations), RS256 access-token verification in the API, `user_identities` mapping, issuer-scoped users and personal workspaces created by `edu.bootstrap_identity`, restricted `eduvia_runtime` role, transaction-local context and FORCE row-level security on every tenant table. Setup: [deploy/better-auth/README.md](deploy/better-auth/README.md).
 - **Classes (CLASS-01..04):** classes, co-teachers, students, single/limited-use invitations stored as sha256 digests, join via `edu.accept_class_invitation`, withdrawal, roster.
 - **Jobs and storage (M2 lean):** `background_jobs` as source of truth with Celery transport, leases, idempotency keys, retry/cancel and a beat sweeper; append-only `usage_events` with a hard monthly cap per workspace; private uploads (DOCX/TXT; PDF only if `pypdf` is installed, which it is not by default) with size/MIME/magic checks and short-lived presigned downloads.
 - **Knowledge/RAG (M3, KNOW-01..10):** curriculum seed (draft Toán 10–12 units), immutable document versions and chunks, lexical (`simple` tsvector) + pgvector retrieval inside the authorized subset, citations, document purge. The default embedder is a local hashing model for development/tests; production refuses it and needs an `openai_compatible` endpoint.
@@ -12,13 +12,13 @@ State of the `feat/m5-m6-ui-m7-pilot-readiness` branch (2026-10-23). "Implemente
 - **AI drafts and exams (M4):** generation jobs with provenance (prompt version, model, source chunk hashes), a fake LLM for development/tests and an Anthropic adapter; drafts are never auto-published. Exams built from blueprints or question lists, immutable published snapshots with answer keys, DOCX/PDF export for teacher/student audiences.
 - **Assignments and assessment (M5/M6):** assignments pinned to a published exam version, student start/autosave/submit only through SECURITY DEFINER functions (idempotent, deadline-aware), deterministic grading jobs, append-only grade revisions, teacher overrides with a reason, separate score and solution release, results CSV.
 - **Frontend:** teacher dashboard, library, lessons, questions, blueprints and classes screens and student assignment/quiz/results screens are under active development; several pages outside these flows still show preview sample data.
-- **Pilot readiness (M7, documents and gates):** static QA gates (`backend/tests/test_qa_gates.py`), alert checks (`deploy/alerts/`), runbooks (`deploy/runbooks/`), restore drill (`deploy/restore-drill.sh`), release checklist (`deploy/CHECKLIST-release.md`), threat model and privacy inventory (`tasks/decisions/0007`, `0011`), and a skipped-by-default Playwright journey (`frontend/tests/e2e/`).
+- **Pilot readiness (M7, documents and gates):** static QA gates (`backend/tests/test_qa_gates.py`), alert checks (`deploy/alerts/`), runbooks (`deploy/runbooks/`), restore drill (`deploy/restore-drill.sh`), release checklist (`deploy/CHECKLIST-release.md`), threat model and privacy inventory (`tasks/decisions/0007`, `0012`), and a skipped-by-default Playwright journey (`frontend/tests/e2e/`).
 
 Not yet verified or not yet present:
 
-- The PostgreSQL integration suites for migrations 0008–0014 (`backend/tests/test_*_integration.py`) skip without `AUTH_TEST_DATABASE_URL`, and CI's `auth-integration` job runs only the identity/bootstrap/auth tests. RLS, triggers, definer functions and locking of classes, jobs, knowledge, authoring, generation and assessment are therefore unproven on a real database by the pipeline.
-- The pilot E2E journey has not been run. No real Auth0 tenant, LLM or embedding provider smoke has been recorded.
-- Staging: `compose.staging.yaml` does not pass embedding/LLM settings (production settings then refuse to start the API), runs no Celery beat, and has no object storage or automated backups.
+- The PostgreSQL integration suites for migrations 0009–0015 (`backend/tests/test_*_integration.py`) skip without `AUTH_TEST_DATABASE_URL`, and CI's `auth-integration` job runs only the identity/bootstrap/auth tests. RLS, triggers, definer functions and locking of classes, jobs, knowledge, authoring, generation and assessment are therefore unproven on a real database by the pipeline.
+- The pilot E2E journey has not been run. No real LLM or embedding provider smoke has been recorded.
+- Staging: `compose.staging.yaml` now requires real `EMBEDDING_*`/`LLM_*` values and runs the worker with `--beat`, but still has no object storage service or automated backups.
 - No consent workflow for minors, no erasure/export workflow for student data, no CSP/HSTS headers, no centralized logs or audit table. Billing, OMR and the student self-study service are not started.
 
 ## Repository layout
@@ -228,4 +228,8 @@ The original scaffold was checked with Node 24/Python 3.12, including 16 backend
 
 ### Better Auth + Account Center (2026-10-23)
 
-The user approved replacing Auth0 with Better Auth and retaining legacy workspaces through an explicit two-session migration gate. [Setup/cutover](deploy/better-auth/README.md), [review evidence for Hào](discuss/2026-10-23-better-auth-account-center.md). Local `.env` and existing user database have not been switched by implementation. Do not run backend integration and either browser suite concurrently: they share a disposable auth test database. Secrets and real Google/SMTP setup stay outside Git.
+Better Auth is the sole provider. The user explicitly discarded the one legacy test account/workspace; no identity transfer is supported. Local database backup was restored successfully, the reviewed test data removed, and migration 0008 applied. See [setup](deploy/better-auth/README.md) and [retirement evidence](discuss/2026-10-23-auth0-retirement.md). Do not run backend integration and browser suites concurrently: they reset a shared disposable test database. Real Google/SMTP, Auth0 cloud resource deletion, staging and reviewer signoff remain separate gates.
+
+## Native local auth email
+
+Dùng profile `dev-mail` với Mailpit (SMTP 127.0.0.1:1025, UI 127.0.0.1:8025); chạy frontend/backend native theo [setup](deploy/better-auth/SETUP-LOCAL.md). `npm run test:auth:local` kiểm app hiện tại bằng Mailpit, tạo synthetic account mà không reset schema. Tách biệt với `test:better-auth` dùng disposable DB. [Evidence](discuss/2026-10-23-local-auth-mailpit.md); manual Google/email Internet/staging vẫn là gate riêng.

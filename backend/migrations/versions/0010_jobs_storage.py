@@ -7,8 +7,8 @@ runtime role: it resolves a job's persisted actor through the narrow SECURITY DE
 
 from alembic import op
 
-revision = "0009_jobs_storage"
-down_revision = "0008_classes"
+revision = "0010_jobs_storage"
+down_revision = "0009_classes"
 branch_labels = None
 depends_on = None
 

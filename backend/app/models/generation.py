@@ -1,4 +1,4 @@
-"""AI generation provenance, exam snapshots and export jobs (0013_generation_exams).
+"""AI generation provenance, exam snapshots and export jobs (0014_generation_exams).
 
 The authoritative DDL, RLS policies, immutability triggers and the SECURITY DEFINER readers
 (``edu.exam_item_key``, ``edu.exam_item_explanation``, ``edu.exam_keys_for_scoring``,

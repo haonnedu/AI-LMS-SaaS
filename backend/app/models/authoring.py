@@ -1,4 +1,4 @@
-"""Manual authoring: content revisions/review, question bank, exam blueprints (0012_authoring).
+"""Manual authoring: content revisions/review, question bank, exam blueprints (0013_authoring).
 
 The authoritative DDL, RLS policies, immutability triggers and the teacher-only
 ``edu.question_key()`` function live in the migration; these mappings mirror its columns and

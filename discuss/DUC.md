@@ -29,3 +29,7 @@ Task được phân công và trạng thái chính thức: [Core](../tasks/CORE.
 - Đề nghị Hao: <review/trả lời một việc cụ thể, hoặc không có>
 - Đề xuất phiên tiếp theo: <không tự nhận task chưa cập nhật tracker>
 ```
+
+2026-10-23: [Auth0 retirement / Better Auth only](2026-10-23-auth0-retirement.md). Đã dọn đúng local test user/workspace sau backup/restore; Google/SMTP thật và cloud teardown chưa nghiệm thu.
+
+2026-10-23 — Mailpit local và automated native email smoke PASS; Google thật và manual local còn pending. [Evidence](2026-10-23-local-auth-mailpit.md).

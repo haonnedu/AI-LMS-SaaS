@@ -1,3 +1,5 @@
+> **Historical transition checkpoint.** Superseded by [Auth0 retirement](2026-10-23-auth0-retirement.md): the user chose to discard legacy test data and remove the migration gate.
+
 # Better Auth + Account Center — bàn giao Hào
 
 Người dùng đổi quyết định sau khi cân nhắc chi phí: thay Auth0 bằng Better Auth, email/password + Google, liên kết có xác nhận, giữ UUID/workspace cũ. Cho phép giai đoạn xác minh Auth0 cũ, không gộp hai user đã có workspace riêng; Google phải cùng email. Owner implementation Duc, reviewer đề xuất Hào; chưa có reviewer signoff.

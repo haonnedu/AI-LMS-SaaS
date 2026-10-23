@@ -10,9 +10,9 @@ import { betterStorage, encryptStorage } from "./better-storage";
 export { decryptStorage } from "./better-storage";
 import { redis } from "./session-store";
 
-export function betterEnabled() { return process.env.AUTH_PROVIDER === "better-auth"; }
 export function origin() {
-  const configured = process.env.APP_BASE_URL || "http://127.0.0.1:3000";
+  const configured = process.env.APP_BASE_URL;
+  if (!configured) throw new Error("app_origin_unconfigured");
   const url = new URL(configured);
   if (url.username || url.password || url.pathname !== "/" || url.search || url.hash || !["http:", "https:"].includes(url.protocol)) throw new Error("invalid_app_origin");
   if (process.env.NODE_ENV === "production" && url.protocol !== "https:" && !["127.0.0.1", "localhost"].includes(url.hostname)) throw new Error("https_required");

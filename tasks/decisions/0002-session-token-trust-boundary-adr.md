@@ -40,3 +40,7 @@ Refresh/session update/logout serialized bằng lock Redis; atomic update không
 ## Better Auth transition — 2026-10-23
 
 Next.js giữ vai trò BFF nhưng dùng Better Auth Redis sessions, opaque cookie và JWT plugin RS256 5 phút chỉ server-to-server. Public handler allowlist chặn token/get-session/link/unlink nội bộ; cookie cache tắt. FastAPI chọn verifier theo allowlist issuer rồi kiểm chữ ký; issuer không bao giờ cung cấp JWKS URL. Transfer proof có issuer/audience riêng và receipt transactional, không dùng access token thông thường làm bằng chứng chuyển. Auth0 SDK/config chỉ giữ trong giai đoạn xác minh tài khoản cũ. Xem runbook Better Auth và execution record mới.
+
+## 2026-10-23 — Superseding decision: discard legacy test data
+
+User explicitly approved Better Auth only and discarding the single Auth0 test account plus its personal workspace. Remove the SDK, legacy verifier and transfer endpoints; no migration gate or email-based ownership recovery. Preserve historical migrations; forward migration 0008 retires transfer storage/function after reviewed cleanup. Local backup/restore and scoped deletion are recorded in [retirement evidence](../../discuss/2026-10-23-auth0-retirement.md). Cloud teardown and real-provider smoke require separate evidence.

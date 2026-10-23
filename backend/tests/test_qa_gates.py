@@ -7,7 +7,7 @@ statically but expensive to lose:
 (b) every workspace-scoped operation documents 401 and 404 (non-member => 404, never 403);
 (c) FORCE ROW LEVEL SECURITY on every table created by migrations 0008-0014 and no runtime
     DELETE (direct grant or surviving default privilege) on append-only/secret tables;
-(d) forward-only policy: every migration after 0008 has a ``downgrade`` that only raises
+(d) forward-only policy: every migration after 0009 has a ``downgrade`` that only raises
 (Duc's identity migrations 0005-0007 are forward-only as well);
 (e) exactly one Alembic head.
 
@@ -275,7 +275,7 @@ def rendered_upgrade(path: Path) -> str:
 
 @pytest.fixture(scope="module")
 def tenant_sql() -> dict[str, str]:
-    return {p.name: rendered_upgrade(p) for p in migration_files() if 8 <= number(p) <= 14}
+    return {p.name: rendered_upgrade(p) for p in migration_files() if 9 <= number(p) <= 15}
 
 
 def created_tables(sql: str) -> dict[str, str]:
@@ -367,7 +367,7 @@ def _downgrade_only_raises(source: str) -> bool:
 
 
 @pytest.mark.parametrize(
-    "path", [p for p in migration_files() if number(p) > 8], ids=lambda p: p.stem
+    "path", [p for p in migration_files() if number(p) > 9], ids=lambda p: p.stem
 )
 def test_migrations_after_0008_are_forward_only(path):
     known(f"d-{path.stem}")

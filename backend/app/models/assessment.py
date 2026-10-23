@@ -1,8 +1,8 @@
-"""Assessment metadata (migration 0014_assessment): assignments, attempts, answers, grading
+"""Assessment metadata (migration 0015_assessment): assignments, attempts, answers, grading
 results and append-only grade revisions.
 
 The authoritative DDL, RLS policies, guard triggers and the student SECURITY DEFINER functions
-live in the migration. Foreign keys into the exam tables (0013, ``app.models.exams``) are
+live in the migration. Foreign keys into the exam tables (0014, ``app.models.exams``) are
 deliberately not declared on these ORM classes so this module never depends on that one; the
 database enforces them. ``exam_versions_ref``/``exam_items_ref`` are read-only Core tables on a
 private ``MetaData`` (they are not part of ``Base.metadata`` and never create anything).
@@ -250,7 +250,7 @@ class Grade(Base):
     reason = Column(Text)
 
 
-# ---- Read-only references to the 0013 exam tables (private metadata, see module docstring) --
+# ---- Read-only references to the 0014 exam tables (private metadata, see module docstring) --
 
 _exam_metadata = MetaData(schema="edu")
 

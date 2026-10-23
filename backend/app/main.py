@@ -21,7 +21,7 @@ from app.api.jobs import router as jobs_router
 from app.api.knowledge import router as knowledge_router
 from app.api.retrieval import router as retrieval_router
 from app.api.student import router as student_router
-from app.core.auth import TokenVerifier, TokenVerifierSet
+from app.core.auth import TokenVerifier
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.core.middleware import RequestContextMiddleware
@@ -62,28 +62,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.token_verifier = (
         TokenVerifier(settings.auth_issuer, settings.auth_audience, settings.auth_jwks_url)
         if settings.auth_issuer
-        else None
-    )
-
-    if settings.legacy_auth_issuer:
-        application.state.token_verifier = TokenVerifierSet(
-            [
-                application.state.token_verifier,
-                TokenVerifier(
-                    settings.legacy_auth_issuer,
-                    settings.legacy_auth_audience,
-                    settings.legacy_auth_jwks_url,
-                ),
-            ]
-        )
-
-    application.state.migration_verifier = (
-        TokenVerifier(
-            settings.auth_issuer + "/migration",
-            settings.auth_audience + "/migration",
-            settings.auth_jwks_url,
-        )
-        if settings.legacy_auth_issuer
         else None
     )
 

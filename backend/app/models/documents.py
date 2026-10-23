@@ -1,4 +1,4 @@
-"""Private uploaded documents (migrations 0009_jobs_storage, 0010_knowledge).
+"""Private uploaded documents (migrations 0010_jobs_storage, 0011_knowledge).
 
 Object keys are server-derived. ``rights_scope`` is private-only (no shared corpus) and
 ``active_version_id`` is set only by the ingest activation transaction.

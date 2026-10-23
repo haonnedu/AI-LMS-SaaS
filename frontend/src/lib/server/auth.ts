@@ -1,15 +1,14 @@
 import { APIError } from "better-auth/api";
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
-import { AccessTokenError, AccessTokenErrorCode } from "@auth0/nextjs-auth0/errors";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import * as legacy from "./legacy-auth";
-import { better, betterEnabled, origin, authDatabase } from "./better-auth";
+
+import { better, origin, authDatabase } from "./better-auth";
 import { redis, withSessionLock } from "./session-store";
-export const auth = legacy.auth;
-export const appOrigin = legacy.appOrigin;
+
 export type EduviaSession = { user: { sub: string; email: string; name: string; email_verified: boolean }; eduviaId: string; csrf: string; token: string; createdAt: Date };
-export const HttpError = legacy.HttpError;
+import { HttpError } from "./http-error";
+export { HttpError } from "./http-error";
 export function failure(error: unknown) {
   if (error instanceof APIError && error.statusCode >= 400 && error.statusCode < 500) {
     const status = error.statusCode;
@@ -24,10 +23,6 @@ export function failure(error: unknown) {
 }
 
 export async function requireSession(verified = true): Promise<EduviaSession> {
-  if (!betterEnabled()) {
-    const old = await legacy.requireSession(verified);
-    return { user: { sub: old.user.sub, email: old.user.email || "", name: old.user.name || "", email_verified: old.user.email_verified === true }, eduviaId: String(old.eduviaId), csrf: String(old.csrf), token: "", createdAt: new Date(old.internal.createdAt * 1000) };
-  }
   await redis();
   const current = await better().api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
   if (!current || Date.now() - new Date(current.session.createdAt).getTime() >= 86400000) throw new HttpError(401, "unauthorized", "Vui lòng đăng nhập lại.");
@@ -53,21 +48,8 @@ export async function lockedSession<T>(action: (session: Awaited<ReturnType<type
 }
 export type BackendOptions = { body?: BodyInit | null; headers?: Record<string, string>; passthroughStatus?: boolean };
 
-/** Provider-agnostic API bearer token for the current session (legacy Auth0 or Better Auth). */
+/** API bearer token for the current Better Auth session. */
 export async function accessToken(): Promise<string> {
-  if (!betterEnabled()) {
-    let token: string;
-    try { token = (await legacy.auth().getAccessToken()).token; }
-    catch (error) {
-      if (error instanceof AccessTokenError && (
-        [AccessTokenErrorCode.MISSING_SESSION, AccessTokenErrorCode.MISSING_REFRESH_TOKEN, AccessTokenErrorCode.SESSION_EXPIRED].includes(error.code as AccessTokenErrorCode) || error.cause?.code === "invalid_grant"
-      )) throw new HttpError(401, "session_expired", "Phiên đã hết hạn. Vui lòng đăng nhập lại.");
-      throw new HttpError(503, "refresh_unavailable", "Chưa thể gia hạn phiên. Vui lòng thử lại.");
-    }
-    // Re-read after refresh; never save the stale tokenSet read before getAccessToken.
-    await legacy.auth().updateSession(await legacy.requireSession());
-    return token;
-  }
   const { token } = await better().api.getToken({ headers: await headers() });
   await requireSession();
   return token;

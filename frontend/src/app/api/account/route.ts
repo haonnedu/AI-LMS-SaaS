@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { betterEnabled } from "@/lib/server/better-auth";
 import { backend, failure, lockedSession } from "@/lib/server/auth";
 import { methods } from "@/lib/server/account-center";
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
-  if (!betterEnabled()) return new Response(null, { status: 404 });
   try {
     const me = await backend(request, "/v1/me");
     if (!me.ok && me.status !== 409) return me;

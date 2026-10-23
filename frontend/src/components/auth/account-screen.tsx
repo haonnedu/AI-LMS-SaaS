@@ -9,7 +9,7 @@ import styles from "../workspace/workspace.module.css";
 
 type Workspace = components["schemas"]["WorkspaceDTO"];
 type User = components["schemas"]["UserDTO"];
-export function AccountScreen({ mode }: { mode: "onboarding" | "verify" | "dashboard" }) {
+export function AccountScreen({ mode }: { mode: "onboarding" | "dashboard" }) {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -64,18 +64,17 @@ export function AccountScreen({ mode }: { mode: "onboarding" | "verify" | "dashb
     window.addEventListener("pageshow", restore);
     return () => { channel.close(); window.removeEventListener("pageshow", restore); };
   }, [load, router]);
-  async function action(kind: "bootstrap" | "resend" | "logout") {
+  async function action(kind: "bootstrap" | "logout") {
     if (inFlight.current || !session?.csrfToken) return;
     inFlight.current = true;
     const version = ++epoch.current;
     setBusy(true); setMessage("");
     if (kind === "logout") { setWorkspace(null); setWorkspaces([]); setUser(null); }
     try {
-      const url = kind === "bootstrap" ? "/api/backend/auth/bootstrap" : kind === "resend" ? "/api/auth/resend-verification" : "/api/logout";
+      const url = kind === "bootstrap" ? "/api/backend/auth/bootstrap" : "/api/logout";
       const payload = await read(url, { method: "POST", headers: { "X-CSRF-Token": session.csrfToken } });
       if (version !== epoch.current) return;
       if (kind === "bootstrap") router.replace(takeReturnTo() || "/dashboard");
-      if (kind === "resend") setMessage("Đã yêu cầu gửi email. Vui lòng kiểm tra hộp thư và thư rác.");
       if (kind === "logout") {
         setSession(null);
         const channel = new BroadcastChannel("eduvia-auth"); channel.postMessage("logout"); channel.close();
@@ -100,9 +99,7 @@ export function AccountScreen({ mode }: { mode: "onboarding" | "verify" | "dashb
     finally { if (version === epoch.current) setBusy(false); }
   }
   return <div className={styles.page}><section className={styles.card} aria-busy={busy}>
-    <h1>{mode === "verify" ? "Xác minh email của bạn" : mode === "onboarding" ? "Mở không gian giảng dạy" : "Không gian của bạn"}</h1>
     <p>{user?.name || session?.user?.name || "Eduvia"}</p>
-    {mode === "verify" && <><p>Kiểm tra email <strong>{session?.user?.email}</strong>, mở liên kết xác minh rồi đăng nhập lại.</p><a className="button button-primary" href="/auth/login">Tôi đã xác minh — đăng nhập lại</a><button className="button button-secondary" disabled={busy || !session} onClick={() => void action("resend")}>Gửi lại email xác minh</button></>}
     {mode === "onboarding" && <><p>Eduvia sẽ tạo hoặc mở lại workspace cá nhân của bạn.</p><button className="button button-primary" disabled={busy || !session} onClick={() => void action("bootstrap")}>{busy ? "Đang chuẩn bị…" : "Mở workspace cá nhân"}</button></>}
     {mode === "dashboard" && <><label htmlFor="real-workspace">Workspace</label><select id="real-workspace" value={workspace?.id || ""} disabled={busy} onChange={event => void switchWorkspace(event.target.value)}><option value="" disabled>Chọn workspace</option>{workspaces.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>{nextCursor && <button disabled={busy} onClick={() => void more()}>Tải thêm workspace</button>}<nav className={styles.navLinks} aria-label="Điều hướng giáo viên"><Link href="/dashboard/classes">Lớp học</Link><Link href="/dashboard/documents">Tài liệu</Link></nav>{workspace ? <div className={styles.workspace}><div><strong>{workspace.name}</strong><p>Vai trò: {workspace.role}</p><p>Workspace của bạn đã sẵn sàng. Các tính năng học liệu và lớp học sẽ được bổ sung sau.</p></div></div> : !busy && <p>Không có workspace khả dụng. Quyền truy cập có thể đã thay đổi.</p>}</>}
     {message && <p role="status" aria-live="polite">{message}</p>}
