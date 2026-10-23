@@ -89,7 +89,10 @@ export function ClassDetailScreen({ classId }: { classId: string }) {
         <span className={styles.chip} data-tone={klass.status === "active" ? undefined : "warn"}>{klass.status === "active" ? "Đang hoạt động" : "Đã lưu trữ"}</span></div>}
       {notice && <p role="status" aria-live="polite">{notice}</p>}
       {error && !inviting && <p role="alert" className={styles.error}>{error} <button className="button button-secondary" onClick={() => void load()}>Tải lại</button></p>}
-      {klass?.status === "active" && <div className={styles.actions}><button className="button button-primary" disabled={loading} onClick={() => setInviting(true)}>Tạo mã mời</button></div>}
+      {klass && <div className={styles.actions}>
+        {klass.status === "active" && <button className="button button-primary" disabled={loading} onClick={() => setInviting(true)}>Tạo mã mời</button>}
+        <Link className="button button-secondary" href={`/dashboard/classes/${classId}/assignments`}>Bài giao</Link>
+      </div>}
     </section>
     {roster && <section className={styles.card} aria-label="Danh sách học sinh">
       <h2>Học sinh</h2>

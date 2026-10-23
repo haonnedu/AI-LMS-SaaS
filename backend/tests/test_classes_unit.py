@@ -207,7 +207,7 @@ class FakeSession:
 @pytest.fixture
 def fake():
     api.token_limiter.reset()
-    api.ip_limiter.reset()
+    api.actor_limiter.reset()
     app = create_app(Settings(_env_file=None, environment="test"))
     if not any(getattr(r, "path", "").endswith("/classes") for r in app.routes):
         app.include_router(api.router)  # main.py wiring is the orchestrator's change
@@ -217,7 +217,7 @@ def fake():
     client = TestClient(app)
     yield client, session
     api.token_limiter.reset()
-    api.ip_limiter.reset()
+    api.actor_limiter.reset()
 
 
 AUTH = {"Authorization": "Bearer good"}
@@ -381,15 +381,15 @@ def test_accept_rejects_malformed_token(fake):
     assert client.post("/v1/invitations/short/accept", headers=AUTH).status_code == 422
 
 
-def test_accept_is_rate_limited_per_ip_and_token_prefix(fake):
+def test_accept_is_rate_limited_per_actor_and_token_prefix(fake):
     client, session = fake
     session.on_text = lambda params: (_ for _ in ()).throw(_db_error("P0002"))
     token = "c" * 43
     codes = [
         client.post(f"/v1/invitations/{token}/accept", headers=AUTH).status_code
-        for _ in range(api.token_limiter.capacity + 1)
+        for _ in range(api.actor_limiter.capacity + 1)
     ]
-    assert codes[:-1] == [404] * int(api.token_limiter.capacity)
+    assert codes[:-1] == [404] * int(api.actor_limiter.capacity)
     assert codes[-1] == 429
     other = client.post("/v1/invitations/" + "d" * 43 + "/accept", headers=AUTH)
     assert other.status_code == 404

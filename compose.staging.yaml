@@ -24,6 +24,14 @@ x-backend: &backend
     AUTH_ISSUER: ${AUTH_ISSUER-}
     AUTH_AUDIENCE: ${AUTH_AUDIENCE-}
     AUTH_JWKS_URL: ${AUTH_JWKS_URL-}
+    # Production settings refuse the local/fake AI providers; set real values in staging.env.
+    EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:?Set openai_compatible and credentials for staging}
+    EMBEDDING_MODEL: ${EMBEDDING_MODEL-}
+    EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL-}
+    EMBEDDING_API_KEY: ${EMBEDDING_API_KEY-}
+    LLM_PROVIDER: ${LLM_PROVIDER:?Set anthropic and LLM_API_KEY for staging}
+    LLM_MODEL: ${LLM_MODEL-}
+    LLM_API_KEY: ${LLM_API_KEY-}
     CORS_ORIGINS: ${CORS_ORIGINS:?Set exact HTTPS staging origin JSON}
     # No storage service is provisioned. Empty endpoint fails closed if invoked;
     # do not silently use the development endpoint or cloud metadata credentials.
@@ -118,7 +126,8 @@ services:
 
   worker:
     <<: *backend
-    command: [celery, -A, 'app.worker:celery_app', worker, '--loglevel=INFO', '--concurrency=2', -Q, 'default,ingestion,generation,export,omr']
+    # --beat runs the sweeper (lost jobs, attempt expiry, scheduled releases); single worker only.
+    command: [celery, -A, 'app.worker:celery_app', worker, '--beat', '--loglevel=INFO', '--concurrency=2', -Q, 'default,ingestion,generation,export,omr']
     depends_on:
       db:
         condition: service_healthy

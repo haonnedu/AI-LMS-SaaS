@@ -2,15 +2,24 @@
 
 ## What is implemented
 
-This repository is a runnable foundation for the design in [ARCHITECTURE.md](ARCHITECTURE.md) and [DATABASE.md](DATABASE.md). It contains:
+State of the `feat/m5-m6-ui-m7-pilot-readiness` branch (2026-10-23). "Implemented" means code plus unit/static tests; it does not mean verified on PostgreSQL or in a deployed environment (see the last list).
 
-- A Next.js App Router/TypeScript frontend with 11 interactive preview pages and API connectivity feedback; educational records shown in the previews are sample data.
-- A FastAPI application with environment configuration, request IDs, logging, health probes, and an OpenAPI contract.
-- Async PostgreSQL sessions, Redis connectivity, Alembic migration setup, and a Celery worker entry point.
-- Migrations for `edu`/pgvector, issuer-scoped users, personal workspaces, memberships, restricted database roles, transaction context and RLS.
-- Local Docker Compose, native Windows scripts, dependency lock files, and CI checks.
+- **Identity (M1):** Auth0 OIDC through the Next.js BFF (server-side encrypted Redis sessions, CSRF on mutations), RS256 access-token verification in the API, issuer-scoped users and personal workspaces created by `edu.bootstrap_identity`, restricted `eduvia_runtime` role, transaction-local context and FORCE row-level security on every tenant table. Setup: [deploy/auth0/README.md](deploy/auth0/README.md).
+- **Classes (CLASS-01..04):** classes, co-teachers, students, single/limited-use invitations stored as sha256 digests, join via `edu.accept_class_invitation`, withdrawal, roster.
+- **Jobs and storage (M2 lean):** `background_jobs` as source of truth with Celery transport, leases, idempotency keys, retry/cancel and a beat sweeper; append-only `usage_events` with a hard monthly cap per workspace; private uploads (DOCX/TXT; PDF only if `pypdf` is installed, which it is not by default) with size/MIME/magic checks and short-lived presigned downloads.
+- **Knowledge/RAG (M3, KNOW-01..10):** curriculum seed (draft Toán 10–12 units), immutable document versions and chunks, lexical (`simple` tsvector) + pgvector retrieval inside the authorized subset, citations, document purge. The default embedder is a local hashing model for development/tests; production refuses it and needs an `openai_compatible` endpoint.
+- **Authoring (M4):** lesson plans/study guides with revisions and review, question bank with keys in a separate table readable only through SECURITY DEFINER functions, CSV import/export (student edition without keys), versioned exam blueprints.
+- **AI drafts and exams (M4):** generation jobs with provenance (prompt version, model, source chunk hashes), a fake LLM for development/tests and an Anthropic adapter; drafts are never auto-published. Exams built from blueprints or question lists, immutable published snapshots with answer keys, DOCX/PDF export for teacher/student audiences.
+- **Assignments and assessment (M5/M6):** assignments pinned to a published exam version, student start/autosave/submit only through SECURITY DEFINER functions (idempotent, deadline-aware), deterministic grading jobs, append-only grade revisions, teacher overrides with a reason, separate score and solution release, results CSV.
+- **Frontend:** teacher dashboard, library, lessons, questions, blueprints and classes screens and student assignment/quiz/results screens are under active development; several pages outside these flows still show preview sample data.
+- **Pilot readiness (M7, documents and gates):** static QA gates (`backend/tests/test_qa_gates.py`), alert checks (`deploy/alerts/`), runbooks (`deploy/runbooks/`), restore drill (`deploy/restore-drill.sh`), release checklist (`deploy/CHECKLIST-release.md`), threat model and privacy inventory (`tasks/decisions/0007`, `0008`), and a skipped-by-default Playwright journey (`frontend/tests/e2e/`).
 
-Auth0-based authentication and membership-scoped workspace APIs are implemented locally, with real PostgreSQL and OIDC fixture tests; tenant/email setup and real-provider smoke remain outstanding. [Setup and troubleshooting](deploy/auth0/README.md). Document upload, RAG, generation, enrollment, quiz submission, OMR and billing remain planned. The public UI previews do not persist educational records. A green API indicator means the API process is reachable; it does not imply database readiness or completed product workflows.
+Not yet verified or not yet present:
+
+- The PostgreSQL integration suites for migrations 0005–0011 (`backend/tests/test_*_integration.py`) skip without `AUTH_TEST_DATABASE_URL`, and CI's `auth-integration` job runs only the identity/bootstrap/auth tests. RLS, triggers, definer functions and locking of classes, jobs, knowledge, authoring, generation and assessment are therefore unproven on a real database by the pipeline.
+- The pilot E2E journey has not been run. No real Auth0 tenant, LLM or embedding provider smoke has been recorded.
+- Staging: `compose.staging.yaml` does not pass embedding/LLM settings (production settings then refuse to start the API), runs no Celery beat, and has no object storage or automated backups.
+- No consent workflow for minors, no erasure/export workflow for student data, no CSP/HSTS headers, no centralized logs or audit table. Billing, OMR and the student self-study service are not started.
 
 ## Repository layout
 

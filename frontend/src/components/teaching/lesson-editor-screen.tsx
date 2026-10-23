@@ -7,7 +7,13 @@ import {
   AUTOSAVE_DELAY_MS, BLOCK_LABEL, BLOCK_TYPES, buildBody, canSave, conflictMessage, conflictRevision, initialSave, MAX_BLOCKS, MAX_SECTIONS, moveItem, newBlock, newSection,
   normalizeBody, removeAt, replaceAt, saveLabel, saveReducer, shouldSchedule, type BlockType, type ContentBody, type SaveEvent, type SaveState,
 } from "@/lib/client/authoring";
+import { approveMessage } from "@/lib/client/generation";
+import { AiDraftPanel } from "./ai-draft-panel";
 import { Chip, dateTime, unitLabel, type Tone } from "./authoring-shared";
+import { CitationDrawer } from "./citation-drawer";
+import { ExportControls } from "./export-controls";
+import { ProvenancePanel, useProvenance } from "./provenance-panel";
+import { panelId, Tabs, tabId } from "./tabs";
 import { ITEM_STATUS, KIND_LABEL } from "./lessons-screen";
 import { Modal } from "./modal";
 import { TeachingNav } from "./teaching-nav";
@@ -29,6 +35,9 @@ export function LessonEditorScreen({ itemId }: { itemId: string }) {
   const [viewing, setViewing] = useState<Revision | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [tab, setTab] = useState("content");
+  const [source, setSource] = useState<{ chunkId: string; label: string } | null>(null);
   const [loadingItem, setLoadingItem] = useState(true);
   const saveRef = useRef(save);
   const bodyRef = useRef<ContentBody | null>(null);
@@ -101,9 +110,10 @@ export function LessonEditorScreen({ itemId }: { itemId: string }) {
     setBusy(true); setError("");
     try {
       if (action === "submit" && !(await flush())) { setError("Chưa thể lưu bản nháp. Hãy xử lý lỗi lưu trước khi gửi duyệt."); return; }
-      await read(`${base}/revisions/${saveRef.current.revisionNo}/${action}`, jsonInit(csrf));
+      const endpoint = action === "approve" && prov.data?.generationJobId ? "approve-with-provenance" : action;
+      await read(`${base}/revisions/${saveRef.current.revisionNo}/${endpoint}`, jsonInit(csrf));
       await load();
-    } catch (e) { setError(handle(e)); }
+    } catch (e) { setError(e instanceof RequestError && e.code === "citations_unresolved" ? approveMessage(e.code, e.message) : handle(e)); if (e instanceof RequestError && e.code === "citations_unresolved") setTab("sources"); }
     finally { setBusy(false); }
   }
   async function newDraft() {
@@ -120,6 +130,10 @@ export function LessonEditorScreen({ itemId }: { itemId: string }) {
   }
 
   const rev = item?.latestRevision || null;
+  const prov = useProvenance(base, rev?.revisionNo ?? null, rev?.status ?? "");
+  const wsBase = workspace ? `/api/backend/workspaces/${workspace.id}` : "";
+  const aiRevision = !!prov.data?.generationJobId;
+  const published = item?.currentRevision?.status === "published" ? item.currentRevision : null;
   const label = saveLabel(save);
   const sectionCount = body?.sections.length ?? 0;
   const mutate = (fn: (current: ContentBody) => ContentBody) => { if (bodyRef.current) edit(fn(bodyRef.current)); };
@@ -141,6 +155,7 @@ export function LessonEditorScreen({ itemId }: { itemId: string }) {
           <span className={styles.saveState} role="status" aria-live="polite" data-phase={save.phase}>{label}</span>
           {editable && (save.phase === "error" || save.phase === "dirty") && <button className="button button-secondary" onClick={() => void flush()}>Lưu ngay</button>}
           <div className={styles.actions}>
+            <button type="button" className="button button-secondary" aria-expanded={aiOpen} onClick={() => setAiOpen(open => !open)}>Soạn cùng AI</button>
             {rev.status === "draft" && <button className="button button-primary" disabled={busy || save.phase === "conflict"} onClick={() => void transition("submit")}>Gửi duyệt</button>}
             {rev.status === "in_review" && <button className="button button-primary" disabled={busy} onClick={() => void transition("approve")}>Duyệt</button>}
             {rev.status === "approved" && <button className="button button-primary" disabled={busy} onClick={() => void transition("publish")}>Xuất bản</button>}
@@ -151,8 +166,16 @@ export function LessonEditorScreen({ itemId }: { itemId: string }) {
           <span>{conflictMessage(save.latestRevisionNo)}. Các thay đổi chưa lưu trên màn hình này chưa được ghi đè.</span>
           <button className="button button-secondary" onClick={() => void load()}>Tải lại</button>
         </div>}
+        {aiRevision && (rev.status === "draft" || rev.status === "in_review") && <p className={styles.notice} role="note">Bản nháp do AI tạo, cần kiểm tra nguồn và duyệt</p>}
         {!editable && <p className={styles.notice} role="note">Bản này đang ở trạng thái “{REV_STATUS[rev.status][0]}” nên không thể chỉnh sửa. Hãy tạo bản nháp mới để tiếp tục soạn.</p>}
 
+        <Tabs prefix="lesson" label="Nội dung bài" tabs={[{ id: "content", label: "Nội dung" }, { id: "sources", label: "Nguồn trích dẫn" }]} active={tab} onChange={setTab} />
+        <div className={aiOpen ? styles.aiLayout : undefined}>
+        <div style={{ minWidth: 0 }}>
+        {tab === "sources" && <div role="tabpanel" id={panelId("lesson", "sources")} aria-labelledby={tabId("lesson", "sources")} tabIndex={0}>
+          <ProvenancePanel data={prov.data} loading={prov.loading} error={prov.error} onView={s => setSource({ chunkId: s.chunkId || "", label: s.label })} />
+        </div>}
+        {tab === "content" && <div role="tabpanel" id={panelId("lesson", "content")} aria-labelledby={tabId("lesson", "content")}>
         <div onBlur={() => { if (editable) void flush(); }} className={styles.editor}>
           {body.sections.map((section, si) => <fieldset key={si} className={styles.section} disabled={!editable}>
             <legend>Phần {si + 1}</legend>
@@ -182,6 +205,11 @@ export function LessonEditorScreen({ itemId }: { itemId: string }) {
           </fieldset>)}
           <div><button type="button" className="button button-secondary" disabled={!editable || sectionCount >= MAX_SECTIONS} onClick={() => mutate(b => ({ sections: [...b.sections, newSection()] }))}>Thêm phần</button></div>
         </div>
+        </div>}
+        </div>
+        {aiOpen && workspace && <AiDraftPanel wsBase={wsBase} csrf={csrf} itemId={itemId} kind={item.kind} unitId={item.curriculumUnitId} beforeStart={flush} onError={handle}
+          onDone={async () => { await load(); setTab("content"); }} />}
+        </div>
 
         <h2>Lịch sử phiên bản</h2>
         <div className={styles.tableWrap}><table className={styles.table}>
@@ -192,8 +220,14 @@ export function LessonEditorScreen({ itemId }: { itemId: string }) {
             <td><button className="button button-secondary" onClick={() => void view(r.revisionNo)} aria-label={`Xem bản ${r.revisionNo}`}>Xem</button></td>
           </tr>)}</tbody>
         </table></div>
+        {published && <>
+          <h2>Xuất tệp</h2>
+          <p className={styles.muted}>Bản {published.revisionNo} đã xuất bản, xuất sang DOCX.</p>
+          <ExportControls wsBase={wsBase} csrf={csrf} target={{ contentRevisionId: published.id }} title={item.title} combos={[{ format: "docx", audience: "teacher" }, { format: "docx", audience: "student" }]} onError={handle} />
+        </>}
       </>}
     </section>
+    {source && source.chunkId && <CitationDrawer base={wsBase} chunkId={source.chunkId} title={source.label} onClose={() => setSource(null)} onError={handle} />}
     {viewing && <Modal title={`Bản ${viewing.revisionNo} (chỉ xem)`} onClose={() => setViewing(null)}>
       <div className={styles.preview}>{normalizeBody(viewing.body).sections.map((s, i) => <div key={i}><h3>{s.heading || `Phần ${i + 1}`}</h3>{s.blocks.map((b, j) => <p key={j}><strong>{BLOCK_LABEL[b.type]}: </strong>{b.text}</p>)}</div>)}</div>
       <div className={styles.actions}><button className="button button-secondary" onClick={() => setViewing(null)}>Đóng</button></div>

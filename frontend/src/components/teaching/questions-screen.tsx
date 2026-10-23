@@ -18,12 +18,12 @@ type Detail = components["schemas"]["TeacherQuestionDTO"];
 type ImportResult = components["schemas"]["ImportResultDTO"];
 const STATUS: Record<Summary["status"], [string, Tone]> = { draft: ["Nháp", "warn"], active: ["Đang dùng", undefined], retired: ["Đã gỡ", "error"] };
 
-export function QuestionsScreen() {
+export function QuestionsScreen({ initialStatus = "" }: { initialStatus?: string } = {}) {
   const { phase, csrf, workspace, message, handle, reload } = useTeaching();
   const base = workspace ? `/api/backend/workspaces/${workspace.id}/questions` : "";
   const [items, setItems] = useState<Summary[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
-  const [filters, setFilters] = useState({ status: "", difficulty: "", cognitiveLevel: "", unitId: "", q: "" });
+  const [filters, setFilters] = useState({ status: initialStatus, difficulty: "", cognitiveLevel: "", unitId: "", q: "" });
   const [applied, setApplied] = useState(filters);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

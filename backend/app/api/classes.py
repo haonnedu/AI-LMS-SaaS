@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Path, Query, Request, Response
+from fastapi import APIRouter, Path, Query, Response
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -210,19 +210,17 @@ class TokenBucketLimiter:
             self._buckets.clear()
 
 
-# 5 attempts per (ip, token prefix) then one per 12 s; 30 per ip then one per 2 s.
-token_limiter = TokenBucketLimiter(capacity=5, refill_per_second=1 / 12)
-ip_limiter = TokenBucketLimiter(capacity=30, refill_per_second=0.5)
+# Every browser request reaches the API through the Next.js BFF, so the peer IP is the BFF's
+# and cannot distinguish students. Limit per verified actor (subject) and per token instead:
+# 5 attempts per (actor, token prefix) then one per 12 s; 200 per token then one per 2 s so a
+# whole class can join with one link. Production needs a Redis-backed limiter (M7).
+actor_limiter = TokenBucketLimiter(capacity=5, refill_per_second=1 / 12)
+token_limiter = TokenBucketLimiter(capacity=200, refill_per_second=0.5)
 
 
-def client_ip(request: Request) -> str:
-    # Direct peer only; forwarded headers are spoofable unless a trusted proxy rewrites them.
-    return request.client.host if request.client else "unknown"
-
-
-def check_accept_rate(request: Request, token: str) -> None:
-    ip = client_ip(request)
-    if not (ip_limiter.allow(ip) and token_limiter.allow((ip, token[:8]))):
+def check_accept_rate(claims: dict, token: str) -> None:
+    actor = f"{claims.get('iss', '')}|{claims.get('sub', '')}"
+    if not (token_limiter.allow(token[:8]) and actor_limiter.allow((actor, token[:8]))):
         raise ApiError(429, "rate_limited", "Bạn thử quá nhiều lần. Vui lòng đợi rồi thử lại.")
 
 
@@ -394,8 +392,8 @@ async def withdraw_enrollment(
 
 
 @router.post("/invitations/{token}/accept", response_model=InvitationAcceptedDTO)
-async def accept_invitation(token: Token, request: Request, db: Database, claims: Claims):
-    check_accept_rate(request, token)
+async def accept_invitation(token: Token, db: Database, claims: Claims):
+    check_accept_rate(claims, token)
     try:
         async with db.begin():
             user = await current_user(db, claims)  # applies set_identity for the definer function

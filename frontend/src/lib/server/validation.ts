@@ -33,3 +33,6 @@ export function safeJoinReturnTo(value: unknown): string | null {
   const match = /^\/join\/([A-Za-z0-9_-]{32,128})$/.exec(value);
   return match ? value : null;
 }
+
+const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{8,128}$/;
+export const isIdempotencyKey = (value: unknown): value is string => typeof value === "string" && IDEMPOTENCY_KEY.test(value);

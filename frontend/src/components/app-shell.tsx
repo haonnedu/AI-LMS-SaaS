@@ -18,7 +18,8 @@ const spaces = [
 ];
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const standalone = ["/login", "/onboarding", "/verify-email", "/dashboard"].includes(pathname);
+  // Real student pages (/student/...) bring their own mobile-first shell; /student itself stays the demo preview.
+  const standalone = ["/login", "/onboarding", "/verify-email", "/dashboard"].includes(pathname) || pathname.startsWith("/student/");
   const [menu, setMenu] = useState({ pathname, open: false });
   const open = menu.pathname === pathname && menu.open;
   // Reset route-owned menu state before children mount on the new route.

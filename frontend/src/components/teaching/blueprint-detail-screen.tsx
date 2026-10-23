@@ -9,6 +9,7 @@ import {
 } from "@/lib/client/authoring";
 import { Chip, dateTime, useSubjects, useUnits } from "./authoring-shared";
 import { BP_STATUS } from "./blueprints-screen";
+import { ExamFromBlueprint } from "./exam-from-blueprint";
 import { TeachingNav } from "./teaching-nav";
 import { useTeaching } from "./use-teaching";
 import styles from "./teaching.module.css";
@@ -117,6 +118,7 @@ export function BlueprintDetailScreen({ blueprintId }: { blueprintId: string }) 
           <div><strong>{totals.slots}</strong>câu</div><div><strong>{totals.points}</strong>điểm (khai báo {detail.totalPoints})</div>
           {COGNITIVE_LEVELS.map(c => <div key={c}><strong>{totals.byLevel[c]}</strong>{COGNITIVE_LABEL[c]}</div>)}
         </div>
+        {detail.status === "published" && <div className={styles.actions}><ExamFromBlueprint wsBase={`/api/backend/workspaces/${workspace?.id}`} csrf={csrf} versionId={dirty ? null : detail.currentVersionId} grade={detail.grade} subject={subjectCode} onError={handle} /></div>}
         {locked && <p className={styles.notice} role="note">Phiên bản này đã xuất bản. Chỉnh sửa và lưu sẽ tạo phiên bản mới.</p>}
 
         <h2>Cấu trúc đề</h2>

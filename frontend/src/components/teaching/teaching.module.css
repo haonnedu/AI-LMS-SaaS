@@ -78,3 +78,30 @@
 .report h3 { font-size:15px; margin:0; }
 .dialog textarea { width:100%; }
 @media(max-width:520px) { .choiceRow { grid-template-columns:auto minmax(0,1fr); } .choiceRow>button { grid-column:2; justify-self:start; } }
+/* --- AI draft, provenance, exams, exports --- */
+.aiLayout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,340px); gap:16px; align-items:start; }
+.aiPanel { display:grid; gap:12px; padding:16px; border:1px solid var(--color-border-default,#dfe6dc); border-radius:12px; background:#f7f9f4; min-width:0; }
+.aiPanel h2 { font-size:18px; margin:0; }
+.aiPanel textarea { width:100%; padding:8px 10px; border:1px solid #758078; border-radius:6px; background:#fff; color:inherit; font:inherit; resize:vertical; }
+.docPick { margin:0; padding:8px 12px; border:1px solid var(--color-border-default,#dfe6dc); border-radius:12px; display:grid; gap:2px; max-height:180px; overflow:auto; min-width:0; }
+.docPick legend { font-size:12px; color:var(--color-text-secondary,#5e7064); padding:0 6px; }
+.docPick .check { overflow-wrap:anywhere; }
+.tabs { display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid var(--color-border-default,#dfe6dc); }
+.tab { min-height:44px; padding:0 16px; border:0; border-bottom:3px solid transparent; background:none; color:var(--color-text-secondary,#5e7064); font:inherit; cursor:pointer; }
+.tab[aria-selected="true"] { color:#216147; font-weight:650; border-bottom-color:#216147; }
+.srcList { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+.srcItem { display:grid; gap:6px; padding:12px; border:1px solid var(--color-border-default,#dfe6dc); border-radius:12px; min-width:0; }
+.srcItem p { margin:0; overflow-wrap:anywhere; }
+.srcItem[data-status="withdrawn"] { background:#fbf2f2; }
+.stem { margin:0 0 4px; overflow-wrap:anywhere; }
+.choices { list-style:none; margin:0; padding:0; display:grid; gap:2px; font-size:13px; }
+.choices li[data-correct="true"] { font-weight:650; color:#216147; }
+.onlyTeacher { display:inline-block; padding:2px 8px; border-radius:6px; background:#faf1dc; color:var(--color-warning-text,#805f20); font-size:12px; font-weight:650; }
+.pickRow { display:grid; grid-template-columns:auto minmax(0,1fr) 96px; gap:10px; align-items:center; padding:6px 0; border-bottom:1px solid var(--color-border-default,#dfe6dc); }
+.pickRow input[type="checkbox"] { width:20px; height:20px; }
+.pickRow .cell { min-width:0; }
+.pickList { display:grid; max-height:44dvh; overflow:auto; min-width:0; }
+.exportGrid { display:flex; flex-wrap:wrap; gap:8px; }
+.exportStatus { margin:0; overflow-wrap:anywhere; }
+.studentSheet { display:grid; gap:12px; padding:16px; border:1px dashed #758078; border-radius:12px; }
+@media(max-width:760px) { .aiLayout { grid-template-columns:minmax(0,1fr); } }

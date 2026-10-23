@@ -86,16 +86,16 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 |---|---|---|---|---|
 | AUTHR-01 | review | Hao | M3 | Content/revision/review schema + optimistic concurrency; version history và editing conflict tests. (Migration 0009: content_items/revisions/review_requests, optimistic concurrency, trigger immutability.) |
 | AUTHR-02 | review | Hao | AUTHR-01 | Manual lesson/study-guide editor và autosave; AI outage vẫn soạn/sửa/nộp duyệt được. (API autosave `PUT /content-items/{id}/draft` + UI `/dashboard/lessons` (đang làm đợt 4).) |
-| AUTHR-03 | todo | — | AUTHR-02 | AI draft adapter dùng authorized retrieval, schema validation và token/cost budget; source injection không đổi system policy. |
-| AUTHR-04 | todo | — | AUTHR-03 | Review/edit/approve exact content revision; provenance/citations visible, chưa review không tự publish. |
+| AUTHR-03 | review | Hao | AUTHR-02 | AI draft adapter dùng authorized retrieval, schema validation và token/cost budget; source injection không đổi system policy. (Job `content.generate`/`questions.generate`; adapter LLM (fake dev / Anthropic qua stdlib), prompt tiếng Việt coi nguồn là dữ liệu không tin cậy; citation không khớp nguồn bị loại, draft không tự duyệt. Metered qua usage.) |
+| AUTHR-04 | review | Hao | AUTHR-03 | Review/edit/approve exact content revision; provenance/citations visible, chưa review không tự publish. (API provenance + `approve-with-provenance` (409 khi citation không resolve); UI panel "Soạn cùng AI" đang làm đợt 5.) |
 | QB-01 | review | Hao | AUTHR-01 | Single-choice question bank + revision/key separation; constraints choices/correct key, teacher-only DTO. (questions/question_revisions + `question_keys` tách riêng, runtime chỉ INSERT, đọc qua `edu.question_key` cho giáo viên.) |
 | QB-02 | review | Hao | QB-01 | Question editor/filter/import theo format đã chốt; validation từng record, duplicate review và objective mappings. (CSV import atomic có báo lỗi từng dòng và duplicate review; export teacher/student là hai hàm riêng.) |
 | BP-01 | review | Hao | QB-02 | Blueprint draft/version/parts/slots/matrix schema và editor; scope/provenance/effective year rõ. (blueprints/blueprint_versions với parts/slots/matrix, provenance, effective_year.) |
 | BP-02 | review | Hao | BP-01 | Validator counts/points/topic/cognitive matrix; difficulty không đồng nhất cognitive demand, unsupported item type fail. (`services/blueprints.py` validator: counts/points/matrix/cognitive/unsupported type theo EXAM_BLUEPRINTS.) |
-| BP-03 | todo | — | BP-02, AUTHR-03 | Constrained pool selection/generation; insufficient pool báo thiếu slot, không âm thầm đổi matrix. |
-| BP-04 | todo | — | BP-03, AUTHR-04 | Review và publish immutable exam snapshot pin question/blueprint/scoring versions; approved draft không tự sửa published exam. |
-| EXPORT-01 | todo | — | BP-04 | Student/teacher Word/PDF export riêng qua durable jobs; layout fixtures, student artifacts tuyệt đối không có key/rubric. |
-| M4-QA | todo | — | EXPORT-01 | Blueprint unsatisfiable/type rejection, key leakage SSR/API/export, license revoke, AI outage và publish races tests. |
+| BP-03 | review | Hao | BP-02, AUTHR-03 | Constrained pool selection/generation; insufficient pool báo thiếu slot, không âm thầm đổi matrix. (`services/exam_builder.py`: chọn câu theo slot deterministic theo seed; thiếu pool → 409 `insufficient_pool` kèm missingSlots và gợi ý sinh câu, không đổi matrix.) |
+| BP-04 | review | Hao | BP-03, AUTHR-04 | Review và publish immutable exam snapshot pin question/blueprint/scoring versions; approved draft không tự sửa published exam. (Migration 0010: exams/exam_versions/exam_items/exam_answer_keys (runtime INSERT-only, đọc qua `edu.exam_item_key`/`edu.exam_keys_for_scoring`), publish validate + trigger immutability, content_hash.) |
+| EXPORT-01 | review | Hao | BP-04 | Student/teacher Word/PDF export riêng qua durable jobs; layout fixtures, student artifacts tuyệt đối không có key/rubric. (Job `export.render`: DOCX bằng stdlib OOXML có golden test, bản học sinh không có key; PDF fail-closed `pdf_unicode_unsupported` (cần dependency nhúng font, chưa thêm).) |
+| M4-QA | review | Hao | EXPORT-01 | Blueprint unsatisfiable/type rejection, key leakage SSR/API/export, license revoke, AI outage và publish races tests. (`tests/test_qa_gates.py`: key-leak scan trên OpenAPI DTO học sinh, 401/404 mọi route tenant, FORCE RLS 37 bảng 0005–0011, không DELETE trên bảng key/ledger, forward-only, 1 head. Integration PostgreSQL chưa chạy local.) |
 
 ## M5 — Teaching portal
 
@@ -105,36 +105,36 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 | CLASS-02 | review | Hao | CLASS-01 | Invitation tokens hash/expiry/single-use/rate limits; token không là credential đọc nội dung. (`class_invitations` lưu sha256 token, hết hạn ≤30 ngày, max_uses 1..500, single-use atomic qua SECURITY DEFINER; rate limit in-process (Redis ở M7).) |
 | CLASS-03 | review | Hao | CLASS-02 | Student identity/enrollment acceptance và withdrawal; không merge học sinh chỉ qua tên, giữ lịch sử theo policy. (Accept theo user đã đăng nhập, không merge học sinh theo tên; withdraw idempotent; học sinh không thành member workspace giáo viên.) |
 | CLASS-04 | review | Hao | CLASS-03 | Teacher roster/invite UI, student join UI và empty/error states; người ngoài lớp không thấy roster. (UI `/dashboard/classes`, chi tiết lớp/roster, tạo mã mời một lần, thu hồi, rút; `/join/[token]`; chưa kiểm browser.) |
-| ASSIGN-01 | todo | — | CLASS-04, M4 | Assignment pin immutable publication, windows/attempt policy/timezone; sửa draft không đổi đề đã giao. |
-| ASSIGN-02 | todo | — | ASSIGN-01 | Student mobile assignment list/detail; only enrolled + release checks, revoke chặn thao tác mới. |
-| M5-QA | todo | — | ASSIGN-02 | E2E invite→join→assign→withdraw, guessing IDs, replay token và mobile accessibility tests. |
+| ASSIGN-01 | review | Hao | CLASS-04, M4 | Assignment pin immutable publication, windows/attempt policy/timezone; sửa draft không đổi đề đã giao. (Migration 0011 `assignments` pin exam_version đã publish, window/time limit/timezone (zoneinfo), max_attempts, release policy; trigger khóa pin sau publish, closes_at chỉ nới.) |
+| ASSIGN-02 | review | Hao | ASSIGN-01 | Student mobile assignment list/detail; only enrolled + release checks, revoke chặn thao tác mới. (API `/v1/student/assignments` qua SECURITY DEFINER theo `edu.actor_id()` + enrollment active; UI học sinh đang làm đợt 5.) |
+| M5-QA | in_progress | Hao | ASSIGN-02 | E2E invite→join→assign→withdraw, guessing IDs, replay token và mobile accessibility tests. (E2E skeleton `frontend/tests/e2e/pilot-journey.spec.ts` (skip trừ EDUVIA_E2E=1); mobile accessibility chưa kiểm browser.) |
 
 ## M6 — Assessment và results
 
 | ID | Trạng thái | Owner | Phụ thuộc | Task / nghiệm thu |
 |---|---|---|---|---|
-| ASMT-01 | todo | — | M5 | Attempt/answer/submission schema và start endpoint; atomic attempt limits, server deadline và snapshot binding. |
-| ASMT-02 | todo | — | ASMT-01 | Autosave expected revision + client sequence; stale retry không ghi đè câu trả lời mới. |
-| ASMT-03 | todo | — | ASMT-02 | Quiz mobile UI/timer/reconnect/save indicators; không báo saved khi server chưa acknowledge. |
-| ASMT-04 | todo | — | ASMT-02 | Locked idempotent submit; submit timeout lookup cùng key, concurrent submit chỉ một accepted snapshot. |
-| ASMT-05 | todo | — | ASMT-04 | Deadline sweeper/expiry policy; late answers reject, race autosave/submit/expiry có deterministic outcome. |
-| ASMT-06 | todo | — | ASMT-05 | Pure single-choice scoring + grading snapshot/job; fixed precision fixtures, pending không coi là zero. |
-| ASMT-07 | todo | — | ASMT-06 | Separate score/solution release policies; student API/SSR/cache không lộ key trước release. |
-| ASMT-08 | todo | — | ASMT-07 | Authorized grade override append-only revision/reason/audit; aggregate reproject không double count. |
-| ASMT-09 | todo | — | ASMT-08, ASMT-03 | Teacher results và student feedback UI; mẫu số enrolled/submitted/graded/pending, export scoped. |
-| M6-QA | todo | — | ASMT-09 | Automated start/submit/deadline races, disconnect, grading retries, solution leaks và correction fixtures. |
+| ASMT-01 | review | Hao | M5 | Attempt/answer/submission schema và start endpoint; atomic attempt limits, server deadline và snapshot binding. (`quiz_attempts` + `edu.student_start_attempt` (advisory lock, partial unique in_progress, deadline = least(closes_at, start+limit)).) |
+| ASMT-02 | review | Hao | ASMT-01 | Autosave expected revision + client sequence; stale retry không ghi đè câu trả lời mới. (`edu.student_save_answer` với expected_revision + client_sequence; stale → EV014.) |
+| ASMT-03 | review | Hao | ASMT-02 | Quiz mobile UI/timer/reconnect/save indicators; không báo saved khi server chưa acknowledge. (UI `/student/attempts/[id]`: một câu/màn, autosave theo revision+sequence, chỉ báo "Đã lưu" sau ack server, timer theo serverNow, offline banner, submit idempotent; chưa chạy browser.) |
+| ASMT-04 | review | Hao | ASMT-02 | Locked idempotent submit; submit timeout lookup cùng key, concurrent submit chỉ một accepted snapshot. (`edu.student_submit` idempotent theo Idempotency-Key + request hash, snapshot sha256; hash khác → EV011.) |
+| ASMT-05 | review | Hao | ASMT-04 | Deadline sweeper/expiry policy; late answers reject, race autosave/submit/expiry có deterministic outcome. (`edu.expire_attempts` trong sweep 60s; late answer → EV010; submit vs expiry deterministic (first commit wins).) |
+| ASMT-06 | review | Hao | ASMT-05 | Pure single-choice scoring + grading snapshot/job; fixed precision fixtures, pending không coi là zero. (`services/scoring.py` Decimal 2dp, run_key idempotent, job `attempt.grade`; pending không hiển thị 0.) |
+| ASMT-07 | review | Hao | ASMT-06 | Separate score/solution release policies; student API/SSR/cache không lộ key trước release. (Score/solution release tách riêng (immediate/after_close/manual); `edu.student_results` chỉ trả key sau solutions_released_at.) |
+| ASMT-08 | review | Hao | ASMT-07 | Authorized grade override append-only revision/reason/audit; aggregate reproject không double count. (`services/overrides.py`: grading_result manual + grade revision append-only có reason, audit; không tự release.) |
+| ASMT-09 | review | Hao | ASMT-08, ASMT-03 | Teacher results và student feedback UI; mẫu số enrolled/submitted/graded/pending, export scoped. (UI `/dashboard/assignments/[id]` kết quả với mẫu số đã nộp/đã chấm/chờ chấm/tổng, CSV export, điều chỉnh điểm có lý do; `/student/.../results` chỉ hiện lời giải sau release.) |
+| M6-QA | in_progress | Hao | ASMT-09 | Automated start/submit/deadline races, disconnect, grading retries, solution leaks và correction fixtures. (Race tests ở `test_attempts_unit.py` (fake definer) + `test_assessment_integration.py` (cần DB); chưa chạy trên PostgreSQL.) |
 
 ## M7 — Pilot readiness
 
 | ID | Trạng thái | Owner | Phụ thuộc | Task / nghiệm thu |
 |---|---|---|---|---|
-| PILOT-01 | todo | — | M6 | Automated teacher→draft→review→assign→student→score E2E; core failures chặn release. |
-| PILOT-02 | todo | — | M6 | Threat-model review + penetration regression tenant/key/file/auth checks; findings có severity/owner và fix gate. |
+| PILOT-01 | in_progress | Hao | M6 | Automated teacher→draft→review→assign→student→score E2E; core failures chặn release. (Spec Playwright teacher→draft→exam→assign→student→score viết xong, chưa chạy; cần stack đầy đủ (worker --beat, S3, fake LLM).) |
+| PILOT-02 | review | Hao | M6 | Threat-model review + penetration regression tenant/key/file/auth checks; findings có severity/owner và fix gate. (Threat model `tasks/decisions/0007-threat-model-pilot.md` (STRIDE, 25 SECURITY DEFINER được liệt kê, checklist pentest regression). Findings mở: CSP/HSTS, Redis rate limit, audit chỉ log.) |
 | PILOT-03 | todo | — | M6 | Load/soak profile theo pilot size, API/worker/DB budgets; capacity và latency targets được chốt trước đo. |
-| PILOT-04 | todo | — | M6 | Alerts/dashboard/runbooks cho queue lag, scoring failures, quota/provider cost, auth incidents; thực hiện alert drill. |
-| PILOT-05 | todo | — | M6 | Privacy/consent/retention/export/erasure policy và UI cần thiết; minor-data review bởi người phù hợp, không tuyên bố compliant tự động. |
-| PILOT-06 | todo | — | PILOT-05 | DB + object restore drill, tombstones/revocations reapplied; đo RPO/RTO với targets được duyệt. |
-| PILOT-07 | todo | — | PILOT-01, PILOT-02, PILOT-03, PILOT-04, PILOT-06 | Staging→production deployment/rollback checklist; không rollback schema phá accepted submissions, secrets/env isolation kiểm chứng. |
+| PILOT-04 | review | Hao | M6 | Alerts/dashboard/runbooks cho queue lag, scoring failures, quota/provider cost, auth incidents; thực hiện alert drill. (Runbooks `deploy/runbooks/*`, `deploy/alerts/queries.sql` + `check.py` (exit 0/1/2), chưa chạy alert drill thật.) |
+| PILOT-05 | review | Hao | M6 | Privacy/consent/retention/export/erasure policy và UI cần thiết; minor-data review bởi người phù hợp, không tuyên bố compliant tự động. (`tasks/decisions/0008-privacy-consent-retention.md` + test inventory chống drift; đề xuất schema `student_consents` chưa tạo; CẦN tư vấn pháp lý NĐ13/2023, chưa có erasure/export học sinh.) |
+| PILOT-06 | in_progress | Hao | PILOT-05 | DB + object restore drill, tombstones/revocations reapplied; đo RPO/RTO với targets được duyệt. (`deploy/restore-drill.sh` (dry-run mặc định) viết xong, chưa `--execute`; RPO/RTO chờ duyệt.) |
+| PILOT-07 | in_progress | Hao | PILOT-01, PILOT-02, PILOT-03, PILOT-04, PILOT-06 | Staging→production deployment/rollback checklist; không rollback schema phá accepted submissions, secrets/env isolation kiểm chứng. (`deploy/CHECKLIST-release.md` viết xong; staging compose đã thêm env EMBEDDING/LLM bắt buộc và worker --beat; `deploy/test-staging.py` còn lỗi thiếu service sessions.) |
 | PILOT-08 | todo | — | PILOT-07 | Pilot onboarding/support/feedback và go-no-go signoff; không còn lỗi chặn isolation, mất bài hoặc sai điểm. |
 
 ### BASE-01 — execution record: acceptance clarification / tooling
@@ -195,3 +195,15 @@ Chưa kiểm chứng: SQL của 0005–0007 (RLS, SECURITY DEFINER, trigger, gra
 ### KNOW-06..10 / AUTHR-01,02 / QB-01,02 / BP-01,02 — execution record 2026-10-23 (đợt 3)
 
 Owner: Hao (agent). Branch `feat/m3-rag-m4-authoring-foundation`, commit `90fe49c`, stack trên `feat/m2-m5-know-lean-slice`. Kiểm chứng local: backend 600 passed / 31 skipped, ruff sạch; frontend lint/typecheck/build + 17 unit tests. Chưa chạy SQL 0008–0009 trên PostgreSQL/pgvector; provider embedding từ xa chỉ test với HTTP giả. Quyết định cần chốt: embedding model (đề xuất bge-m3 hoặc multilingual-e5-large, 1024 chiều), ngưỡng eval, metering query.
+
+
+### AUTHR-03,04 / BP-03,04 / EXPORT-01 / ASSIGN-01,02 / ASMT-01..08 — execution record 2026-10-23 (đợt 4)
+
+Owner: Hao (agent). Branch `feat/m4-generation-m5-m6-assessment`, commit `911c959`, stack trên đợt 3. Kiểm chứng local: backend 965 passed / 37 skipped, ruff sạch, một Alembic head `0011_assessment`; frontend lint/typecheck/build + 30 unit tests (UI soạn bài/câu hỏi/blueprint). Chưa chạy SQL 0010–0011 trên PostgreSQL (toàn bộ plpgsql SECURITY DEFINER phía học sinh chưa compile thật); chưa gọi Anthropic thật; worker cần consume queue `generation`/`export` (compose đã có). PDF export chưa dùng được với tiếng Việt.
+
+
+### ASMT-03,09 / M4-QA / M5-QA / M6-QA / PILOT-01..07 + sửa lỗi staging — execution record 2026-10-23 (đợt 5)
+
+Owner: Hao (agent). Branch `feat/m5-m6-ui-m7-pilot-readiness` stack trên đợt 4. Kiểm chứng local: backend 999 passed / 37 skipped, ruff sạch; frontend lint/typecheck/build + 51 unit tests; YAML compose/CI parse ok. Sửa theo findings M7: (F1) `compose.staging.yaml` yêu cầu `EMBEDDING_PROVIDER`/`LLM_PROVIDER` thật vì production từ chối provider local/fake; (F2) worker staging chạy `--beat`; (F3) rate limit accept mã mời chuyển sang theo actor+token thay vì IP (mọi request đến từ BFF); (F4) CI job `auth-integration` chạy toàn bộ integration 0005–0011.
+
+Chưa làm: PILOT-03 (load/soak), PILOT-08 (go/no-go). Chưa kiểm chứng ở bất kỳ đợt nào: SQL 0005–0011 trên PostgreSQL thật (CI của PR sẽ là lần đầu), browser UI, provider AI/embedding thật, restore drill, E2E. Quyết định treo: embedding model, cấu trúc đề thực tế, pháp lý dữ liệu, ngưỡng RAG eval, `pypdf` + font PDF.
