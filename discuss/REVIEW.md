@@ -2,6 +2,17 @@
 
 Mỗi yêu cầu ghi task và revision. Người yêu cầu đề xuất reviewer; người review tự ghi kết luận của mình.
 
+## 2026-10-22 — FE-02a — onboarding/workspace mock
+
+- Người chuẩn bị: Codex theo yêu cầu người dùng, phía Duc; reviewer đề xuất: Hao (chưa xác nhận nhận review).
+- Task/revision: [Core FE-02a](../tasks/CORE.md), branch `feat/fe-02-workspace-mock`; base `2379a6e5e70b5c65645880202cae6bab5b11ac8b` cộng diff/file mới chưa commit. Chưa có source SHA mới hoặc remote PR. Cập nhật SHA sau commit; reviewer phải xem revision đó, không duyệt chỉ theo base.
+- Thay đổi: login thử đi qua onboarding, workspace mẫu gắn với từng auth generation, reuse/retry và bỏ kết quả cũ khi rời route/logout/expiry. Không có backend, migration, HTTP contract, dependency hay authorization change.
+- Evidence và phạm vi commit: [FE-02a.md](../frontend/FE-02a.md); nội dung PR chuẩn bị tại [FE-02a-PR.md](../frontend/FE-02a-PR.md). Baseline lint/typecheck/build, 4 adapter tests, 14 backlog tests pass; review docs không phải lượt chạy lại.
+- Cần tập trung: guard sau mỗi await/catch/finally, pending Promise reuse, session mới cùng user ID không kế thừa workspace cũ; onboarding chưa login không provisioning, preview vẫn truy cập được.
+- Còn mở P2: visual gate chưa đạt vì capture sai so với DOM; frontend CI chưa gọi `test:workspace`. Đề nghị phối hợp workflow riêng; trong lúc chưa có CI step, reviewer chạy test thủ công. Không tự gán deadline hoặc xác nhận Hao đã nhận việc.
+- Checklist visual: kiểm trực tiếp login/onboarding/dashboard ở 375×812 và 1440×900, chữ/nút không bị cắt, scroll/focus/logout truy cập được; lưu ảnh đáng tin cậy. Ảnh hiện có chỉ để chẩn đoán.
+- Kết luận reviewer / SHA đã xem / ngày / kiểm tra đã chạy: **chưa có**; để Hao tự bổ sung. Chưa tuyên bố acceptance đầy đủ hoặc sẵn sàng merge.
+
 ## 2026-10-21 — BASE-01 / BASE-05 — tooling và CI
 
 - Người chuẩn bị: Codex theo yêu cầu người dùng; branch `fix/tooling-ci`, base `302762b` cộng diff chưa commit.

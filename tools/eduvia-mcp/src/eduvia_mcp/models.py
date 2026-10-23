@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-type Track = Literal["core", "school", "student", "omr_billing"]
+type Track = Literal["core", "school", "student", "omr_billing", "ai"]
 type Status = Literal["todo", "ready", "in_progress", "review", "blocked", "done", "cancelled"]
 type ErrorCode = Literal["ACCESS_DENIED", "NOT_FOUND", "INVALID_INPUT", "PARSE_ERROR", "IO_ERROR"]
 

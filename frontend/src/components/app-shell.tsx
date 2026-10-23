@@ -1,5 +1,8 @@
 "use client";
 import Link from "next/link";
+import { useAuth } from "@/components/auth/auth-provider";
+import { useWorkspace } from "@/components/workspace/workspace-provider";
+import authStyles from "@/components/auth/mock-auth.module.css";
 import { usePathname } from "next/navigation";
 import { BookOpen, ChevronDown, ChevronRight, LayoutDashboard, Library, Users, Settings2, Sparkles, ClipboardList, ChartNoAxesCombined, GraduationCap, Building2, ShieldCheck, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -18,19 +21,26 @@ const spaces = [
 ];
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const { session, signOut } = useAuth();
+  const { workspace } = useWorkspace();
+  const standalone = pathname === "/login" || pathname === "/onboarding";
+  const [menu, setMenu] = useState({ pathname, open: false });
+  const open = menu.pathname === pathname && menu.open;
+  // Reset route-owned menu state before children mount on the new route.
+  if (menu.pathname !== pathname) setMenu({ pathname, open: false });
+  const setOpen = (value: boolean) => setMenu({ pathname, open: value });
   const sidebar = useRef<HTMLElement>(null);
   const alternate = spaces.find(space => space.href === pathname);
   const roleLabel = alternate?.label ?? "Không gian giáo viên";
   const visibleLinks = alternate ? [alternate] : links;
   useEffect(() => {
-    if (!open) return;
+    if (!open || standalone) return;
     const previous = document.activeElement as HTMLElement | null;
     const oldOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     sidebar.current?.querySelector<HTMLElement>("a")?.focus();
     function handleKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") setMenu({ pathname, open: false });
       if (event.key !== "Tab") return;
       const controls = Array.from(sidebar.current?.querySelectorAll<HTMLElement>("a, button, summary") ?? []).filter(el => el.getClientRects().length);
       const first = controls[0]; const last = controls[controls.length - 1];
@@ -39,19 +49,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
     document.addEventListener("keydown", handleKey);
     return () => { document.body.style.overflow = oldOverflow; document.removeEventListener("keydown", handleKey); previous?.focus(); };
-  }, [open]);
+  }, [open, pathname, standalone]);
   const currentPage = [...links, ...spaces, { href: "/settings", label: "Cài đặt" }].find((link) => link.href === pathname)?.label ?? "Eduvia";
-  if (pathname === "/login") return <main className="auth-root">{children}</main>;
+  if (standalone) return <main className="auth-root">{children}</main>;
   return <div className="app-shell">
     <a className="skip-link" href="#main-content">Đến nội dung chính</a>
     {open && <button className="nav-scrim" aria-label="Đóng menu" onClick={() => setOpen(false)} />}
     <aside ref={sidebar} id="workspace-navigation" className={`sidebar ${open ? "is-open" : ""}`} aria-label="Điều hướng không gian">
       <Link href="/" aria-label="Eduvia · Trang tổng quan" className="brand" onClick={() => setOpen(false)}><span className="brand-mark"><BookOpen size={24} /></span><span>eduvia<span className="brand-dot">.</span></span></Link>
-      <div className="workspace-card"><span className="workspace-avatar">{alternate ? "DEMO" : "GV"}</span><div><strong>{roleLabel}</strong><span>Dữ liệu minh họa</span></div></div>
+      <div className="workspace-card"><span className="workspace-avatar">{alternate ? "DEMO" : "GV"}</span><div><strong>{workspace?.name ?? roleLabel}</strong><span>Dữ liệu minh họa</span></div></div>
       <p className="nav-label">{alternate ? "KHÔNG GIAN HIỆN TẠI" : "GIẢNG DẠY"}</p>
       <nav className="main-nav" aria-label="Điều hướng chính">{visibleLinks.map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} title={label} onClick={() => setOpen(false)} className={`nav-link ${pathname === href ? "active" : ""}`} aria-current={pathname === href ? "page" : undefined}><Icon size={19} /><span>{label}</span>{href === "/lessons" && <span className="ai-mini">AI</span>}</Link>)}</nav>
       <details className="role-picker"><summary>Xem giao diện vai trò khác <ChevronDown size={14} aria-hidden="true" /></summary><p className="nav-label">BẢN MẪU · KHÔNG ĐỔI QUYỀN</p><nav aria-label="Khám phá vai trò mẫu">{[{ href: "/", label: "Không gian giáo viên", icon: BookOpen }, ...spaces].map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} title={label} onClick={() => setOpen(false)} className="nav-link"><Icon size={18} /><span>{label}</span></Link>)}</nav></details>
-      <div className="sidebar-bottom">{!alternate && <Link href="/settings" onClick={() => setOpen(false)} aria-label="Cài đặt không gian" title="Cài đặt không gian" className={`nav-link ${pathname === "/settings" ? "active" : ""}`} aria-current={pathname === "/settings" ? "page" : undefined}><Settings2 size={19} />Cài đặt không gian</Link>}<Link href="/login" aria-label="Xem giao diện đăng nhập" className="profile" onClick={() => setOpen(false)}><span className="avatar">{alternate ? "EV" : "MA"}</span><span><strong>{alternate ? "Khám phá Eduvia" : "Minh Anh"}</strong><small>Xem đăng nhập mẫu</small></span><ChevronRight size={16} /></Link></div>
+      <div className="sidebar-bottom">{!alternate && <Link href="/settings" onClick={() => setOpen(false)} aria-label="Cài đặt không gian" title="Cài đặt không gian" className={`nav-link ${pathname === "/settings" ? "active" : ""}`} aria-current={pathname === "/settings" ? "page" : undefined}><Settings2 size={19} />Cài đặt không gian</Link>}{session ? <div className={authStyles.profile}><strong>{session.user.name}</strong><small>Phiên minh họa</small><button className={`button button-secondary ${authStyles.logout}`} onClick={() => { setOpen(false); void signOut(); }}>Đăng xuất thử</button></div> : <Link href="/login" aria-label="Xem giao diện đăng nhập" className="profile" onClick={() => setOpen(false)}><span className="avatar">EV</span><span><strong>Khám phá Eduvia</strong><small>Đăng nhập thử</small></span><ChevronRight size={16} /></Link>}</div>
     </aside>
     <div className="workspace-main"><header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-toggle" aria-expanded={open} aria-controls="workspace-navigation" aria-label={open ? "Đóng menu" : "Mở menu"} onClick={() => setOpen(!open)}>{open ? <X size={20} /> : <Menu size={20} />}</button><span>Không gian làm việc</span><ChevronRight size={14} /><strong>{currentPage}</strong></div><span className="preview-label"><span />Bản mẫu tương tác</span></header><main id="main-content" className="page-content" tabIndex={-1}>{children}</main><footer className="page-footer"><span>Mỗi bài học hay bắt đầu từ người thầy.</span><span>Eduvia · Dữ liệu minh họa</span></footer></div>
   </div>;

@@ -31,14 +31,15 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 | DB-03 | done | Hao | DB-02 | Transaction-local verified actor/workspace context; reset an toàn khi commit/rollback/pool reuse. (Đã hiện thực tại backend/app/infrastructure/context.py và unit test). |
 | DB-04 | done | Hao | DB-03 | RLS + FORCE RLS, active membership checks; missing context deny, bootstrap flow không mở quyền tùy ý. (Đã tạo migration backend/migrations/versions/0003_row_level_security.py). |
 | DB-05 | done | Hao | DB-04 | Runtime-role integration tests: tenant A/B, forged IDs, revoked member, pool reuse, negative writes và joins. (Đã chạy deploy/test/rls-smoke.sql trên PostgreSQL 17 staging bằng role eduvia_runtime: 8/8 PASS, transaction rollback. Lưu ý: chưa có test connection-pool thật; pool reuse dựa trên ngữ nghĩa set_config(... , true).) |
-| BE-01 | in_progress | Hao | DB-02, AUTH-02 | Verify provider identity/session server-side; bad issuer/audience/expiry/signature và spoofed headers bị chặn. |
-| BE-02 | todo | — | BE-01, DB-04 | Idempotent user provisioning theo stable provider subject; không merge email tùy tiện. |
+| BE-01 | in_progress | Hao | DB-02, AUTH-02 | Verify provider identity/session server-side; bad issuer/audience/expiry/signature và spoofed headers bị chặn. Bản nháp: chưa xác minh chữ ký RS256/ES256; chưa đủ điều kiện triển khai. |
+| BE-02 | in_progress | Hao | BE-01, DB-04 | Idempotent user provisioning theo stable provider subject; không merge email tùy tiện. Bản nháp và mock tests; còn thiếu issuer-scoped identity, kiểm chứng schema/migration và concurrency bằng DB thật. |
 | BE-03 | todo | — | BE-02 | Personal workspace provisioning atomic; concurrent requests chỉ tạo một ownership hợp lệ. |
 | BE-04 | todo | — | BE-03 | Current-user/workspace-list endpoints, paginated DTO tối thiểu; chỉ membership hợp lệ. |
 | BE-05 | todo | — | BE-04, DB-05 | Workspace auth dependency; client-selected context luôn được verify; revoke có hiệu lực không dựa UI. |
 | BE-06 | todo | — | BE-05 | Export OpenAPI và generate frontend types theo scripts repo; CI phát hiện contract drift. |
-| FE-01 | todo | — | BE-01 | Login/logout/callback UI; loading/error/session expiry, không chứa provider secrets. |
+| FE-01 | in_progress | Duc | BE-01 | Login/logout/callback UI; loading/error/session expiry, không chứa provider secrets. |
 | FE-02 | todo | — | BE-06, FE-01 | Onboarding + dashboard workspace thật; không cần Library/Classes API chưa tồn tại. |
+| FE-02a | in_progress | Duc | — | Chuẩn bị onboarding/workspace mock độc lập; prerequisite phần mock FE-01 đã merge PR #5 (2379a6e), không thay gate FE-02 thật. React-memory theo session; pending/retry/logout/expiry và responsive có evidence. |
 | FE-03 | todo | — | FE-02 | Protected routes và 401/403 states; không rò dữ liệu qua SSR/cache; server authorization độc lập. |
 | FE-04 | todo | — | FE-02 | Workspace selector và tên context hiện hành; switch invalidate tenant caches. |
 | QA-01 | todo | — | FE-03, FE-04 | Automated E2E login → provision → workspace → logout; bổ sung manual smoke cho provider. |
@@ -143,3 +144,29 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 - Branch triển khai tooling: `fix/tooling-ci`; Codex thực hiện theo yêu cầu người dùng, không tự thay owner task.
 - Scope bổ sung: sửa setup PowerShell 5.1/7, cập nhật verifier cho migration head hiện tại, thêm regression checks và CI. Evidence/giới hạn: [bàn giao tooling](../discuss/BASE-tooling-ci.md).
 - Trạng thái các hàng task giữ nguyên; đợt tooling mới chưa được reviewer con người nghiệm thu. Pilot/ngân sách/region vẫn chưa chốt; DB roles/RLS ngoài phạm vi đợt này.
+
+### FE-01 — execution record
+Owner: Duc
+Reviewer: Hao (đề xuất; chưa review)
+Branch: fe-01-auth-mock
+Phạm vi: frontend mock auth; session trong React memory, không provider/token/backend/authorization. BE-01 vẫn là dependency cho tích hợp thật; chưa nghiệm thu toàn bộ FE-01.
+Scenario dev: thành công, lỗi, callback bị hủy, hết hạn sau 5 giây. Production chỉ có đăng nhập thử thành công.
+Ngày cập nhật: 2026-10-22
+Kiểm tra: frontend lint/typecheck pass; production build + standalone pass ngoài sandbox (sandbox EPERM). Browser xác nhận success/loading/logout/error/cancel/expiry/reload; DOM 375px không tràn ngang. Desktop visual pass; mobile visual capture chưa đáng tin cậy, còn chờ signoff. Chi tiết: frontend/FE-01.md.
+
+FE-01 follow-up (2026-10-22): đã bổ sung operation ID để hủy login khi rời route, bỏ kết quả cũ và bảo vệ timer/session mới; menu reset theo pathname. Lint/typecheck và production build+standalone pass. Browser checks đạt cho cancel/retry/expiry/logout/reload/keyboard/production. Evidence và draft PR body: frontend/FE-01.md, frontend/FE-01-PR.md. Capture raster vẫn không khớp DOM ở cả desktop/mobile; visual signoff chưa đạt, chưa ghi mock sẵn sàng review. FE-01 giữ in_progress; chưa push/PR/deploy.
+
+### FE-02a — execution record
+Owner: Duc
+Reviewer: Hao (đề xuất; chưa review)
+Branch: feat/fe-02-workspace-mock
+Prerequisite: FE-01 mock đã merge PR #5 / 2379a6e; không tuyên bố FE-01 thật hoặc BE-06 đã đạt.
+Phạm vi: frontend onboarding + workspace mock; reset theo sessionVersion, bỏ kết quả cũ theo operation/session, không HTTP/provider/migration/API contract.
+Kiểm tra: lint/typecheck pass; 4 Node adapter tests pass; build production + standalone pass. Browser dev/production: success/existing/error-retry/cancel/logout/expiry/reload/keyboard đạt. DOM 375x812 và 1440x900 không tràn ngang; capture vẫn không khớp DOM nên visual signoff chưa đạt.
+Evidence: frontend/FE-02a.md; frontend/evidence/fe-02a/geometry.json. PR body local: frontend/FE-02a-PR.md.
+Trạng thái: in_progress; FE-02 giữ todo, FE-01 giữ in_progress. Chưa commit/push/PR/deploy.
+Ngày cập nhật: 2026-10-22
+
+FE-02a review trước commit (2026-10-22): đã rà diff + toàn bộ file mới, chưa xác nhận lỗi chức năng mới trong phạm vi mock; lượt review chỉ cập nhật docs, không sửa source/test. Baseline lint/typecheck/build + 4 adapter tests + 14 backlog tests được giữ nguyên, không tuyên bố là lượt chạy mới. Findings còn mở: visual acceptance (P2), CI frontend chưa gọi test:workspace (P2, phối hợp Hào; không sửa workflow), provider/race E2E coverage chỉ manual. FE-02a.md có checklist visual, file manifest và review boundaries; FE-02a-PR.md theo PR template. FE-02a/FE-01 vẫn in_progress, FE-02 todo; chưa có reviewer approval/commit/push/PR/deploy.
+
+Bàn giao discuss (2026-10-22 22:12 +07:00): đã thêm ghi chú phía Duc tại [discuss/DUC.md](../discuss/DUC.md) và yêu cầu review đề xuất tại [discuss/REVIEW.md](../discuss/REVIEW.md); chưa có phản hồi/chấp thuận của Hao. Discuss chỉ dẫn evidence và hành động phối hợp, không thay authority owner/status tại tracker.

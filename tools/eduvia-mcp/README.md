@@ -72,7 +72,7 @@ Package không tự sửa cấu hình MCP của ứng dụng.
 | `get_task` | `task_id` | Task, dependency phân loại, các task phụ thuộc trực tiếp |
 
 Các filter `list_tasks` đều tùy chọn và kết hợp AND. `track` nhận `core`, `school`,
-`student`, `omr_billing`. `status` nhận `todo`, `ready`, `in_progress`, `review`,
+`student`, `omr_billing`, `ai`. `status` nhận `todo`, `ready`, `in_progress`, `review`,
 `blocked`, `done`, `cancelled`. Owner/milestone khớp chính xác; `query` tìm không
 phân biệt hoa/thường trong ID và mô tả. `get_task` yêu cầu ID chính xác.
 
@@ -95,12 +95,12 @@ mới, không bảo đảm snapshot giữa hai lần gọi nếu người dùng 
 
 ## Quy tắc backlog
 
-Nguồn trạng thái là bốn tracker trong `tasks/`; không suy ra completion từ source.
+Nguồn trạng thái là năm tracker trong `tasks/`; không suy ra completion từ source.
 Parser đọc bảng ID/Trạng thái/Owner/Phụ thuộc/Task, hỗ trợ tiếng Việt và escaped pipe,
 bỏ qua bảng quy ước và fenced code. ID trùng hoặc hàng sai định dạng trả `PARSE_ERROR`
 có vị trí nguồn, không âm thầm bỏ qua task lỗi.
 
-Milestone lấy từ heading gần nhất: M0–M7, H0–H4, L0–L4 dùng mã; OMR/billing/future
+Milestone lấy từ heading gần nhất: M0–M7, H0–H4, L0–L4, A0–A4 dùng mã; OMR/billing/future
 dùng nguyên heading. Dependency `kind` là `task`, `gate`, hoặc `unknown`.
 `resolved=true` chỉ có nghĩa ID/gate tồn tại, **không phải đã nghiệm thu**.
 `get_task.dependents` chỉ bao gồm liên kết task ID trực tiếp; không mở rộng gate

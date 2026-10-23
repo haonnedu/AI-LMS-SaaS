@@ -10,6 +10,7 @@
     "start": "node scripts/start.mjs",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "next typegen && tsc --noEmit",
+    "test:workspace": "node --test tests/workspace-adapter.test.mjs",
     "api:generate": "openapi-typescript ../contracts/openapi.json -o src/lib/api/generated.ts"
   },
   "dependencies": {
