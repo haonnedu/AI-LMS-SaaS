@@ -10,7 +10,7 @@ This repository is a runnable foundation for the design in [ARCHITECTURE.md](ARC
 - Migrations for `edu`/pgvector, issuer-scoped users, personal workspaces, memberships, restricted database roles, transaction context and RLS.
 - Local Docker Compose, native Windows scripts, dependency lock files, and CI checks.
 
-Auth0-based authentication and membership-scoped workspace APIs are implemented locally, with real PostgreSQL and OIDC fixture tests; tenant/email setup and real-provider smoke remain outstanding. [Setup and troubleshooting](deploy/auth0/README.md). Document upload, RAG, generation, enrollment, quiz submission, OMR and billing remain planned. The public UI previews do not persist educational records. A green API indicator means the API process is reachable; it does not imply database readiness or completed product workflows.
+Better Auth email/password and Google authentication and membership-scoped workspace APIs are implemented locally, with real PostgreSQL and OIDC fixture tests; tenant/email setup and real-provider smoke remain outstanding. [Setup and troubleshooting](deploy/better-auth/README.md). Document upload, RAG, generation, enrollment, quiz submission, OMR and billing remain planned. The public UI previews do not persist educational records. A green API indicator means the API process is reachable; it does not imply database readiness or completed product workflows.
 
 ## Repository layout
 
@@ -219,4 +219,8 @@ The original scaffold was checked with Node 24/Python 3.12, including 16 backend
 
 ### Better Auth + Account Center (2026-10-23)
 
-The user approved replacing Auth0 with Better Auth and retaining legacy workspaces through an explicit two-session migration gate. [Setup/cutover](deploy/better-auth/README.md), [review evidence for Hào](discuss/2026-10-23-better-auth-account-center.md). Local `.env` and existing user database have not been switched by implementation. Do not run backend integration and either browser suite concurrently: they share a disposable auth test database. Secrets and real Google/SMTP setup stay outside Git.
+Better Auth is the sole provider. The user explicitly discarded the one legacy test account/workspace; no identity transfer is supported. Local database backup was restored successfully, the reviewed test data removed, and migration 0008 applied. See [setup](deploy/better-auth/README.md) and [retirement evidence](discuss/2026-10-23-auth0-retirement.md). Do not run backend integration and browser suites concurrently: they reset a shared disposable test database. Real Google/SMTP, Auth0 cloud resource deletion, staging and reviewer signoff remain separate gates.
+
+## Native local auth email
+
+Dùng profile `dev-mail` với Mailpit (SMTP 127.0.0.1:1025, UI 127.0.0.1:8025); chạy frontend/backend native theo [setup](deploy/better-auth/SETUP-LOCAL.md). `npm run test:auth:local` kiểm app hiện tại bằng Mailpit, tạo synthetic account mà không reset schema. Tách biệt với `test:better-auth` dùng disposable DB. [Evidence](discuss/2026-10-23-local-auth-mailpit.md); manual Google/email Internet/staging vẫn là gate riêng.

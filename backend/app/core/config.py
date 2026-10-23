@@ -22,9 +22,6 @@ class Settings(BaseSettings):
         default="development", validation_alias="APP_ENV"
     )
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
-    legacy_auth_issuer: str | None = None
-    legacy_auth_audience: str | None = None
-    legacy_auth_jwks_url: str | None = None
     auth_issuer: str | None = None
     auth_audience: str | None = None
     auth_jwks_url: str | None = None
@@ -87,20 +84,9 @@ class Settings(BaseSettings):
         auth_values = (self.auth_issuer, self.auth_audience, self.auth_jwks_url)
         if any(auth_values) and not all(auth_values):
             raise ValueError("Set AUTH_ISSUER, AUTH_AUDIENCE and AUTH_JWKS_URL together")
-        legacy_values = (
-            self.legacy_auth_issuer,
-            self.legacy_auth_audience,
-            self.legacy_auth_jwks_url,
-        )
-        if any(legacy_values) and (not all(legacy_values) or not self.auth_issuer):
-            raise ValueError("Legacy identity requires a complete primary and legacy verifier")
-        if self.legacy_auth_issuer and self.legacy_auth_issuer == self.auth_issuer:
-            raise ValueError("Identity issuers must be distinct")
         for endpoint in (
             self.auth_issuer,
             self.auth_jwks_url,
-            self.legacy_auth_issuer,
-            self.legacy_auth_jwks_url,
         ):
             if endpoint:
                 parsed = urlsplit(endpoint)

@@ -65,3 +65,7 @@ Bản sửa đã merge qua PR #1; [Foundation CI tại 302762b](https://github.c
 ```
 
 Trước khi chốt: acceptance đạt, tests phù hợp, migration/contract được xem xét, không rò secrets/dữ liệu, giới hạn evidence được ghi. Reviewer chấp thuận chưa tự đồng nghĩa task `done`; áp dụng đầy đủ [Definition of Done](../tasks/BACKLOG.md).
+
+2026-10-23 — Đề xuất Hào review [retirement diff](2026-10-23-auth0-retirement.md): single-issuer verifier, cleanup guards/transaction, migration 0008 và session boundaries. Chưa có reviewer signoff.
+
+2026-10-23 — Đề xuất Hào review Compose loopback/profile isolation và native smoke không reset dữ liệu; chưa reviewer signoff. [Evidence](2026-10-23-local-auth-mailpit.md).

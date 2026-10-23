@@ -18,7 +18,7 @@ const spaces = [
 ];
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const standalone = ["/login", "/onboarding", "/verify-email", "/dashboard", "/account", "/reset-password", "/account/complete", "/account/migrate"].includes(pathname);
+  const standalone = ["/login", "/onboarding", "/verify-email", "/dashboard", "/account", "/reset-password", "/account/complete"].includes(pathname);
   const [menu, setMenu] = useState({ pathname, open: false });
   const open = menu.pathname === pathname && menu.open;
   // Reset route-owned menu state before children mount on the new route.

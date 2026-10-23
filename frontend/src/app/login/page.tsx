@@ -1,7 +1,5 @@
-import { betterEnabled } from "@/lib/server/better-auth";
 import { PasswordLogin } from "@/components/auth/password-login";
-import { LoginScreen } from "@/components/auth/login-screen";
 export default async function Page({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
-  return <>{error && <p role="alert">{error === "expired" ? "Phiên đã hết hạn. Vui lòng đăng nhập lại." : "Đăng nhập chưa hoàn tất. Vui lòng thử lại."}</p>}{betterEnabled() ? <PasswordLogin google={Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)} /> : <LoginScreen />}</>;
+  return <>{error && <p role="alert">{error === "expired" ? "Phiên đã hết hạn. Vui lòng đăng nhập lại." : "Đăng nhập chưa hoàn tất. Vui lòng thử lại."}</p>}<PasswordLogin google={Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)} /></>;
 }

@@ -2,13 +2,13 @@ import { APIError } from "better-auth/api";
 import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import * as legacy from "./legacy-auth";
-import { better, betterEnabled, origin, authDatabase } from "./better-auth";
+
+import { better, origin, authDatabase } from "./better-auth";
 import { redis, withSessionLock } from "./session-store";
-export const auth = legacy.auth;
-export const appOrigin = legacy.appOrigin;
+
 export type EduviaSession = { user: { sub: string; email: string; name: string; email_verified: boolean }; eduviaId: string; csrf: string; token: string; createdAt: Date };
-export const HttpError = legacy.HttpError;
+import { HttpError } from "./http-error";
+export { HttpError } from "./http-error";
 export function failure(error: unknown) {
   if (error instanceof APIError && error.statusCode >= 400 && error.statusCode < 500) {
     const status = error.statusCode;
@@ -23,10 +23,6 @@ export function failure(error: unknown) {
 }
 
 export async function requireSession(verified = true): Promise<EduviaSession> {
-  if (!betterEnabled()) {
-    const old = await legacy.requireSession(verified);
-    return { user: { sub: old.user.sub, email: old.user.email || "", name: old.user.name || "", email_verified: old.user.email_verified === true }, eduviaId: String(old.eduviaId), csrf: String(old.csrf), token: "", createdAt: new Date(old.internal.createdAt * 1000) };
-  }
   await redis();
   const current = await better().api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
   if (!current || Date.now() - new Date(current.session.createdAt).getTime() >= 86400000) throw new HttpError(401, "unauthorized", "Vui lòng đăng nhập lại.");
@@ -51,7 +47,6 @@ export async function lockedSession<T>(action: (session: Awaited<ReturnType<type
   });
 }
 export async function backend(request: Request, path: string, method = "GET") {
-  if (!betterEnabled()) return legacy.backend(request, path, method);
   return lockedSession(async session => {
     if (method !== "GET") checkCsrf(request, session);
     const { token } = await better().api.getToken({ headers: await headers() });

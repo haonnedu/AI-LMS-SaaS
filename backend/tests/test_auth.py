@@ -41,6 +41,7 @@ def test_valid(signing):
     "claim,value",
     [
         ("iss", "https://evil.example/"),
+        ("iss", "https://retired.auth0.com/"),
         ("aud", "other-api"),
         ("exp", 1),
         ("nbf", 9999999999),

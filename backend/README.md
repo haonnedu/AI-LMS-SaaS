@@ -1,6 +1,6 @@
 # Eduvia backend
 
-FastAPI/Python API for Eduvia. Health endpoints and `/v1` identity/workspace endpoints are implemented. Authentication uses fixed-issuer RS256 access tokens; user and workspace bootstrap runs atomically under a restricted runtime role. See [Auth0 setup](../deploy/auth0/README.md) before enabling real accounts. Product teaching/AI/grading modules remain planned.
+FastAPI/Python API for Eduvia. Health endpoints and `/v1` identity/workspace endpoints are implemented. Authentication uses fixed-issuer RS256 access tokens; user and workspace bootstrap runs atomically under a restricted runtime role. See [Better Auth setup](../deploy/better-auth/README.md) before enabling real accounts. Product teaching/AI/grading modules remain planned.
 
 ## Local development
 
@@ -28,7 +28,7 @@ Run the bootstrap migration separately:
 alembic upgrade head
 ```
 
-Migrations enable pgvector and create `edu.users`, `edu.workspaces`, and `edu.workspace_members`, issuer-scoped identities and RLS. Migration 0004 is forward-only and requires an explicit mapping for existing user issuers; see the Auth0 setup guide. Run migrations as `eduvia_migrator`; API uses `eduvia_runtime`, never a superuser. No schema creation occurs during API startup.
+Migrations enable pgvector and create `edu.users`, `edu.workspaces`, and `edu.workspace_members`, issuer-scoped identities and RLS. Migration 0004 is forward-only and requires an explicit mapping for existing user issuers; see the historical migration notes. Run migrations as `eduvia_migrator`; API uses `eduvia_runtime`, never a superuser. No schema creation occurs during API startup.
 
 ## Worker
 
@@ -62,4 +62,4 @@ The new identity endpoints return `{error:{code,message},requestId}` and `Cache-
 
 ## Multiple identities and Better Auth
 
-Migrations 0005/0006 preserve Eduvia UUIDs and backfill `user_identities`. `POST /v1/auth/migrate` is available only with a configured legacy issuer, accepts a verified primary bearer plus a server-signed transfer proof, and does not merge by email. Migration 0007 adds durable auth session revocation. Auth storage is owned separately and accessed by `eduvia_auth_runtime`; API keeps `eduvia_runtime`. See [runbook](../deploy/better-auth/README.md). `scripts/report_identity_migration.py --source <legacy-issuer> --target <primary-issuer>` prints counts only, with an operator/migrator database connection.
+Migration history 0001–0007 is retained; 0008 retires the transfer function/table and refuses unreviewed nonempty transfer receipts. Runtime accepts only the configured Better Auth issuer; `/v1/auth/migrate` is removed. `user_identities` remains the provisioning/RLS mapping. Auth storage uses `eduvia_auth_runtime`; API keeps `eduvia_runtime`. Operator-only dry-run cleanup is documented in the [runbook](../deploy/better-auth/README.md).

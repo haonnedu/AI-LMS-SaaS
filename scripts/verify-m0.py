@@ -103,16 +103,8 @@ class Verification:
             AUTH_ISSUER="",
             AUTH_AUDIENCE="",
             AUTH_JWKS_URL="",
-            AUTH0_DOMAIN="",
-            AUTH0_CLIENT_ID="",
-            AUTH0_CLIENT_SECRET="",
-            AUTH0_SECRET="",
-            AUTH0_AUDIENCE="",
-            AUTH0_CONNECTION="",
             APP_BASE_URL="",
             SESSION_ENCRYPTION_KEY="",
-            AUTH0_MANAGEMENT_CLIENT_ID="",
-            AUTH0_MANAGEMENT_CLIENT_SECRET="",
         )
         self.env_file = self.directory / "compose.env"
         self.env_file.write_text("".join(f"{k}={v}\n" for k, v in self.values.items()))

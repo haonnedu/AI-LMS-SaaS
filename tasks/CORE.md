@@ -183,3 +183,9 @@ Evidence và giới hạn: [bản ghi triển khai](../discuss/2026-10-23-auth-i
 ### Better Auth / Account Center — execution 2026-10-23
 
 Người dùng thay quyết định provider và duyệt implementation: email/password + Google, Account Center, explicit linking cùng email, giữ user/workspace cũ qua chuyển đổi có hai bằng chứng; không merge user đã có dữ liệu. Owner Duc, reviewer đề xuất Hào. Các task liên quan tiếp tục `in_progress`, chưa signoff/cutover. [Evidence](../discuss/2026-10-23-better-auth-account-center.md), [runbook](../deploy/better-auth/README.md). Checkpoint Auth0 `912c0d2` giữ lịch sử; không diễn giải smoke Auth0 cũ như nghiệm thu Better Auth.
+
+## 2026-10-23 — Better Auth only / Auth0 retirement
+
+Owner Duc; reviewer đề xuất Hào, chưa signoff. User chốt bỏ một account/workspace thử Auth0, không chuyển dữ liệu. SDK/config/transfer endpoints được gỡ, migration 0008 tiến tới, cleanup có dry-run/transaction. Local backup restore đã kiểm; dữ liệu cũ đã xóa. Evidence và phần Google/SMTP thật, cloud teardown, staging còn thiếu: [discuss](../discuss/2026-10-23-auth0-retirement.md).
+
+2026-10-23 — Owner Duc; reviewer đề xuất Hào. Mailpit dev-mail + native local email smoke đã triển khai, Google/manual local/staging chưa nghiệm thu. [Evidence](../discuss/2026-10-23-local-auth-mailpit.md).

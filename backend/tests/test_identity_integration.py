@@ -153,69 +153,12 @@ async def api(database):
             yield client, headers, app
 
 
-async def test_transfer_preserves_uuid_and_workspace(api, database):
-    from types import SimpleNamespace
-    from unittest.mock import Mock
-
-    from app.core.auth import TokenVerifier
-
-    client, headers, app = api
-    settings = app.state.settings
-    settings.legacy_auth_issuer = "https://legacy.example/"
-    verifier = TokenVerifier(
-        settings.auth_issuer + "/migration",
-        settings.auth_audience + "/migration",
-        "https://keys.example/jwks",
+async def test_removed_transfer_endpoint(api):
+    client, headers, _ = api
+    response = await client.post(
+        "/v1/auth/migrate", headers=headers("old-user"), json={"proof": "old"}
     )
-    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    verifier.jwks.get_signing_key_from_jwt = Mock(
-        return_value=SimpleNamespace(key=key.public_key())
-    )
-    app.state.migration_verifier = verifier
-    with database.connect() as db:
-        source = db.execute(
-            text(
-                "SELECT u.id,w.id AS workspace FROM edu.users u "
-                "JOIN edu.workspaces w ON w.personal_owner_user_id=u.id "
-                "WHERE u.provider_sub='legacy-sub'"
-            )
-        ).one()
-    target = "transfer-" + str(uuid4())
-    now = int(time.time())
-    claims = {
-        "iss": verifier.issuer,
-        "aud": verifier.audience,
-        "sub": target,
-        "iat": now,
-        "exp": now + 300,
-        "jti": str(uuid4()),
-        "purpose": "identity_transfer",
-        "source_issuer": settings.legacy_auth_issuer,
-        "source_subject": "legacy-sub",
-    }
-    proof = jwt.encode(claims, key, algorithm="RS256", headers={"kid": "migration"})
-    response = await client.post("/v1/auth/migrate", headers=headers(target), json={"proof": proof})
-    assert response.status_code == 200, response.text
-    assert response.json()["id"] == str(source.id)
-    # Retrying the exact proof is idempotent, and ordinary bootstrap retains the old ownership.
-    assert (
-        await client.post("/v1/auth/migrate", headers=headers(target), json={"proof": proof})
-    ).status_code == 200
-    result = (await client.post("/v1/auth/bootstrap", headers=headers(target))).json()
-    assert result["user"]["id"] == str(source.id)
-    assert result["personalWorkspace"]["id"] == str(source.workspace)
-    assert (
-        await client.post("/v1/auth/migrate", headers=headers("attacker"), json={"proof": proof})
-    ).status_code == 401
-    conflict = "conflict-" + str(uuid4())
-    assert (await client.post("/v1/auth/bootstrap", headers=headers(conflict))).status_code == 200
-    claims.update(sub=conflict, jti=str(uuid4()))
-    conflicting_proof = jwt.encode(claims, key, algorithm="RS256", headers={"kid": "migration"})
-    assert (
-        await client.post(
-            "/v1/auth/migrate", headers=headers(conflict), json={"proof": conflicting_proof}
-        )
-    ).status_code == 409
+    assert response.status_code == 404
 
 
 async def test_bootstrap_concurrency_and_identity(api, database):
@@ -302,7 +245,6 @@ async def test_runtime_cannot_change_roles_and_rollback(api, database):
                 await session.execute(text("UPDATE edu.workspace_members SET role='owner'"))
         for statement in (
             "UPDATE edu.user_identities SET subject='forged'",
-            "DELETE FROM edu.identity_transfers",
             'SELECT id FROM auth."user"',
         ):
             with pytest.raises(DBAPIError):
@@ -376,3 +318,115 @@ async def test_workspace_pagination_only_returns_own_memberships(api, database):
     invalid = await client.get("/v1/workspaces?limit=101", headers=headers(subject))
     assert invalid.status_code == 422
     assert set(invalid.json()) == {"error", "requestId"}
+
+
+def seed_discardable(database):
+    user_id, workspace_id = uuid4(), uuid4()
+    with database.begin() as db:
+        db.execute(
+            text(
+                "INSERT INTO edu.users(id,provider_issuer,provider_sub,email) "
+                "VALUES(:id,'https://retired.auth0.com/', :sub,'test@example.test')"
+            ),
+            {"id": user_id, "sub": "auth0|" + str(user_id)},
+        )
+        db.execute(
+            text(
+                "INSERT INTO edu.user_identities(issuer,subject,user_id) "
+                "VALUES('https://retired.auth0.com/',:sub,:id)"
+            ),
+            {"id": user_id, "sub": "auth0|" + str(user_id)},
+        )
+        db.execute(
+            text(
+                "INSERT INTO edu.workspaces(id,name,slug,personal_owner_user_id) "
+                "VALUES(:wid,'Test',:slug,:id)"
+            ),
+            {"wid": workspace_id, "slug": str(workspace_id), "id": user_id},
+        )
+        db.execute(
+            text(
+                "INSERT INTO edu.workspace_members(user_id,workspace_id,role) "
+                "VALUES(:id,:wid,'owner')"
+            ),
+            {"id": user_id, "wid": workspace_id},
+        )
+    return user_id, workspace_id
+
+
+def test_cleanup_dry_run_rollback_and_retry(database):
+    from scripts.cleanup_legacy_account import cleanup
+
+    user_id, _ = seed_discardable(database)
+    with database.begin() as db:
+        assert (
+            cleanup(db, "https://retired.auth0.com/", "auth0|" + str(user_id), user_id)["status"]
+            == "dry_run"
+        )
+        assert db.scalar(text("SELECT count(*) FROM edu.users WHERE id=:id"), {"id": user_id}) == 1
+    with pytest.raises(RuntimeError):
+        with database.begin() as db:
+            cleanup(db, "https://retired.auth0.com/", "auth0|" + str(user_id), user_id, True)
+            raise RuntimeError("simulated failure")
+    with database.begin() as db:
+        assert db.scalar(text("SELECT count(*) FROM edu.users WHERE id=:id"), {"id": user_id}) == 1
+        assert (
+            cleanup(db, "https://retired.auth0.com/", "auth0|" + str(user_id), user_id, True)[
+                "status"
+            ]
+            == "deleted"
+        )
+        assert (
+            cleanup(db, "https://retired.auth0.com/", "auth0|" + str(user_id), user_id, True)[
+                "status"
+            ]
+            == "already_absent"
+        )
+
+
+def test_cleanup_refuses_mismatched_and_linked_identity(database):
+    from scripts.cleanup_legacy_account import cleanup
+
+    user_id, _ = seed_discardable(database)
+    with database.begin() as db:
+        with pytest.raises(ValueError, match="do not match"):
+            cleanup(db, "https://wrong.auth0.com/", "auth0|" + str(user_id), user_id, True)
+        db.execute(
+            text(
+                "INSERT INTO edu.user_identities(issuer,subject,user_id) "
+                "VALUES('https://better.example/','new',:id)"
+            ),
+            {"id": user_id},
+        )
+        with pytest.raises(ValueError, match="Additional identity"):
+            cleanup(db, "https://retired.auth0.com/", "auth0|" + str(user_id), user_id, True)
+
+
+def test_cleanup_refuses_shared_workspace(database):
+    from scripts.cleanup_legacy_account import cleanup
+
+    user_id, workspace_id = seed_discardable(database)
+    other_id, _ = seed_discardable_other(database)
+    with database.begin() as db:
+        db.execute(
+            text(
+                "INSERT INTO edu.workspace_members(user_id,workspace_id,role) "
+                "VALUES(:id,:wid,'teacher')"
+            ),
+            {"id": other_id, "wid": workspace_id},
+        )
+        with pytest.raises(ValueError, match="Shared workspace"):
+            cleanup(db, "https://retired.auth0.com/", "auth0|" + str(user_id), user_id, True)
+
+
+def seed_discardable_other(database):
+    other_id = uuid4()
+    with database.begin() as db:
+        db.execute(
+            text(
+                "INSERT INTO edu.users(id,provider_issuer,provider_sub,email) "
+                "VALUES(:id,'https://other.example/',:sub,'other@example.test')"
+            ),
+            {"id": other_id, "sub": str(other_id)},
+        )
+    return other_id, None

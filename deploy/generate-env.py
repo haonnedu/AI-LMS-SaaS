@@ -17,7 +17,7 @@ if not target.is_absolute():
 if origin != '--tunnel' and (parsed.scheme != 'https' or not parsed.hostname or parsed.path or parsed.query or parsed.fragment or parsed.username or parsed.password):
     raise SystemExit('Supply an exact HTTPS origin without a trailing slash')
 values = {key: secrets.token_hex(32) for key in (
-    'POSTGRES_PASSWORD', 'DB_MIGRATOR_PASSWORD', 'DB_RUNTIME_PASSWORD', 'DB_AUTH_PASSWORD', 'BETTER_AUTH_SECRET', 'REDIS_PASSWORD', 'SESSION_REDIS_PASSWORD', 'AUTH0_SECRET', 'SESSION_ENCRYPTION_KEY'
+    'POSTGRES_PASSWORD', 'DB_MIGRATOR_PASSWORD', 'DB_RUNTIME_PASSWORD', 'DB_AUTH_PASSWORD', 'BETTER_AUTH_SECRET', 'REDIS_PASSWORD', 'SESSION_REDIS_PASSWORD', 'SESSION_ENCRYPTION_KEY'
 )}
 values['APP_BASE_URL'] = '' if origin == '--tunnel' else origin
 values['CORS_ORIGINS'] = json.dumps([] if origin == '--tunnel' else [origin], separators=(',', ':'))

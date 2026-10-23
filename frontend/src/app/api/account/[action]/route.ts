@@ -1,15 +1,16 @@
 import { allowEmail } from "@/lib/server/email-limit";
 import { NextResponse } from "next/server";
-import { better, betterEnabled, decryptStorage } from "@/lib/server/better-auth";
+import { better, decryptStorage } from "@/lib/server/better-auth";
 import { checkCsrf, failure, HttpError, lockedSession } from "@/lib/server/auth";
 import { accountKey, methods, requireRecent, revokeAll, markSecurityChange } from "@/lib/server/account-center";
 import { redis } from "@/lib/server/session-store";
 
 export async function POST(request: Request, { params }: { params: Promise<{ action: string }> }) {
-  if (!betterEnabled()) return new Response(null, { status: 404 });
+  const { action } = await params;
+  if (!["reauthenticate", "password", "link-google", "confirm-google", "unlink-google"].includes(action)) return new Response(null, { status: 404 });
   try { return await lockedSession(async session => {
     checkCsrf(request, session);
-    const { action } = await params, connection = await redis();
+    const connection = await redis();
     const enabled = await methods(session.user.sub);
     if (action === "reauthenticate") {
       const count = Number(await connection.eval("local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],60) end; return n", { keys: [accountKey(session.user.sub, "attempts")], arguments: [] }));
