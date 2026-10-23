@@ -23,8 +23,8 @@ from app.core.config import get_settings
 from app.infrastructure.sync_database import get_sync_sessionmaker, set_actor_context
 from app.models.documents import Document
 from app.models.jobs import BackgroundJob
+from app.services import embeddings, indexing, knowledge, parsing
 from app.services import jobs as job_service
-from app.services import knowledge, parsing
 from app.services.storage import ObjectStore, ObjectTooLarge
 from app.worker import celery_app
 
@@ -47,9 +47,13 @@ class HandlerContext:
     store: ObjectStore
     now: datetime | None = None
     max_bytes: int | None = None
+    embedder: embeddings.EmbeddingProvider | None = None
 
     def clock(self) -> datetime:
         return self.now or job_service.utcnow()
+
+    def embedding_provider(self) -> embeddings.EmbeddingProvider:
+        return self.embedder or default_embedder()
 
     def byte_limit(self) -> int:
         return self.max_bytes or get_settings().upload_max_bytes
@@ -90,11 +94,22 @@ def _index(ctx: HandlerContext, document: Document, mode: knowledge.Mode) -> dic
         raise PermanentJobError("rights_attestation_required")
     data = _download(ctx, document)
     try:
-        return knowledge.ingest_bytes(
+        result = knowledge.ingest_bytes(
             ctx.db, document, data, mode=mode, max_bytes=ctx.byte_limit(), now=ctx.clock()
         )
     except knowledge.IngestRejected as exc:
         raise PermanentJobError(exc.code, rejection=exc) from None
+    # KNOW-06: the text version is already active; an embedding failure is recorded on its
+    # embedding run (retry with ``document.embed``) and never fails or undoes activation.
+    result["embedding"] = indexing.embed_version_safely(
+        ctx.db,
+        workspace_id=document.workspace_id,
+        version_id=UUID(result["versionId"]),
+        embedder=ctx.embedding_provider(),
+        job_id=ctx.job.id,
+        now=ctx.clock(),
+    )
+    return result
 
 
 def ingest_document(ctx: HandlerContext) -> dict[str, Any]:
@@ -163,20 +178,48 @@ def record_reingest_failure(ctx: HandlerContext, error: Exception) -> None:
         ctx.db.flush()
 
 
+def embed_document(ctx: HandlerContext) -> dict[str, Any]:
+    """Retry only the embedding stage for the document's active version (KNOW-06)."""
+    document = _document(ctx)
+    if document is None or document.status == "deleted":
+        return {"skipped": True}
+    if not document.rights_attested:
+        raise PermanentJobError("rights_attestation_required")
+    if document.status != "uploaded" or document.active_version_id is None:
+        raise PermanentJobError("document_not_ready")
+    return indexing.embed_version(
+        ctx.db,
+        workspace_id=document.workspace_id,
+        version_id=document.active_version_id,
+        embedder=ctx.embedding_provider(),
+        job_id=ctx.job.id,
+        now=ctx.clock(),
+    )
+
+
 def delete_document_object(ctx: HandlerContext) -> dict[str, Any]:
+    """KNOW-09: purge derived chunks/vectors (versions become ``withdrawn``), then the blob.
+    Idempotent: a replay purges 0 rows and deletes an already-missing object without error,
+    and a withdrawn version can never become active again (database transition guard)."""
     document = _document(ctx)
     if document is None:
         return {"deleted": False}
     if document.status != "deleted":
         raise PermanentJobError("document_not_deleted")
+    purged = ctx.db.execute(
+        text("SELECT edu.purge_document_chunks(:document_id)"), {"document_id": document.id}
+    ).scalar_one()
+    document.active_version_id = None
+    ctx.db.flush()
     ctx.store.delete(document.object_key)  # idempotent in S3
-    return {"deleted": True}
+    return {"deleted": True, "purgedChunks": int(purged or 0)}
 
 
 HANDLERS: dict[str, Handler] = {
     "document.ingest": Handler(ingest_document, quarantine_document),
     "document.reingest": Handler(reingest_document, record_reingest_failure),
     "document.delete": Handler(delete_document_object),
+    "document.embed": Handler(embed_document),
 }
 
 
@@ -209,6 +252,7 @@ def execute_job(
     send: Callable[..., None] = job_service.send_job,
     clock: Callable[[], datetime] = job_service.utcnow,
     max_bytes: int | None = None,
+    embedder: embeddings.EmbeddingProvider | None = None,
 ) -> str:
     with sessions() as db:
         with db.begin():
@@ -234,7 +278,7 @@ def execute_job(
                 handler = HANDLERS.get(job.kind)
                 if handler is None:
                     raise PermanentJobError("unknown_job_kind")
-                result = handler.run(HandlerContext(db, job, store, clock(), max_bytes))
+                result = handler.run(HandlerContext(db, job, store, clock(), max_bytes, embedder))
                 job_service.complete_job(db, job_id, attempt, result, clock())
             return "succeeded"
         except Exception as exc:
@@ -254,7 +298,7 @@ def execute_job(
             handler = HANDLERS.get(job.kind)
             if outcome == "failed" and handler and handler.on_permanent_failure:
                 handler.on_permanent_failure(
-                    HandlerContext(db, job, store, clock(), max_bytes), failure
+                    HandlerContext(db, job, store, clock(), max_bytes, embedder), failure
                 )
         if outcome == "queued":
             try:
@@ -308,6 +352,14 @@ def sweep_jobs(
 
 
 _store: ObjectStore | None = None
+_embedder: embeddings.EmbeddingProvider | None = None
+
+
+def default_embedder() -> embeddings.EmbeddingProvider:
+    global _embedder
+    if _embedder is None:
+        _embedder = embeddings.get_embedder(get_settings())
+    return _embedder
 
 
 def default_store() -> ObjectStore:

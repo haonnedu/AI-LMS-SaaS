@@ -1,7 +1,12 @@
-"""Curriculum metadata, immutable document versions and chunks (migration 0007_knowledge).
+"""Curriculum metadata, immutable document versions and chunks (migrations 0007_knowledge,
+0008_retrieval).
 
-The authoritative DDL, RLS policies and immutability triggers live in the migration; these
-mappings mirror its columns and constraint names.
+The authoritative DDL, RLS policies and immutability triggers live in the migrations; these
+mappings mirror their columns and constraint names. The 0008 chunk columns (``search_vector``,
+``embedding``, ``embedding_model``, ``embedding_version``) are deliberately NOT mapped on
+``DocumentChunk``: no pgvector Python adapter is installed, so the embedding stage and retrieval
+address them with explicit SQL (``app.services.indexing`` / ``app.services.retrieval``), and the
+ORM never loads 4 KiB vectors with every chunk.
 """
 
 from sqlalchemy import (
@@ -19,11 +24,14 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from app.infrastructure.database import Base
 
-VERSION_STATUSES = ("processing", "active", "failed", "superseded")
+VERSION_STATUSES = ("processing", "active", "failed", "superseded", "withdrawn")
+EMBEDDING_RUN_STATUSES = ("pending", "succeeded", "failed")
+# Fixed by migration 0008 (``vector(1024)``); changing it needs a new migration + full re-embed.
+EMBEDDING_DIMENSION = 1024
 RIGHTS_SCOPES = ("private",)
 
 
@@ -162,3 +170,40 @@ class DocumentCurriculumTag(Base):
         UUID(as_uuid=True), ForeignKey("edu.curriculum_units.id"), nullable=False
     )
     created_at = _timestamp()
+
+
+class EmbeddingRun(Base):
+    """One embedding attempt for a version (0008). Never stores texts, only counts/IDs."""
+
+    __tablename__ = "embedding_runs"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workspace_id", "document_version_id"],
+            ["edu.document_versions.workspace_id", "edu.document_versions.id"],
+            name="fk_embedding_runs_version",
+        ),
+        ForeignKeyConstraint(
+            ["workspace_id", "job_id"],
+            ["edu.background_jobs.workspace_id", "edu.background_jobs.id"],
+            name="fk_embedding_runs_job",
+        ),
+        Index(
+            "ix_embedding_runs_version",
+            "workspace_id",
+            "document_version_id",
+            text("created_at DESC"),
+        ),
+    )
+    id = _id()
+    workspace_id = _workspace()
+    document_version_id = Column(UUID(as_uuid=True), nullable=False)
+    job_id = Column(UUID(as_uuid=True))
+    model = Column(Text, nullable=False)
+    version = Column(Text, nullable=False)
+    status = Column(Text, nullable=False, server_default="pending")
+    chunk_count = Column(Integer, nullable=False, server_default="0")
+    units = Column(Integer, nullable=False, server_default="0")
+    provider_request_ids = Column(JSONB, nullable=False, server_default="[]")
+    error_code = Column(Text)
+    created_at = _timestamp()
+    finished_at = _timestamp(nullable=True)

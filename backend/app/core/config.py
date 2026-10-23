@@ -43,6 +43,21 @@ class Settings(BaseSettings):
     s3_secret_access_key: SecretStr | None = None
     # Lean upload limit (STORE-01): enforced before and while reading the request body.
     upload_max_bytes: int = Field(default=25 * 1024 * 1024, ge=1024 * 1024, le=100 * 1024 * 1024)
+    # Embeddings (KNOW-06). The provider/model decision is still pending: ``local`` is a
+    # deterministic hashing embedder for development/tests only and is refused in production.
+    embedding_provider: Literal["local", "openai_compatible"] = "local"
+    embedding_model: str = Field(default="local-hash-v1", min_length=1, max_length=128)
+    # Bump to force a re-embed when a provider silently changes a model behind the same name.
+    embedding_revision: str = Field(default="1", pattern=r"^[A-Za-z0-9._-]{1,16}$")
+    embedding_base_url: str | None = None
+    embedding_api_key: SecretStr | None = None
+    # Fixed by migration 0008 (vector(1024)); another value needs a new migration + re-embed.
+    embedding_dimension: int = 1024
+    embedding_timeout_seconds: float = Field(default=20, ge=1, le=120)
+    embedding_batch_size: int = Field(default=64, ge=1, le=64)
+    # Semantic candidates farther than this cosine distance are not evidence (abstention).
+    # Model-dependent: calibrate with the RAG eval set when the provider is chosen.
+    retrieval_max_cosine_distance: float = Field(default=0.8, gt=0, le=2)
 
     @field_validator("database_url")
     @classmethod
@@ -101,6 +116,25 @@ class Settings(BaseSettings):
                     or parsed.fragment
                 ):
                     raise ValueError("Identity endpoints require fixed HTTPS URLs")
+        if self.embedding_dimension != 1024:
+            raise ValueError("EMBEDDING_DIMENSION is fixed at 1024 by migration 0008_retrieval")
+        if self.embedding_provider == "openai_compatible":
+            if not self.embedding_base_url or not self.embedding_api_key:
+                raise ValueError("openai_compatible embeddings need EMBEDDING_BASE_URL and key")
+            parsed = urlsplit(self.embedding_base_url)
+            local_dev = self.environment != "production" and parsed.hostname in {
+                "127.0.0.1",
+                "localhost",
+            }
+            if (
+                (parsed.scheme != "https" and not local_dev)
+                or not parsed.hostname
+                or parsed.username
+                or parsed.password
+                or parsed.query
+                or parsed.fragment
+            ):
+                raise ValueError("EMBEDDING_BASE_URL requires a fixed HTTPS URL")
         if bool(self.s3_access_key_id) != bool(self.s3_secret_access_key):
             raise ValueError("Set both S3 credential fields or use the default credential chain")
         if self.environment == "production":
@@ -119,6 +153,8 @@ class Settings(BaseSettings):
                 raise ValueError("Production requires a non-development object-storage credential")
             if any(not origin.startswith("https://") for origin in self.cors_origins):
                 raise ValueError("Production CORS origins require HTTPS")
+            if self.embedding_provider == "local":
+                raise ValueError("The local hashing embedder is for development/tests only")
         return self
 
 

@@ -25,7 +25,7 @@ export function allowQuery(params: URLSearchParams, allowed: readonly string[], 
   }
   return query;
 }
-export const QUERY_RULES = { limit: /^\d{1,3}$/, status: /^[a-z_]{1,20}$/ } as const;
+export const QUERY_RULES = { limit: /^\d{1,3}$/, status: /^[a-z_]{1,20}$/, subject: /^[A-Za-z0-9_.-]{1,64}$/, grade: /^\d{1,2}$/, programYear: /^[A-Za-z0-9_-]{1,16}$/ } as const;
 
 /** Accept only same-site relative /join/<token> destinations (no open redirect). */
 export function safeJoinReturnTo(value: unknown): string | null {

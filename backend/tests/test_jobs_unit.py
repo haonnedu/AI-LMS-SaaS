@@ -299,6 +299,9 @@ class FakeWorkerDb:
                 workspace_id=uuid4(), user_id=uuid4(), issuer="https://i/", subject="s"
             )
             return SimpleNamespace(first=lambda: row if self.actor else None)
+        if "purge_document_chunks" in sql:  # KNOW-09 deletion helper (0008)
+            self.purged = getattr(self, "purged", []) + [params["document_id"]]
+            return SimpleNamespace(scalar_one=lambda: 0)
         assert "set_config" in sql and set(params) == {
             "issuer",
             "subject",
@@ -399,4 +402,6 @@ def test_worker_delete_handler_is_idempotent():
     job, document, db = worker_fixture(kind="document.delete", doc_status="deleted")
     store = FakeStore()
     assert run_worker(db, job, store) == "succeeded"
-    assert store.deleted == [document.object_key] and job.result == {"deleted": True}
+    assert store.deleted == [document.object_key]
+    assert job.result == {"deleted": True, "purgedChunks": 0}
+    assert db.purged == [document.id] and document.active_version_id is None

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import type { components } from "@/lib/api/generated";
 import { read, RequestError } from "@/lib/client/api";
@@ -170,6 +171,7 @@ export function DocumentsScreen() {
           <div><strong>{doc.fileName}</strong><small>{size(doc.sizeBytes)} · {new Date(doc.createdAt).toLocaleDateString("vi-VN")}</small></div>
           <span className={styles.chip} data-tone={tone}>{label}</span>
           <div className={styles.actions}>
+            {doc.status === "uploaded" && <Link className="button button-secondary" href={`/dashboard/library/${doc.id}`} aria-label={`Chi tiết ${doc.fileName}`}>Chi tiết</Link>}
             <button className="button button-secondary" disabled={doc.status !== "uploaded"} onClick={() => void download(doc)} aria-label={`Tải xuống ${doc.fileName}`}>Tải xuống</button>
             <button className="button button-secondary" disabled={doc.status === "deleted"} onClick={() => setConfirm(doc)} aria-label={`Xóa ${doc.fileName}`}>Xóa</button>
           </div></li>;

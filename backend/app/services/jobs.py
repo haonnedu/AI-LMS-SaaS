@@ -40,6 +40,7 @@ QUEUE_BY_KIND = {
     "document.ingest": "ingestion",
     "document.delete": "ingestion",
     "document.reingest": "ingestion",
+    "document.embed": "ingestion",
 }
 CLIENT_KEY_PREFIX = "client:"
 SYSTEM_KEY_PREFIX = "system:"

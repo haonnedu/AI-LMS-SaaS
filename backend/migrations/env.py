@@ -6,6 +6,7 @@ from sqlalchemy import create_engine, pool
 from app.core.config import get_settings
 from app.infrastructure.database import Base
 from app.models import (
+    authoring,  # noqa: F401
     documents,  # noqa: F401
     identity,  # noqa: F401
     jobs,  # noqa: F401
