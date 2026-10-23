@@ -3,14 +3,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { components } from "@/lib/api/generated";
+import { read, RequestError, type Session } from "@/lib/client/api";
+import { takeReturnTo } from "@/lib/client/return-to";
 import styles from "../workspace/workspace.module.css";
 
 type Workspace = components["schemas"]["WorkspaceDTO"];
 type User = components["schemas"]["UserDTO"];
-class RequestError extends Error {
-  constructor(public status: number, public code: string, message: string) { super(message); }
-}
-type Session = { authenticated: boolean; emailVerified?: boolean; csrfToken?: string; user?: { name: string; email: string } };
 export function AccountScreen({ mode }: { mode: "onboarding" | "dashboard" }) {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
@@ -22,14 +20,6 @@ export function AccountScreen({ mode }: { mode: "onboarding" | "dashboard" }) {
   const [message, setMessage] = useState("");
   const epoch = useRef(0);
   const inFlight = useRef(false);
-  const read = useCallback(async (url: string, init?: RequestInit) => {
-    const response = await fetch(url, { ...init, cache: "no-store", signal: AbortSignal.timeout(15000) });
-    const payload = await response.json();
-    if (!response.ok) {
-      throw new RequestError(response.status, payload.error?.code || "request_failed", payload.error?.message || "Chưa thể hoàn thành. Vui lòng thử lại.");
-    }
-    return payload;
-  }, []);
   const handleError = useCallback((error: unknown) => {
     setMessage(error instanceof Error ? error.message : "Không thể kết nối.");
     if (!(error instanceof RequestError)) return;
@@ -53,7 +43,7 @@ export function AccountScreen({ mode }: { mode: "onboarding" | "dashboard" }) {
       }
     } catch (error) { if (version === epoch.current) handleError(error); }
     finally { if (version === epoch.current) setBusy(false); }
-  }, [read, mode, router, handleError]);
+  }, [mode, router, handleError]);
   // Starts external session/API synchronization; state updates follow network responses.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void load(); return () => {
@@ -84,7 +74,7 @@ export function AccountScreen({ mode }: { mode: "onboarding" | "dashboard" }) {
       const url = kind === "bootstrap" ? "/api/backend/auth/bootstrap" : "/api/logout";
       const payload = await read(url, { method: "POST", headers: { "X-CSRF-Token": session.csrfToken } });
       if (version !== epoch.current) return;
-      if (kind === "bootstrap") router.replace("/dashboard");
+      if (kind === "bootstrap") router.replace(takeReturnTo() || "/dashboard");
       if (kind === "logout") {
         setSession(null);
         const channel = new BroadcastChannel("eduvia-auth"); channel.postMessage("logout"); channel.close();
@@ -111,7 +101,7 @@ export function AccountScreen({ mode }: { mode: "onboarding" | "dashboard" }) {
   return <div className={styles.page}><section className={styles.card} aria-busy={busy}>
     <p>{user?.name || session?.user?.name || "Eduvia"}</p>
     {mode === "onboarding" && <><p>Eduvia sẽ tạo hoặc mở lại workspace cá nhân của bạn.</p><button className="button button-primary" disabled={busy || !session} onClick={() => void action("bootstrap")}>{busy ? "Đang chuẩn bị…" : "Mở workspace cá nhân"}</button></>}
-    {mode === "dashboard" && <><label htmlFor="real-workspace">Workspace</label><select id="real-workspace" value={workspace?.id || ""} disabled={busy} onChange={event => void switchWorkspace(event.target.value)}><option value="" disabled>Chọn workspace</option>{workspaces.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>{nextCursor && <button disabled={busy} onClick={() => void more()}>Tải thêm workspace</button>}{workspace ? <div className={styles.workspace}><div><strong>{workspace.name}</strong><p>Vai trò: {workspace.role}</p><p>Workspace của bạn đã sẵn sàng. Các tính năng học liệu và lớp học sẽ được bổ sung sau.</p></div></div> : !busy && <p>Không có workspace khả dụng. Quyền truy cập có thể đã thay đổi.</p>}</>}
+    {mode === "dashboard" && <><label htmlFor="real-workspace">Workspace</label><select id="real-workspace" value={workspace?.id || ""} disabled={busy} onChange={event => void switchWorkspace(event.target.value)}><option value="" disabled>Chọn workspace</option>{workspaces.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>{nextCursor && <button disabled={busy} onClick={() => void more()}>Tải thêm workspace</button>}<nav className={styles.navLinks} aria-label="Điều hướng giáo viên"><Link href="/dashboard/classes">Lớp học</Link><Link href="/dashboard/documents">Tài liệu</Link></nav>{workspace ? <div className={styles.workspace}><div><strong>{workspace.name}</strong><p>Vai trò: {workspace.role}</p><p>Workspace của bạn đã sẵn sàng. Các tính năng học liệu và lớp học sẽ được bổ sung sau.</p></div></div> : !busy && <p>Không có workspace khả dụng. Quyền truy cập có thể đã thay đổi.</p>}</>}
     {message && <p role="status" aria-live="polite">{message}</p>}
     {message && <button disabled={busy} onClick={() => void load()}>Tải lại</button>}
     <button className="button button-secondary" disabled={busy || !session} onClick={() => void action("logout")}>Đăng xuất</button>

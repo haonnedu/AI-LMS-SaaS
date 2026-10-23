@@ -5,7 +5,16 @@ from sqlalchemy import create_engine, pool
 
 from app.core.config import get_settings
 from app.infrastructure.database import Base
-from app.models import identity  # noqa: F401
+from app.models import (
+    assessment,  # noqa: F401
+    authoring,  # noqa: F401
+    documents,  # noqa: F401
+    generation,  # noqa: F401
+    identity,  # noqa: F401
+    jobs,  # noqa: F401
+    knowledge,  # noqa: F401
+    teaching,  # noqa: F401
+)
 
 target_metadata = Base.metadata
 

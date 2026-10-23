@@ -1,0 +1,124 @@
+{
+  "input": {
+    "pages": [
+      {
+        "pageNo": null,
+        "text": "Lời nói đầu. Tài liệu ôn tập dành cho học sinh lớp 10.\nChương 1. Mệnh đề và tập hợp\nMệnh đề là một câu khẳng định đúng hoặc một câu khẳng định sai. Một mệnh đề không thể vừa đúng vừa sai. Mệnh đề phủ định của P được kí hiệu là P gạch. Nếu P đúng thì P gạch sai, và ngược lại. Mệnh đề kéo theo có dạng nếu P thì Q. Mệnh đề đảo của nó là nếu Q thì P.\nBài 2. Tập hợp\nTập hợp là một khái niệm cơ bản của toán học, không định nghĩa. Ta thường kí hiệu tập hợp bằng chữ cái in hoa như A, B, C. Tập hợp rỗng là tập hợp không chứa phần tử nào! Hai tập hợp bằng nhau khi mỗi phần tử của tập này cũng là phần tử của tập kia?",
+        "sections": [
+          {
+            "start": 0,
+            "end": 54,
+            "path": null
+          },
+          {
+            "start": 55,
+            "end": 348,
+            "path": "Chương 1. Mệnh đề và tập hợp"
+          },
+          {
+            "start": 349,
+            "end": 613,
+            "path": "Chương 1. Mệnh đề và tập hợp > Bài 2. Tập hợp"
+          }
+        ]
+      }
+    ],
+    "targetTokens": 30
+  },
+  "expected": {
+    "chunkerVersion": "1",
+    "textSha256": "e4a7ae1b59d2045c5a0ac4cc5737611ac64fd8c3710a735f1ecf6e9518dcc079",
+    "chunks": [
+      {
+        "chunk_index": 0,
+        "page_no": null,
+        "section_path": null,
+        "char_start": 0,
+        "char_end": 54,
+        "text": "Lời nói đầu. Tài liệu ôn tập dành cho học sinh lớp 10.",
+        "text_sha256": "9b2bb433e40cc1bb9e7b38a71d044a1b56f2aae5ef9d449fc57f77e7f2eddd2c",
+        "token_estimate": 17
+      },
+      {
+        "chunk_index": 1,
+        "page_no": null,
+        "section_path": "Chương 1. Mệnh đề và tập hợp",
+        "char_start": 55,
+        "char_end": 147,
+        "text": "Chương 1. Mệnh đề và tập hợp\nMệnh đề là một câu khẳng định đúng hoặc một câu khẳng định sai.",
+        "text_sha256": "3f3685e6ed93a26e06e50df17e5ffe4786debcba48e4067f21f5212e045465ad",
+        "token_estimate": 27
+      },
+      {
+        "chunk_index": 2,
+        "page_no": null,
+        "section_path": "Chương 1. Mệnh đề và tập hợp",
+        "char_start": 148,
+        "char_end": 234,
+        "text": "Một mệnh đề không thể vừa đúng vừa sai. Mệnh đề phủ định của P được kí hiệu là P gạch.",
+        "text_sha256": "ce4a86cdd42153341e5614344e97deea2f9f2c95ef986da0e99d5406a7588434",
+        "token_estimate": 27
+      },
+      {
+        "chunk_index": 3,
+        "page_no": null,
+        "section_path": "Chương 1. Mệnh đề và tập hợp",
+        "char_start": 235,
+        "char_end": 313,
+        "text": "Nếu P đúng thì P gạch sai, và ngược lại. Mệnh đề kéo theo có dạng nếu P thì Q.",
+        "text_sha256": "74ff21a2453635989345f6f4dfe96beaec97f97f2db23167a793ad14a5de9ed8",
+        "token_estimate": 26
+      },
+      {
+        "chunk_index": 4,
+        "page_no": null,
+        "section_path": "Chương 1. Mệnh đề và tập hợp",
+        "char_start": 314,
+        "char_end": 348,
+        "text": "Mệnh đề đảo của nó là nếu Q thì P.",
+        "text_sha256": "7c0899fb069fa0980d0fdd1c4006155fcc144b38548c5ac24b5574b825901731",
+        "token_estimate": 13
+      },
+      {
+        "chunk_index": 5,
+        "page_no": null,
+        "section_path": "Chương 1. Mệnh đề và tập hợp > Bài 2. Tập hợp",
+        "char_start": 349,
+        "char_end": 427,
+        "text": "Bài 2. Tập hợp\nTập hợp là một khái niệm cơ bản của toán học, không định nghĩa.",
+        "text_sha256": "fe440ef2db5c51a92ccc54008a0c9c671bebd3c44f4b83addb7ff81cc9302c00",
+        "token_estimate": 23
+      },
+      {
+        "chunk_index": 6,
+        "page_no": null,
+        "section_path": "Chương 1. Mệnh đề và tập hợp > Bài 2. Tập hợp",
+        "char_start": 428,
+        "char_end": 486,
+        "text": "Ta thường kí hiệu tập hợp bằng chữ cái in hoa như A, B, C.",
+        "text_sha256": "1fbd816bccd77648a4c06c6f0c426f83768c1c8f92da5f90424faff02447690a",
+        "token_estimate": 20
+      },
+      {
+        "chunk_index": 7,
+        "page_no": null,
+        "section_path": "Chương 1. Mệnh đề và tập hợp > Bài 2. Tập hợp",
+        "char_start": 487,
+        "char_end": 534,
+        "text": "Tập hợp rỗng là tập hợp không chứa phần tử nào!",
+        "text_sha256": "b03ded1911b0b42aa64dde042a3fed5a3558ff13f706b04a451168287ca2938f",
+        "token_estimate": 14
+      },
+      {
+        "chunk_index": 8,
+        "page_no": null,
+        "section_path": "Chương 1. Mệnh đề và tập hợp > Bài 2. Tập hợp",
+        "char_start": 535,
+        "char_end": 613,
+        "text": "Hai tập hợp bằng nhau khi mỗi phần tử của tập này cũng là phần tử của tập kia?",
+        "text_sha256": "d7ce57ed780bd162f6d01269d91971aa716220ab5889ccbc3cc886070dffaec4",
+        "token_estimate": 25
+      }
+    ]
+  }
+}

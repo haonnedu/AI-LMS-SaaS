@@ -1,0 +1,65 @@
+{
+  "input": {
+    "pages": [
+      {
+        "pageNo": 7,
+        "text": "Hàm số bậc hai có dạng y bằng a x bình phương cộng b x cộng c. Đồ thị của hàm số bậc hai là một parabol. Đỉnh của parabol có hoành độ bằng trừ b chia hai a. Nếu a dương thì parabol quay bề lõm lên trên. Nếu a âm thì parabol quay bề lõm xuống dưới. Trục đối xứng là đường thẳng đi qua đỉnh. Hàm số đồng biến hoặc nghịch biến trên từng khoảng.",
+        "sections": [
+          {
+            "start": 0,
+            "end": 341,
+            "path": "Chương 6 > Bài 16. Hàm số bậc hai"
+          }
+        ]
+      }
+    ],
+    "targetTokens": 40,
+    "overlapRatio": 0.35
+  },
+  "expected": {
+    "chunkerVersion": "1",
+    "textSha256": "7035ab0a65bc79086a433e35af34cbce202f760d48edf0904defad86bb3177e1",
+    "chunks": [
+      {
+        "chunk_index": 0,
+        "page_no": 7,
+        "section_path": "Chương 6 > Bài 16. Hàm số bậc hai",
+        "char_start": 0,
+        "char_end": 104,
+        "text": "Hàm số bậc hai có dạng y bằng a x bình phương cộng b x cộng c. Đồ thị của hàm số bậc hai là một parabol.",
+        "text_sha256": "2d2639f6ac172bd23d377e5b2b886fb9acfed3d7c74cc2fc351d4a1deea32125",
+        "token_estimate": 35
+      },
+      {
+        "chunk_index": 1,
+        "page_no": 7,
+        "section_path": "Chương 6 > Bài 16. Hàm số bậc hai",
+        "char_start": 63,
+        "char_end": 156,
+        "text": "Đồ thị của hàm số bậc hai là một parabol. Đỉnh của parabol có hoành độ bằng trừ b chia hai a.",
+        "text_sha256": "216a6bcb36b44652980ef5f2dace3ff231d7684fd77cb4bf4ee6e7dd52d9605c",
+        "token_estimate": 29
+      },
+      {
+        "chunk_index": 2,
+        "page_no": 7,
+        "section_path": "Chương 6 > Bài 16. Hàm số bậc hai",
+        "char_start": 157,
+        "char_end": 289,
+        "text": "Nếu a dương thì parabol quay bề lõm lên trên. Nếu a âm thì parabol quay bề lõm xuống dưới. Trục đối xứng là đường thẳng đi qua đỉnh.",
+        "text_sha256": "4bfeda6c506d1eda7ad5604b9575683b16c4099846f5d6bda4583b201e9b3c77",
+        "token_estimate": 38
+      },
+      {
+        "chunk_index": 3,
+        "page_no": 7,
+        "section_path": "Chương 6 > Bài 16. Hàm số bậc hai",
+        "char_start": 248,
+        "char_end": 341,
+        "text": "Trục đối xứng là đường thẳng đi qua đỉnh. Hàm số đồng biến hoặc nghịch biến trên từng khoảng.",
+        "text_sha256": "fd499eaf4aabf1f685aed21796e8aa66ad28c3b5230224fb08721a11b1d3c233",
+        "token_estimate": 25
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+import Link from "next/link";
+import styles from "./teaching.module.css";
+export function TeachingNav({ current }: { current: "dashboard" | "classes" | "documents" | "library" | "lessons" | "questions" | "blueprints" | "exams" }) {
+  const items = [["dashboard", "/dashboard", "Tổng quan"], ["classes", "/dashboard/classes", "Lớp học"], ["documents", "/dashboard/documents", "Tài liệu"], ["library", "/dashboard/library", "Thư viện"], ["lessons", "/dashboard/lessons", "Soạn bài"], ["questions", "/dashboard/questions", "Câu hỏi"], ["blueprints", "/dashboard/blueprints", "Ma trận đề"], ["exams", "/dashboard/exams", "Đề kiểm tra"]] as const;
+  return <nav className={styles.nav} aria-label="Điều hướng giáo viên">{items.map(([key, href, label]) => <Link key={key} href={href} aria-current={current === key ? "page" : undefined}>{label}</Link>)}</nav>;
+}

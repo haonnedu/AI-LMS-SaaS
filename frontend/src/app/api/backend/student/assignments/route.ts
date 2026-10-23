@@ -1,0 +1,6 @@
+import { failure } from "@/lib/server/auth";
+import { get } from "@/lib/server/bff";
+export async function GET(request: Request) {
+  try { return await get(request, "/v1/student/assignments"); }
+  catch (error) { return failure(error); }
+}

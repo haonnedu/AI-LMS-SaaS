@@ -1,0 +1,63 @@
+{
+  "input": {
+    "pages": [
+      {
+        "pageNo": null,
+        "text": "Lời nói đầu. Tài liệu ôn tập dành cho học sinh lớp 10.\nChương 1. Mệnh đề và tập hợp\nMệnh đề là một câu khẳng định đúng hoặc một câu khẳng định sai. Một mệnh đề không thể vừa đúng vừa sai. Mệnh đề phủ định của P được kí hiệu là P gạch. Nếu P đúng thì P gạch sai, và ngược lại. Mệnh đề kéo theo có dạng nếu P thì Q. Mệnh đề đảo của nó là nếu Q thì P.\nBài 2. Tập hợp\nTập hợp là một khái niệm cơ bản của toán học, không định nghĩa. Ta thường kí hiệu tập hợp bằng chữ cái in hoa như A, B, C. Tập hợp rỗng là tập hợp không chứa phần tử nào! Hai tập hợp bằng nhau khi mỗi phần tử của tập này cũng là phần tử của tập kia?",
+        "sections": [
+          {
+            "start": 0,
+            "end": 54,
+            "path": null
+          },
+          {
+            "start": 55,
+            "end": 348,
+            "path": "Chương 1. Mệnh đề và tập hợp"
+          },
+          {
+            "start": 349,
+            "end": 613,
+            "path": "Chương 1. Mệnh đề và tập hợp > Bài 2. Tập hợp"
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "chunkerVersion": "1",
+    "textSha256": "e4a7ae1b59d2045c5a0ac4cc5737611ac64fd8c3710a735f1ecf6e9518dcc079",
+    "chunks": [
+      {
+        "chunk_index": 0,
+        "page_no": null,
+        "section_path": null,
+        "char_start": 0,
+        "char_end": 54,
+        "text": "Lời nói đầu. Tài liệu ôn tập dành cho học sinh lớp 10.",
+        "text_sha256": "9b2bb433e40cc1bb9e7b38a71d044a1b56f2aae5ef9d449fc57f77e7f2eddd2c",
+        "token_estimate": 17
+      },
+      {
+        "chunk_index": 1,
+        "page_no": null,
+        "section_path": "Chương 1. Mệnh đề và tập hợp",
+        "char_start": 55,
+        "char_end": 348,
+        "text": "Chương 1. Mệnh đề và tập hợp\nMệnh đề là một câu khẳng định đúng hoặc một câu khẳng định sai. Một mệnh đề không thể vừa đúng vừa sai. Mệnh đề phủ định của P được kí hiệu là P gạch. Nếu P đúng thì P gạch sai, và ngược lại. Mệnh đề kéo theo có dạng nếu P thì Q. Mệnh đề đảo của nó là nếu Q thì P.",
+        "text_sha256": "fbccafb443c925172ed3a8450b02f4bfd589271c539160c2ec227c1a7bc4b46b",
+        "token_estimate": 94
+      },
+      {
+        "chunk_index": 2,
+        "page_no": null,
+        "section_path": "Chương 1. Mệnh đề và tập hợp > Bài 2. Tập hợp",
+        "char_start": 349,
+        "char_end": 613,
+        "text": "Bài 2. Tập hợp\nTập hợp là một khái niệm cơ bản của toán học, không định nghĩa. Ta thường kí hiệu tập hợp bằng chữ cái in hoa như A, B, C. Tập hợp rỗng là tập hợp không chứa phần tử nào! Hai tập hợp bằng nhau khi mỗi phần tử của tập này cũng là phần tử của tập kia?",
+        "text_sha256": "291331315f42a48797f282cfd62355704b78013bcfc70c2aacdf96c7a3bc4750",
+        "token_estimate": 82
+      }
+    ]
+  }
+}

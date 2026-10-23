@@ -46,12 +46,51 @@ export async function lockedSession<T>(action: (session: Awaited<ReturnType<type
     return action(fresh);
   });
 }
-export async function backend(request: Request, path: string, method = "GET") {
-  return lockedSession(async session => {
+export type BackendOptions = { body?: BodyInit | null; headers?: Record<string, string>; passthroughStatus?: boolean };
+
+/** API bearer token for the current Better Auth session. */
+export async function accessToken(): Promise<string> {
+  const { token } = await better().api.getToken({ headers: await headers() });
+  await requireSession();
+  return token;
+}
+export function backendOrigin() {
+  const base = new URL(process.env.API_INTERNAL_URL || "http://127.0.0.1:8000");
+  if (!["http:", "https:"].includes(base.protocol) || base.username || base.password) throw new Error("invalid_backend_origin");
+  return base;
+}
+/**
+ * Forwards a same-origin BFF request to the API with the session's bearer token.
+ * CSRF (Origin + token) is enforced for every non-GET before any upstream work. `options.body`
+ * forwards a JSON string or a streamed raw body (uploads); only caller headers in `options.headers`
+ * are sent and they can never replace Authorization/Accept. Long uploads release the per-session
+ * lock before streaming so /api/session and other BFF calls are not stalled.
+ */
+export async function backend(request: Request, path: string, method = "GET", options: BackendOptions = {}) {
+  const hasBody = options.body !== undefined && options.body !== null;
+  if (method === "GET" && hasBody) throw new HttpError(500, "invalid_backend_call", "Yêu cầu không hợp lệ.");
+  const call = await lockedSession(async session => {
     if (method !== "GET") checkCsrf(request, session);
-    const { token } = await better().api.getToken({ headers: await headers() });
-    await requireSession();
-    const response = await fetch(new URL(path, process.env.API_INTERNAL_URL || "http://127.0.0.1:8000"), { method, headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(5000) });
-    return NextResponse.json(await response.json(), { status: response.status, headers: { "Cache-Control": "no-store" } });
+    const token = await accessToken();
+    const base = backendOrigin();
+    const send = async () => {
+      const requestHeaders: Record<string, string> = { ...options.headers, Authorization: `Bearer ${token}`, Accept: "application/json" };
+      const init: RequestInit & { duplex?: "half" } = { method, headers: requestHeaders, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(hasBody ? 120000 : 5000) };
+      if (hasBody) { init.body = options.body; if (typeof options.body !== "string") init.duplex = "half"; }
+      return respond(await fetch(new URL(path, base), init), options.passthroughStatus === true);
+    };
+    return hasBody ? send : await send();
   });
+  return typeof call === "function" ? call() : call;
+}
+async function respond(response: Response, tolerant: boolean) {
+  const responseHeaders = { "Cache-Control": "no-store" };
+  if (response.status === 204 || response.status === 205) return new NextResponse(null, { status: response.status, headers: responseHeaders });
+  let payload: unknown;
+  try { payload = await response.json(); }
+  catch (error) {
+    if (!tolerant) throw error;
+    payload = { error: { code: "upstream_error", message: "Dịch vụ tạm thời không khả dụng. Vui lòng thử lại." }, requestId: randomUUID() };
+  }
+  return NextResponse.json(payload, { status: response.status, headers: responseHeaders });
 }

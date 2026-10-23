@@ -1,0 +1,78 @@
+{
+  "input": {
+    "pages": [
+      {
+        "pageNo": 1,
+        "text": "Ngắn thôi. chữ0 chữ1 chữ2 chữ3 chữ4 chữ5 chữ6 chữ7 chữ8 chữ9 chữ10 chữ11 chữ12 chữ13 chữ14 chữ15 chữ16 chữ17 chữ18 chữ19 chữ20 chữ21 chữ22 chữ23 chữ24 chữ25 chữ26 chữ27 chữ28 chữ29 chữ30 chữ31 chữ32 chữ33 chữ34 chữ35 chữ36 chữ37 chữ38 chữ39 chữ40 chữ41 chữ42 chữ43 chữ44 chữ45 chữ46 chữ47 chữ48 chữ49 chữ50 chữ51 chữ52 chữ53 chữ54 chữ55 chữ56 chữ57 chữ58 chữ59 chữ60 chữ61 chữ62 chữ63 chữ64 chữ65 chữ66 chữ67 chữ68 chữ69 hết câu dài. Câu cuối cùng “có ngoặc kép.” Xong",
+        "sections": []
+      }
+    ],
+    "targetTokens": 20
+  },
+  "expected": {
+    "chunkerVersion": "1",
+    "textSha256": "68b8844d616e90fa2698e77dc2841900fce41191b90c18745e6ff5ba039d400e",
+    "chunks": [
+      {
+        "chunk_index": 0,
+        "page_no": 1,
+        "section_path": null,
+        "char_start": 0,
+        "char_end": 78,
+        "text": "Ngắn thôi. chữ0 chữ1 chữ2 chữ3 chữ4 chữ5 chữ6 chữ7 chữ8 chữ9 chữ10 chữ11 chữ12",
+        "text_sha256": "1453e312f9250d85e980f9f836ea6493b2cd4409f32a0c26e027f98e0a1c6001",
+        "token_estimate": 20
+      },
+      {
+        "chunk_index": 1,
+        "page_no": 1,
+        "section_path": null,
+        "char_start": 79,
+        "char_end": 168,
+        "text": "chữ13 chữ14 chữ15 chữ16 chữ17 chữ18 chữ19 chữ20 chữ21 chữ22 chữ23 chữ24 chữ25 chữ26 chữ27",
+        "text_sha256": "07fb2130936565a531ecb5fc418e7070771719e023f0a0c156f50427d4fbc70b",
+        "token_estimate": 20
+      },
+      {
+        "chunk_index": 2,
+        "page_no": 1,
+        "section_path": null,
+        "char_start": 169,
+        "char_end": 258,
+        "text": "chữ28 chữ29 chữ30 chữ31 chữ32 chữ33 chữ34 chữ35 chữ36 chữ37 chữ38 chữ39 chữ40 chữ41 chữ42",
+        "text_sha256": "6ef9cdc6a98405d44bce6ed1c52873f5ca0fdf89aa1c5c1fb17d974d1983de64",
+        "token_estimate": 20
+      },
+      {
+        "chunk_index": 3,
+        "page_no": 1,
+        "section_path": null,
+        "char_start": 259,
+        "char_end": 348,
+        "text": "chữ43 chữ44 chữ45 chữ46 chữ47 chữ48 chữ49 chữ50 chữ51 chữ52 chữ53 chữ54 chữ55 chữ56 chữ57",
+        "text_sha256": "dca248dcb312299d1dda7e4ae6f077489f01178c144a620b01783651f0f05fb2",
+        "token_estimate": 20
+      },
+      {
+        "chunk_index": 4,
+        "page_no": 1,
+        "section_path": null,
+        "char_start": 349,
+        "char_end": 433,
+        "text": "chữ58 chữ59 chữ60 chữ61 chữ62 chữ63 chữ64 chữ65 chữ66 chữ67 chữ68 chữ69 hết câu dài.",
+        "text_sha256": "63930a76285550b72d1f746fe2b3c52d84a0ed52a83afa6315ea73c99152dfd3",
+        "token_estimate": 20
+      },
+      {
+        "chunk_index": 5,
+        "page_no": 1,
+        "section_path": null,
+        "char_start": 434,
+        "char_end": 468,
+        "text": "Câu cuối cùng “có ngoặc kép.” Xong",
+        "text_sha256": "0ee0e601932477711c23fa33727580d53b60bf2d598165c9a9fa6d4b3ac3129a",
+        "token_estimate": 9
+      }
+    ]
+  }
+}
