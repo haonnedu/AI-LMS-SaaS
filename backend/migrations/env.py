@@ -5,7 +5,13 @@ from sqlalchemy import create_engine, pool
 
 from app.core.config import get_settings
 from app.infrastructure.database import Base
-from app.models import identity  # noqa: F401
+from app.models import (
+    documents,  # noqa: F401
+    identity,  # noqa: F401
+    jobs,  # noqa: F401
+    knowledge,  # noqa: F401
+    teaching,  # noqa: F401
+)
 
 target_metadata = Base.metadata
 database_url = get_settings().database_url.get_secret_value()

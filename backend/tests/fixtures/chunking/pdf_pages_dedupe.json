@@ -1,0 +1,103 @@
+{
+  "input": {
+    "pages": [
+      {
+        "pageNo": 1,
+        "text": "Trường THPT Chu Văn An\nĐề kiểm tra giữa học kì I. Môn Toán 11.\nCâu 1. Tìm tập xác định của hàm số y = tan x. Câu 2. Giải phương trình sin x = 1/2 trên đoạn [0; 2π].",
+        "sections": []
+      },
+      {
+        "pageNo": 2,
+        "text": "",
+        "sections": []
+      },
+      {
+        "pageNo": 3,
+        "text": "Câu 3. Cho cấp số cộng có u1 = 3 và d = 2. Tính tổng 10 số hạng đầu. Câu 4. Tính giới hạn của dãy số un = (2n + 1)/(n − 3) khi n dần tới vô cực…",
+        "sections": []
+      },
+      {
+        "pageNo": 4,
+        "text": "Trường THPT Chu Văn An\nĐề kiểm tra giữa học kì I. Môn Toán 11.\nCâu 1. Tìm tập xác định của hàm số y = tan x. Câu 2. Giải phương trình sin x = 1/2 trên đoạn [0; 2π].",
+        "sections": []
+      }
+    ],
+    "targetTokens": 25
+  },
+  "expected": {
+    "chunkerVersion": "1",
+    "textSha256": "da7e8d4a595db7ccb1ddc29839ea41e36b90581e875562862ef6f1069057c6e5",
+    "chunks": [
+      {
+        "chunk_index": 0,
+        "page_no": 1,
+        "section_path": null,
+        "char_start": 0,
+        "char_end": 62,
+        "text": "Trường THPT Chu Văn An\nĐề kiểm tra giữa học kì I. Môn Toán 11.",
+        "text_sha256": "bb48e7165b63cc75e0e0e04a157acf34affb03d8b22b5725ec116a9080cf7673",
+        "token_estimate": 20
+      },
+      {
+        "chunk_index": 1,
+        "page_no": 1,
+        "section_path": null,
+        "char_start": 63,
+        "char_end": 108,
+        "text": "Câu 1. Tìm tập xác định của hàm số y = tan x.",
+        "text_sha256": "2ae273f9adeb1c1167d824fac86e02abdc74a0468ae8b4090a2d07d33081dad0",
+        "token_estimate": 17
+      },
+      {
+        "chunk_index": 2,
+        "page_no": 1,
+        "section_path": null,
+        "char_start": 109,
+        "char_end": 164,
+        "text": "Câu 2. Giải phương trình sin x = 1/2 trên đoạn [0; 2π].",
+        "text_sha256": "aecb75a56c00d5771545f9a128bfce08851fe88febb4f5d1288ea96135d1cca2",
+        "token_estimate": 17
+      },
+      {
+        "chunk_index": 3,
+        "page_no": 3,
+        "section_path": null,
+        "char_start": 168,
+        "char_end": 210,
+        "text": "Câu 3. Cho cấp số cộng có u1 = 3 và d = 2.",
+        "text_sha256": "3ea9e7c63dea76e2bd17b2d8cfedc94081079b5f3005403e6e9d74a9da70a4cf",
+        "token_estimate": 18
+      },
+      {
+        "chunk_index": 4,
+        "page_no": 3,
+        "section_path": null,
+        "char_start": 211,
+        "char_end": 236,
+        "text": "Tính tổng 10 số hạng đầu.",
+        "text_sha256": "7a787b47f6b4b009404f84451c9ee7567ced6e3c34ab643667e3fbb68a53f7fd",
+        "token_estimate": 8
+      },
+      {
+        "chunk_index": 5,
+        "page_no": 3,
+        "section_path": null,
+        "char_start": 237,
+        "char_end": 304,
+        "text": "Câu 4. Tính giới hạn của dãy số un = (2n + 1)/(n − 3) khi n dần tới",
+        "text_sha256": "417972fc610f4202e07e0d3ebfc1f622919fa9e45dcad2df7c251d4dbf05be31",
+        "token_estimate": 25
+      },
+      {
+        "chunk_index": 6,
+        "page_no": 3,
+        "section_path": null,
+        "char_start": 305,
+        "char_end": 312,
+        "text": "vô cực…",
+        "text_sha256": "aff127ad03df5a8bf39ea37ffa85a337b4b8bd76083319641bf745018db3e671",
+        "token_estimate": 3
+      }
+    ]
+  }
+}

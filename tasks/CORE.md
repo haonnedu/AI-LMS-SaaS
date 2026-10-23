@@ -50,30 +50,30 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 
 | ID | Trạng thái | Owner | Phụ thuộc | Task / nghiệm thu |
 |---|---|---|---|---|
-| JOB-01 | todo | — | M1 | Migration job state machine + outbox, idempotency key/request hash scoped owner; duplicate conflict không tạo job mới. |
-| JOB-02 | todo | — | JOB-01 | Dispatcher publish/ack/retry với durable outbox; broker downtime không mất accepted command. |
+| JOB-01 | review | Hao | M1 | Migration job state machine + outbox, idempotency key/request hash scoped owner; duplicate conflict không tạo job mới. (Dạng lean (plan 3.4): bảng `background_jobs` là nguồn sự thật, idempotency key + request hash theo owner, duplicate trả job cũ/409 (migration 0006).) |
+| JOB-02 | review | Hao | JOB-01 | Dispatcher publish/ack/retry với durable outbox; broker downtime không mất accepted command. (Dạng lean: Celery `acks_late` + lease 5 phút trong PostgreSQL, sweeper 60s re-dispatch job mất message; chưa có outbox đầy đủ.) |
 | JOB-03 | todo | — | JOB-02 | Worker leases/fencing/heartbeat; stale worker không commit kết quả sau khi lease đổi. |
-| JOB-04 | todo | — | JOB-03 | Retry/backoff/cancel/sweeper và terminal states; poison job có recovery path không retry vô hạn. |
-| JOB-05 | todo | — | JOB-04 | Authorized progress/retry/cancel API và UI; reconnect không nhân đôi action, worker reauthorize actor-sensitive work. |
-| COST-01 | todo | — | JOB-01 | Ledger/reservation schema và unit policy; provider execution ID khác logical job ID, số tiền fixed precision. |
-| COST-02 | todo | — | COST-01 | Atomic quota reserve/settle/release; concurrent requests không vượt ceiling, timeout không tự giả định free. |
+| JOB-04 | review | Hao | JOB-03 | Retry/backoff/cancel/sweeper và terminal states; poison job có recovery path không retry vô hạn. (Dạng lean: retry/backoff tối đa 3 lần, cancel (queued→cancelled, running→cancel_requested), sweeper fail job quá lease.) |
+| JOB-05 | review | Hao | JOB-04 | Authorized progress/retry/cancel API và UI; reconnect không nhân đôi action, worker reauthorize actor-sensitive work. (API `/v1/workspaces/{id}/jobs` list/get/cancel/retry; reconnect không nhân đôi retry. UI progress mới có trang Tài liệu (poll 3s).) |
+| COST-01 | review | Hao | JOB-01 | Ledger/reservation schema và unit policy; provider execution ID khác logical job ID, số tiền fixed precision. (Dạng lean: `usage_events` append-only, `workspace_quotas` cap cứng/tháng (trigger tạo quota khi tạo workspace).) |
+| COST-02 | review | Hao | COST-01 | Atomic quota reserve/settle/release; concurrent requests không vượt ceiling, timeout không tự giả định free. (Dạng lean: reserve trong transaction với `SELECT ... FOR UPDATE` quota; vượt cap → 429. Concurrency chỉ có integration test chưa chạy local.) |
 | COST-03 | todo | — | COST-02, JOB-04 | Reconcile uncertain executions và expired holds; không double charge logical retry, vẫn ghi actual duplicate provider cost. |
-| STORE-01 | todo | — | M1 | Private bucket, object metadata, scoped signed upload; validate size/type/path/expiry, tenant không chọn key người khác. |
-| STORE-02 | todo | — | STORE-01, COST-02 | Upload finalize/quarantine checks; live+held bytes tính quota, abandoned multipart cleanup idempotent. |
-| STORE-03 | todo | — | STORE-02 | Authorized short-lived download/export URLs và file lifecycle; revoke chặn cấp URL mới, không hứa thu hồi file đã tải. |
-| STORE-04 | todo | — | STORE-03, JOB-05 | Upload/progress/failure/retry UI; lỗi file không publish, quota messages rõ và accessible. |
-| AUDIT-01 | todo | — | JOB-01 | Structured audit/trace IDs cho sensitive mutations; redaction secrets/PII và admin access scope tests. |
+| STORE-01 | review | Hao | M1 | Private bucket, object metadata, scoped signed upload; validate size/type/path/expiry, tenant không chọn key người khác. (Dạng lean: upload qua API (raw body, MIME allowlist pdf/docx/txt, ≤25 MiB, magic bytes), object key do server đặt, MinIO trong compose.) |
+| STORE-02 | review | Hao | STORE-01, COST-02 | Upload finalize/quarantine checks; live+held bytes tính quota, abandoned multipart cleanup idempotent. (Dạng lean: sha256 streaming, kiểm tra size/khớp object khi ingest; thiếu/khác size → quarantined. Chưa có held bytes/multipart.) |
+| STORE-03 | review | Hao | STORE-02 | Authorized short-lived download/export URLs và file lifecycle; revoke chặn cấp URL mới, không hứa thu hồi file đã tải. (Signed GET ≤5 phút, attachment; soft delete + job `document.delete` xóa object; chưa thu hồi URL đã cấp.) |
+| STORE-04 | review | Hao | STORE-03, JOB-05 | Upload/progress/failure/retry UI; lỗi file không publish, quota messages rõ và accessible. (Trang `/dashboard/documents`: upload có checkbox quyền sử dụng, trạng thái, tải về, xóa; chưa kiểm browser.) |
+| AUDIT-01 | review | Hao | JOB-01 | Structured audit/trace IDs cho sensitive mutations; redaction secrets/PII và admin access scope tests. (Tối thiểu: `app/core/audit.py` log JSON có request/user/workspace, redaction token/secret/email; gọi ở upload/delete/cancel/retry/reingest/tags.) |
 | M2-QA | todo | — | JOB-05, COST-03, STORE-04, AUDIT-01 | Fault tests broker/worker kill, fencing, quota race, storage leak, duplicate messages; recovery chứng minh không mất command. |
 
 ## M3 — Knowledge và RAG
 
 | ID | Trạng thái | Owner | Phụ thuộc | Task / nghiệm thu |
 |---|---|---|---|---|
-| KNOW-01 | todo | — | M2 | Curriculum metadata migration/seeds cho pilot; grade/subject/year/source provenance được version hóa. |
-| KNOW-02 | todo | — | KNOW-01 | Rights attestation và source access policy; upload không tự thành shared corpus, missing rights bị reject. |
-| KNOW-03 | todo | — | KNOW-02 | Immutable document versions + activation transaction; failed ingest không thay active version. |
-| KNOW-04 | todo | — | KNOW-03 | Sandboxed PDF-text/DOCX/TXT parsing, resource limits và malformed files tests; scan PDF chưa OCR hiển thị unsupported. |
-| KNOW-05 | todo | — | KNOW-04 | Versioned chunking pipeline; preserve page/section offsets, dedupe và reproducible fixtures. |
+| KNOW-01 | review | Hao | M2 | Curriculum metadata migration/seeds cho pilot; grade/subject/year/source provenance được version hóa. (Migration 0007: `curriculum_subjects`/`curriculum_units` platform-wide, seed Toán/Văn/Anh + 15 đơn vị Toán 10–12 (`seed:pilot-draft`, chuyên môn cần duyệt).) |
+| KNOW-02 | review | Hao | KNOW-01 | Rights attestation và source access policy; upload không tự thành shared corpus, missing rights bị reject. (`documents.rights_attested` bắt buộc khi upload/reingest; `rights_scope` chỉ `private` (shared corpus chưa bật theo quyết định 3.5).) |
+| KNOW-03 | review | Hao | KNOW-02 | Immutable document versions + activation transaction; failed ingest không thay active version. (`document_versions` immutable, partial unique active, trigger chuyển trạng thái; ingest thất bại không thay active version.) |
+| KNOW-04 | review | Hao | KNOW-03 | Sandboxed PDF-text/DOCX/TXT parsing, resource limits và malformed files tests; scan PDF chưa OCR hiển thị unsupported. (Parser TXT/DOCX (stdlib, chống zip bomb, timeout 30s); PDF cần thêm `pypdf` (chưa thêm dependency), PDF scan → `no_text_layer` hiển thị unsupported.) |
+| KNOW-05 | review | Hao | KNOW-04 | Versioned chunking pipeline; preserve page/section offsets, dedupe và reproducible fixtures. (`document_chunks` theo version, offsets page/section/char, dedupe, golden fixtures `tests/fixtures/chunking`.) |
 | KNOW-06 | todo | — | KNOW-05 | Embedding provider adapter + model/index versions; retries metered, reindex không trộn incompatible vectors. |
 | KNOW-07 | todo | — | KNOW-06 | Authorized hybrid retrieval/reranking; tenant/license filters trước trả context, cross-tenant negative evals. |
 | KNOW-08 | todo | — | KNOW-07 | Citation resolver và source preview UI; snippets map đúng version/page, không bịa nguồn khi thiếu context. |
@@ -101,10 +101,10 @@ Các ID SET/BASE/AUTH/ACL/DATA/DB/BE/FE/QA/DOC giữ từ backlog ban đầu. Ph
 
 | ID | Trạng thái | Owner | Phụ thuộc | Task / nghiệm thu |
 |---|---|---|---|---|
-| CLASS-01 | todo | — | M1 | Class/teacher/roster schema + CRUD; tenant FKs, archive policy và class-scoped authorization. |
-| CLASS-02 | todo | — | CLASS-01 | Invitation tokens hash/expiry/single-use/rate limits; token không là credential đọc nội dung. |
-| CLASS-03 | todo | — | CLASS-02 | Student identity/enrollment acceptance và withdrawal; không merge học sinh chỉ qua tên, giữ lịch sử theo policy. |
-| CLASS-04 | todo | — | CLASS-03 | Teacher roster/invite UI, student join UI và empty/error states; người ngoài lớp không thấy roster. |
+| CLASS-01 | review | Hao | M1 | Class/teacher/roster schema + CRUD; tenant FKs, archive policy và class-scoped authorization. (Migration 0005: classes/class_teachers/students/enrollments với composite FK, FORCE RLS; API CRUD + archive, teacher chỉ thấy lớp mình dạy.) |
+| CLASS-02 | review | Hao | CLASS-01 | Invitation tokens hash/expiry/single-use/rate limits; token không là credential đọc nội dung. (`class_invitations` lưu sha256 token, hết hạn ≤30 ngày, max_uses 1..500, single-use atomic qua SECURITY DEFINER; rate limit in-process (Redis ở M7).) |
+| CLASS-03 | review | Hao | CLASS-02 | Student identity/enrollment acceptance và withdrawal; không merge học sinh chỉ qua tên, giữ lịch sử theo policy. (Accept theo user đã đăng nhập, không merge học sinh theo tên; withdraw idempotent; học sinh không thành member workspace giáo viên.) |
+| CLASS-04 | review | Hao | CLASS-03 | Teacher roster/invite UI, student join UI và empty/error states; người ngoài lớp không thấy roster. (UI `/dashboard/classes`, chi tiết lớp/roster, tạo mã mời một lần, thu hồi, rút; `/join/[token]`; chưa kiểm browser.) |
 | ASSIGN-01 | todo | — | CLASS-04, M4 | Assignment pin immutable publication, windows/attempt policy/timezone; sửa draft không đổi đề đã giao. |
 | ASSIGN-02 | todo | — | ASSIGN-01 | Student mobile assignment list/detail; only enrolled + release checks, revoke chặn thao tác mới. |
 | M5-QA | todo | — | ASSIGN-02 | E2E invite→join→assign→withdraw, guessing IDs, replay token và mobile accessibility tests. |
@@ -179,3 +179,14 @@ Owner tích hợp: Duc, theo người dùng xác nhận Hào đã bàn giao scop
 Thay đổi: Auth0-hosted email/password signup/login, verification/resend, Redis server sessions, RS256 verifier, identity/workspace bootstrap và các endpoint thật; frontend dashboard riêng, CSRF và server route guards. Dùng migration mới 0004, không sửa SQL của các migration đã phát hành. Runtime role và NOLOGIN function owner tách biệt.
 
 Evidence và giới hạn: [bản ghi triển khai](../discuss/2026-10-23-auth-implementation.md); setup tại [Auth0 runbook](../deploy/auth0/README.md). Tenant development đã tạo; người dùng xác nhận smoke Auth0/verification/reset email thật trên local. Resend bị skip, refresh thật chưa xác nhận, HTTPS staging/máy thứ hai chưa kiểm chứng. Người dùng quyết định giữ Auth0. CI workflow đã thêm test, chưa chạy GitHub CI cho diff này. Giữ các task liên quan `in_progress`, chưa nghiệm thu M1, chưa xác nhận review/merge/deploy.
+
+
+### CLASS-01..04 / JOB-01,02,04,05 / COST-01,02 / STORE-01..04 / AUDIT-01 / KNOW-01..05 — execution record 2026-10-23
+
+Owner: Hao (thực hiện bằng agent theo yêu cầu người dùng, chia 5 work package song song, file không trùng). Reviewer đề xuất: Duc. Trạng thái `review` nghĩa là code + unit test có, **chưa** có evidence PostgreSQL thật và chưa có người thứ hai duyệt; không coi gate M2/M3/M5 đạt.
+
+Phạm vi: migrations `0005_classes`, `0006_jobs_storage`, `0007_knowledge` (forward-only trừ 0005); `app/api/workspace_access.py` (BE-05 dùng chung: membership + RLS context cho mọi route tenant); router classes/documents/jobs/knowledge mount trong `main.py`; worker `app.tasks.jobs` (acks_late, lease, sweeper beat 60s); MinIO trong `compose.yaml`; frontend `/dashboard/classes`, `/dashboard/documents`, `/join/[token]` qua BFF `backend()` mở rộng (JSON/raw body, CSRF giữ nguyên). Dạng lean theo IMPLEMENTATION_PLAN 3.4.
+
+Kiểm chứng local (Windows, không Docker): backend `ruff check`/`format --check` PASS; `pytest -q` 333 passed, 23 skipped (toàn bộ integration cần `AUTH_TEST_DATABASE_URL`); OpenAPI export + `npm run api:generate` không drift; frontend lint/typecheck/build PASS, `test:unit` 11/11, `test:workspace` PASS. Review M1 của Duc (nháp) tại [discuss/REVIEW.md](../discuss/REVIEW.md): 0 P1, 5 P2, 18 P3.
+
+Chưa kiểm chứng: SQL của 0005–0007 (RLS, SECURITY DEFINER, trigger, grants) chưa chạy trên PostgreSQL; MinIO image tag/healthcheck chưa chạy; upload stream qua Next→FastAPI; UI ở browser 375px; `pypdf` chưa thêm vào lock (cần uv). Quyết định còn treo trước khi đi tiếp: embedding model/provider (KNOW-06), cấu trúc đề thực tế (trước M4), pháp lý dữ liệu (3.5).

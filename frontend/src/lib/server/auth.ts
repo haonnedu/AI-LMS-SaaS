@@ -73,8 +73,18 @@ export async function lockedSession<T>(action: (session: SessionData) => Promise
     return action(fresh);
   });
 }
-export async function backend(request: Request, path: string, method = "GET") {
-  return lockedSession(async session => {
+export type BackendOptions = {
+  /** JSON string, or a raw stream/Blob for uploads. Never forwarded for GET. */
+  body?: BodyInit | null;
+  /** Already-allowlisted headers only (see pickUploadHeaders). Authorization/Accept cannot be overridden. */
+  headers?: Record<string, string>;
+  /** Relay upstream status and tolerate non-JSON bodies instead of failing with 503. */
+  passthroughStatus?: boolean;
+};
+export async function backend(request: Request, path: string, method = "GET", options: BackendOptions = {}) {
+  const hasBody = options.body !== undefined && options.body !== null;
+  if (method === "GET" && hasBody) throw new HttpError(500, "invalid_backend_call", "Yêu cầu không hợp lệ.");
+  const call = await lockedSession(async session => {
     if (method !== "GET") checkCsrf(request, session);
     let token: string;
     try { token = (await auth().getAccessToken()).token; }
@@ -88,8 +98,26 @@ export async function backend(request: Request, path: string, method = "GET") {
     await auth().updateSession(await requireSession());
     const base = new URL(process.env.API_INTERNAL_URL || "http://127.0.0.1:8000");
     if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password) throw new Error("invalid_backend_origin");
-    const response = await fetch(new URL(path, base), { method, headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(5000) });
-    const payload = await response.json();
-    return NextResponse.json(payload, { status: response.status, headers: { "Cache-Control": "no-store" } });
+    const send = async () => {
+      // Caller headers first so they can never replace Authorization/Accept.
+      const headers: Record<string, string> = { ...options.headers, Authorization: `Bearer ${token}`, Accept: "application/json" };
+      const init: RequestInit & { duplex?: "half" } = { method, headers, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(hasBody ? 120000 : 5000) };
+      if (hasBody) { init.body = options.body; if (typeof options.body !== "string") init.duplex = "half"; }
+      return respond(await fetch(new URL(path, base), init), options.passthroughStatus === true);
+    };
+    // Long uploads must not hold the per-session lock: it would stall /api/session and other BFF calls.
+    return hasBody ? send : await send();
   });
+  return typeof call === "function" ? call() : call;
+}
+async function respond(response: Response, tolerant: boolean) {
+  const headers = { "Cache-Control": "no-store" };
+  if (response.status === 204 || response.status === 205) return new NextResponse(null, { status: response.status, headers });
+  let payload: unknown;
+  try { payload = await response.json(); }
+  catch (error) {
+    if (!tolerant) throw error;
+    payload = { error: { code: "upstream_error", message: "Dịch vụ tạm thời không khả dụng. Vui lòng thử lại." }, requestId: randomUUID() };
+  }
+  return NextResponse.json(payload, { status: response.status, headers });
 }

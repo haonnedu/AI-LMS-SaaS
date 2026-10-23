@@ -19,3 +19,5 @@
 .reminder { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; padding:20px; margin-bottom:24px; border:1px solid #dce4d7; border-radius:12px; background:#eef4e7; }
 .reminder p { margin-top:4px; }
 @media(max-width:760px) { .page { padding:24px 16px 32px; } .page>.card { margin-top:28px; } .card { padding:24px; border-radius:16px; } }
+.navLinks { display:flex; flex-wrap:wrap; gap:8px; }
+.navLinks a { display:inline-flex; align-items:center; min-height:44px; padding:0 14px; border-radius:8px; background:#eef4e7; color:#216147; }

@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     s3_bucket: str = "eduvia-dev"
     s3_access_key_id: SecretStr | None = None
     s3_secret_access_key: SecretStr | None = None
+    # Lean upload limit (STORE-01): enforced before and while reading the request body.
+    upload_max_bytes: int = Field(default=25 * 1024 * 1024, ge=1024 * 1024, le=100 * 1024 * 1024)
 
     @field_validator("database_url")
     @classmethod
